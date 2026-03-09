@@ -12,6 +12,7 @@ import RatingScreen from "./pages/RatingScreen";
 import HistoryScreen from "./pages/HistoryScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 import DriverPanel from "./pages/DriverPanel";
+import HomePage from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<SplashScreen />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/passenger" element={<PassengerHome />} />
           <Route path="/ride-confirm" element={<RideConfirm />} />
