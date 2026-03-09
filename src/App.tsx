@@ -25,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<SplashScreen />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/passenger" element={<PassengerHome />} />
           <Route path="/ride-confirm" element={<RideConfirm />} />
