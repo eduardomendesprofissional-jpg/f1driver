@@ -74,10 +74,10 @@ const HomePage = () => {
               className="flex flex-col sm:flex-row gap-4"
             >
               <Button size="lg" onClick={() => navigate("/login")} className="glow-blue text-base font-bold px-8 h-14">
-                Quero ser passageiro
+                <Users size={18} /> Quero ser passageiro
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate("/login")} className="text-base font-bold px-8 h-14 border-primary/30 hover:bg-primary/10">
-                Quero ser motorista
+                <Car size={18} /> Quero ser motorista
               </Button>
             </motion.div>
           </div>
