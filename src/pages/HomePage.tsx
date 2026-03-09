@@ -4,6 +4,7 @@ import { Car, Users, Shield, MapPin, Star, Zap, Clock, TrendingUp, ChevronRight,
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-f1driver.jpeg";
 import carImg from "@/assets/car-3d.png";
+import heroPhones from "@/assets/hero-phones.png";
 import motoImg from "@/assets/moto-3d.png";
 import scheduleImg from "@/assets/schedule-3d.png";
 import deliveryImg from "@/assets/delivery-3d.png";
@@ -89,8 +90,7 @@ const HomePage = () => {
           >
             <div className="relative">
               <div className="absolute -inset-8 bg-primary/10 rounded-full blur-3xl" />
-              <img src={carImg} alt="Carro F1 Driver" className="relative w-72 md:w-96 drop-shadow-2xl" />
-              <img src={motoImg} alt="Moto F1 Driver" className="absolute -bottom-4 -left-8 w-32 md:w-40 drop-shadow-xl" />
+              <img src={heroPhones} alt="App F1 Driver em smartphones" className="relative w-80 md:w-[28rem] drop-shadow-2xl" />
             </div>
           </motion.div>
         </div>
