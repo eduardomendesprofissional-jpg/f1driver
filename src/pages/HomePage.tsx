@@ -90,7 +90,7 @@ const HomePage = () => {
           >
             <div className="relative">
               <div className="absolute -inset-8 bg-primary/10 rounded-full blur-3xl" />
-              <img src={heroPhones} alt="App F1 Driver em smartphones" className="relative w-80 md:w-[28rem] drop-shadow-2xl" />
+              <img src={heroPhones} alt="App F1 Driver em smartphones" className="relative w-[22rem] md:w-[38rem] drop-shadow-2xl" />
             </div>
           </motion.div>
         </div>
