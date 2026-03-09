@@ -4,6 +4,7 @@ import { Car, Users, Shield, MapPin, Star, Zap, Clock, TrendingUp, ChevronRight,
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-f1driver.jpeg";
 import carImg from "@/assets/car-3d.png";
+import heroPhones from "@/assets/hero-phones.png";
 import motoImg from "@/assets/moto-3d.png";
 import scheduleImg from "@/assets/schedule-3d.png";
 import deliveryImg from "@/assets/delivery-3d.png";
