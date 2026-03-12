@@ -90,10 +90,11 @@ const SidebarItem = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
         </button>
         {open && (
           <div className="ml-9 space-y-0.5 mt-0.5">
-            {item.children.map((child) => (
+             {item.children.map((child) => (
               <NavLink
                 key={child.path}
                 to={child.path}
+                onClick={onNavigate}
                 className={({ isActive }) =>
                   `block px-3 py-2 text-sm rounded-lg transition-colors ${
                     isActive
