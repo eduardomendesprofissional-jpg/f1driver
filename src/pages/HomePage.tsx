@@ -18,10 +18,10 @@ const fadeUp = {
 };
 
 const stats = [
-  { value: "50K+", label: "Corridas realizadas", icon: Car },
-  { value: "12K+", label: "Usuários ativos", icon: Users },
-  { value: "4.9", label: "Avaliação média", icon: Star },
-  { value: "98%", label: "Taxa de satisfação", icon: TrendingUp },
+  { value: "—", label: "Corridas realizadas", icon: Car },
+  { value: "—", label: "Usuários ativos", icon: Users },
+  { value: "—", label: "Avaliação média", icon: Star },
+  { value: "—", label: "Taxa de satisfação", icon: TrendingUp },
 ];
 
 const HomePage = () => {
