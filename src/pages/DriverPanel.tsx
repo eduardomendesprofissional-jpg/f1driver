@@ -3,22 +3,8 @@ import { motion } from "framer-motion";
 import { Navigation, DollarSign, MapPin, Check, X, Power } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const mockRequests = [
-  { id: 1, from: "Av. Paulista, 1000", to: "Shopping Iguatemi", distance: "5.2 km", value: "R$ 18,50", time: "12 min" },
-  { id: 2, from: "Rua Augusta, 500", to: "Aeroporto Internacional", distance: "18 km", value: "R$ 42,00", time: "25 min" },
-];
-
 const DriverPanel = () => {
   const [online, setOnline] = useState(false);
-  const [requests, setRequests] = useState(mockRequests);
-
-  const handleAccept = (id: number) => {
-    setRequests((r) => r.filter((req) => req.id !== id));
-  };
-
-  const handleReject = (id: number) => {
-    setRequests((r) => r.filter((req) => req.id !== id));
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -62,7 +48,7 @@ const DriverPanel = () => {
         <div className="flex items-center gap-2">
           <DollarSign size={18} className="text-primary" />
           <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
-          <span className="text-lg font-bold text-primary">R$ 124,80</span>
+          <span className="text-lg font-bold text-primary">R$ 0,00</span>
         </div>
       </div>
 
@@ -70,58 +56,7 @@ const DriverPanel = () => {
       {online && (
         <div className="p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solicitações</p>
-          {requests.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Aguardando novas corridas...</p>
-          ) : (
-            requests.map((req, i) => (
-              <motion.div
-                key={req.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-card border border-border rounded-xl p-4 space-y-3"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex flex-col items-center gap-1 mt-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                    <div className="w-px h-6 bg-border" />
-                    <MapPin size={12} className="text-destructive" />
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Origem</p>
-                      <p className="text-sm font-semibold">{req.from}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Destino</p>
-                      <p className="text-sm font-semibold">{req.to}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{req.distance} · {req.time}</span>
-                  <span className="font-bold text-primary">{req.value}</span>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="destructive"
-                    className="flex-1 h-11 font-bold"
-                    onClick={() => handleReject(req.id)}
-                  >
-                    <X size={16} className="mr-1" /> Recusar
-                  </Button>
-                  <Button
-                    className="flex-1 h-11 font-bold bg-success hover:bg-success/90 text-success-foreground"
-                    onClick={() => handleAccept(req.id)}
-                  >
-                    <Check size={16} className="mr-1" /> Aceitar
-                  </Button>
-                </div>
-              </motion.div>
-            ))
-          )}
+          <p className="text-sm text-muted-foreground text-center py-8">Aguardando novas corridas...</p>
         </div>
       )}
     </div>

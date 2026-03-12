@@ -2,12 +2,6 @@ import { AlertTriangle, Edit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const errosData = [
-  { cidade: "São José da Coroa Grande", km: "13.93", categoria: "Carro", horario: "15:28:05", dia: "Sexta" },
-  { cidade: "Barreiros", km: "12.1", categoria: "Carro", horario: "12:39:50", dia: "Sábado" },
-  { cidade: "São José da Coroa Grande", km: "87.95", categoria: "Carro", horario: "08:38:24", dia: "Quinta" },
-];
-
 const RelatorioErros = () => {
   return (
     <div className="space-y-6">
@@ -37,25 +31,7 @@ const RelatorioErros = () => {
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-foreground">Relatório de falhas recentes</h3>
         <p className="text-sm text-muted-foreground">Abaixo estão listadas as tentativas falhas. Use isso para saber onde está faltando preço.</p>
-
-        {errosData.map((erro, i) => (
-          <Card key={i} className="bg-card border-border border-l-4 border-l-rose-500">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-rose-400">Falha ao calcular rota em: {erro.cidade}</p>
-                <p className="text-sm text-muted-foreground">
-                  O passageiro tentou andar <strong className="text-foreground">{erro.km} KM</strong> na categoria <strong className="text-foreground">{erro.categoria}</strong>.
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  🕐 Horário: {erro.horario} | 📅 Dia: {erro.dia}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" className="text-xs text-rose-400 border-rose-400 hover:bg-rose-500/10">
-                Corrigir Regra
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+        <p className="text-sm text-muted-foreground text-center py-8">Nenhuma falha registrada.</p>
       </div>
     </div>
   );

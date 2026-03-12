@@ -5,11 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const passageirosData = [
-  { id: "35630", cadastro: "07/03/26 11:33", nome: "Eduardomendesprofissional@gmail.com", email: "Eduardomendesprofissional@gmail.com", status: "ATIVO" },
-  { id: "18222", cadastro: "03/02/26 10:45", nome: "Antônio Luiz colaço lira", email: "antoniodoegito22020@gmail.com", status: "ATIVO" },
-];
-
 const Passageiros = () => {
   return (
     <div className="space-y-6">
@@ -42,31 +37,19 @@ const Passageiros = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {passageirosData.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="text-sm">{p.id}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{p.cadastro}</TableCell>
-                    <TableCell className="text-sm font-medium">{p.nome}</TableCell>
-                    <TableCell className="text-sm">{p.email}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-emerald-500 text-white text-xs">{p.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1">
-                        <Settings size={12} /> Gerenciar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhum passageiro registrado.
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </div>
 
           <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>Mostrando de 1 até 2 de 2 registros</span>
+            <span>Mostrando 0 até 0 de 0 registros</span>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="text-xs h-8" disabled>Anterior</Button>
-              <Button size="sm" className="text-xs h-8 bg-primary text-primary-foreground">1</Button>
               <Button variant="outline" size="sm" className="text-xs h-8" disabled>Próximo</Button>
             </div>
           </div>

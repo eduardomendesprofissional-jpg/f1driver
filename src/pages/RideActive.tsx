@@ -20,11 +20,9 @@ const RideActive = () => {
             <div key={`v-${i}`} className="absolute h-full w-px bg-primary" style={{ left: `${i * 5}%` }} />
           ))}
         </div>
-        {/* Route line */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M 30 70 Q 50 30 70 35" stroke="hsl(210 100% 56%)" strokeWidth="0.8" fill="none" strokeDasharray="2 1" />
         </svg>
-        {/* Points */}
         <div className="absolute top-[68%] left-[28%] w-3 h-3 rounded-full bg-primary animate-pulse-glow" />
         <motion.div
           animate={{ x: status === "arriving" ? [0, 5, 10] : [10, 15, 20], y: status === "arriving" ? [0, -5, -10] : [-10, -15, -18] }}
@@ -40,7 +38,7 @@ const RideActive = () => {
           <div className="bg-card border border-border rounded-full px-4 py-2 flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${status === "arriving" ? "bg-primary animate-pulse" : "bg-success"}`} />
             <span className="text-xs font-semibold">
-              {status === "arriving" ? "Motorista a caminho — 3 min" : "Em viagem — 12 min restantes"}
+              {status === "arriving" ? "Motorista a caminho" : "Em viagem"}
             </span>
           </div>
         </div>
@@ -54,15 +52,14 @@ const RideActive = () => {
       >
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-xl font-bold text-primary">
-            JM
+            —
           </div>
           <div className="flex-1">
-            <p className="font-bold">João Marcos</p>
+            <p className="font-bold">—</p>
             <div className="flex items-center gap-1">
               <Star size={14} className="text-primary fill-primary" />
-              <span className="text-sm text-muted-foreground">4.9 · Honda Civic Preto</span>
+              <span className="text-sm text-muted-foreground">—</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">ABC-1D23</p>
           </div>
           <div className="flex gap-2">
             <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
@@ -88,7 +85,7 @@ const RideActive = () => {
                 className="flex-1 h-12 font-bold"
                 onClick={() => setStatus("in_progress")}
               >
-                Simular embarque
+                Embarcar
               </Button>
             </>
           ) : (
@@ -96,7 +93,7 @@ const RideActive = () => {
               className="w-full h-12 font-bold"
               onClick={() => navigate("/rating")}
             >
-              Simular chegada
+              Finalizar viagem
             </Button>
           )}
         </div>

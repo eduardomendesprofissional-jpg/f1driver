@@ -5,11 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const driversData = [
-  { id: "#3798", name: "Antonio luiz colaço lira", phone: "81981986978", email: "antonio@irlogo.com", status: "Ativo", categoria: "Carro", veiculo: "S10 branca", placa: "Qsi4i27" },
-  { id: "#3780", name: "Antônio Luiz colaço", phone: "81981986978", email: "antoniodoegito19@gmail.com", status: "Ativo", categoria: "Carro", veiculo: "S10", placa: "Qsi4i27" },
-];
-
 const Motoristas = () => {
   return (
     <div className="space-y-6">
@@ -21,8 +16,8 @@ const Motoristas = () => {
             Top 5 Performance
           </button>
           <div className="flex items-center gap-2">
-            <Input type="date" defaultValue="2026-03-01" className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
-            <Input type="date" defaultValue="2026-03-12" className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
+            <Input type="date" className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
+            <Input type="date" className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
             <Button size="sm" variant="outline" className="text-xs border-white/30 text-white hover:bg-white/10 gap-1">
               <Search size={14} /> Filtrar
             </Button>
@@ -42,20 +37,9 @@ const Motoristas = () => {
           </TableHeader>
           <TableBody>
             <TableRow className="border-white/10 hover:bg-white/5">
-              <TableCell className="text-white">
-                <Trophy size={16} className="text-yellow-400" />
+              <TableCell colSpan={6} className="text-center text-white/50 py-8 text-sm">
+                Nenhum dado disponível.
               </TableCell>
-              <TableCell className="text-white text-sm">Antonio luiz colaço lira</TableCell>
-              <TableCell className="text-center">
-                <Badge className="bg-emerald-500 text-white">1</Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="outline" className="border-yellow-400 text-yellow-400">0</Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="outline" className="border-rose-400 text-rose-400">0</Badge>
-              </TableCell>
-              <TableCell className="text-right text-emerald-400 font-bold">100%</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -88,43 +72,19 @@ const Motoristas = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {driversData.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell><input type="checkbox" className="rounded border-border" /></TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{d.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <User size={14} className="text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{d.name}</p>
-                          <p className="text-xs text-muted-foreground">{d.phone}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-xs">{d.email}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-xs text-emerald-500">{d.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge variant="secondary" className="text-xs">{d.categoria}</Badge></TableCell>
-                    <TableCell className="text-sm">{d.veiculo}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-xs">{d.placa}</Badge></TableCell>
-                    <TableCell><Button variant="ghost" size="sm"><MoreVertical size={14} /></Button></TableCell>
-                  </TableRow>
-                ))}
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhum motorista cadastrado.
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </div>
 
           <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>Mostrando de 1 até 2 de 2 registros</span>
+            <span>Mostrando 0 até 0 de 0 registros</span>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="text-xs h-8" disabled>Anterior</Button>
-              <Button size="sm" className="text-xs h-8 bg-primary text-primary-foreground">1</Button>
               <Button variant="outline" size="sm" className="text-xs h-8" disabled>Próximo</Button>
             </div>
           </div>
