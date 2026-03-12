@@ -70,7 +70,7 @@ const navItems: NavItem[] = [
   { label: "Configurar Aplicativo", icon: Settings, path: "/admin/configurar" },
 ];
 
-const SidebarItem = ({ item }: { item: NavItem }) => {
+const SidebarItem = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
