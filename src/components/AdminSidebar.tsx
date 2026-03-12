@@ -70,7 +70,7 @@ const navItems: NavItem[] = [
   { label: "Configurar Aplicativo", icon: Settings, path: "/admin/configurar" },
 ];
 
-const SidebarItem = ({ item }: { item: NavItem }) => {
+const SidebarItem = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
@@ -90,10 +90,11 @@ const SidebarItem = ({ item }: { item: NavItem }) => {
         </button>
         {open && (
           <div className="ml-9 space-y-0.5 mt-0.5">
-            {item.children.map((child) => (
+             {item.children.map((child) => (
               <NavLink
                 key={child.path}
                 to={child.path}
+                onClick={onNavigate}
                 className={({ isActive }) =>
                   `block px-3 py-2 text-sm rounded-lg transition-colors ${
                     isActive
@@ -115,6 +116,7 @@ const SidebarItem = ({ item }: { item: NavItem }) => {
     <NavLink
       to={item.path!}
       end={item.path === "/admin"}
+      onClick={onNavigate}
       className={({ isActive }) =>
         `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
           isActive
@@ -129,7 +131,7 @@ const SidebarItem = ({ item }: { item: NavItem }) => {
   );
 };
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   return (
     <aside className="w-56 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
       <div className="p-4 flex items-center gap-2">
@@ -141,7 +143,7 @@ const AdminSidebar = () => {
 
       <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => (
-          <SidebarItem key={item.label} item={item} />
+          <SidebarItem key={item.label} item={item} onNavigate={onNavigate} />
         ))}
       </nav>
     </aside>
