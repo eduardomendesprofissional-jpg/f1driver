@@ -18,6 +18,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DespachoRapido from "./pages/admin/DespachoRapido";
 import WhatsPainel from "./pages/admin/WhatsPainel";
+import WhatsPalavrasChave from "./pages/admin/WhatsPalavrasChave";
 
 const queryClient = new QueryClient();
 
