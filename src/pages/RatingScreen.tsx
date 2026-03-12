@@ -17,11 +17,11 @@ const RatingScreen = () => {
         className="w-full max-w-sm flex flex-col items-center gap-6"
       >
         <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-2xl font-bold text-primary">
-          JM
+          —
         </div>
         <div className="text-center">
           <h2 className="text-xl font-bold">Como foi sua viagem?</h2>
-          <p className="text-sm text-muted-foreground mt-1">Avalie o motorista João Marcos</p>
+          <p className="text-sm text-muted-foreground mt-1">Avalie o motorista</p>
         </div>
 
         {/* Stars */}
@@ -54,11 +54,11 @@ const RatingScreen = () => {
         <div className="w-full bg-card border border-border rounded-xl p-4">
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Valor cobrado</span>
-            <span className="text-lg font-bold text-primary">R$ 18,50</span>
+            <span className="text-lg font-bold text-primary">—</span>
           </div>
           <div className="flex justify-between items-center mt-2">
             <span className="text-sm text-muted-foreground">Pagamento</span>
-            <span className="text-sm font-medium">Pix</span>
+            <span className="text-sm font-medium">—</span>
           </div>
         </div>
 

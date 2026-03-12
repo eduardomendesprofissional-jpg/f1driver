@@ -6,20 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState } from "react";
 
-const cidadesIniciais = [
-  { nome: "Agrestina", uf: "PE" },
-  { nome: "Água Preta", uf: "PE" },
-  { nome: "Altinho", uf: "PE" },
-  { nome: "Barreiros", uf: "PE" },
-  { nome: "Bonito", uf: "PE" },
-  { nome: "Camocim de São Félix", uf: "PE" },
-  { nome: "Catende", uf: "PE" },
-  { nome: "Cupira", uf: "PE" },
-  { nome: "Jaqueira", uf: "PE" },
-];
-
 const NovaCidade = () => {
-  const [cidades] = useState(cidadesIniciais);
+  const [cidades] = useState<{ nome: string; uf: string }[]>([]);
 
   return (
     <div className="space-y-6">
@@ -66,7 +54,7 @@ const NovaCidade = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {cidades.map((c, i) => (
+              {cidades.length > 0 ? cidades.map((c, i) => (
                 <TableRow key={i}>
                   <TableCell className="text-sm font-medium">{c.nome}</TableCell>
                   <TableCell><Badge variant="secondary" className="text-xs">{c.uf}</Badge></TableCell>
@@ -76,7 +64,13 @@ const NovaCidade = () => {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhuma cidade cadastrada.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -44,11 +44,11 @@ const RideConfirm = () => {
             <div className="flex-1 space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground">Origem</p>
-                <p className="text-sm font-semibold">Sua localização atual</p>
+                <p className="text-sm font-semibold">—</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Destino</p>
-                <p className="text-sm font-semibold">Shopping Iguatemi</p>
+                <p className="text-sm font-semibold">—</p>
               </div>
             </div>
           </div>
@@ -58,11 +58,11 @@ const RideConfirm = () => {
           <div className="flex justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Tempo estimado</p>
-              <p className="text-lg font-bold">12 min</p>
+              <p className="text-lg font-bold">—</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Valor estimado</p>
-              <p className="text-lg font-bold text-primary">R$ 18,50</p>
+              <p className="text-lg font-bold text-primary">—</p>
             </div>
           </div>
         </motion.div>
@@ -94,7 +94,7 @@ const RideConfirm = () => {
       {/* Confirm Button */}
       <div className="p-4">
         <Button onClick={handleConfirm} className="w-full h-14 text-base font-bold glow-blue">
-          Confirmar corrida — R$ 18,50
+          Confirmar corrida
         </Button>
       </div>
     </div>

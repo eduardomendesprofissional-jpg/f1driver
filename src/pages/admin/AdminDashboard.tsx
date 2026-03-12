@@ -11,21 +11,7 @@ const stats = [
   { label: "Suporte Pendente", value: 0, icon: Headphones, color: "hsl(0, 72%, 51%)" },
 ];
 
-const chartData = [
-  { name: "04/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "05/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "06/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "07/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "08/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "09/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "10/03", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "Ontem", faturamento: 0, finalizadas: 0, canceladas: 0 },
-  { name: "Hoje", faturamento: 0, finalizadas: 0, canceladas: 0 },
-];
-
-const topDrivers = [
-  { nome: "Antonio luiz co...", viagens: 6, nota: 5.0 },
-];
+const chartData: { name: string; faturamento: number; finalizadas: number; canceladas: number }[] = [];
 
 const AdminDashboard = () => {
   return (
@@ -56,25 +42,29 @@ const AdminDashboard = () => {
           <CardTitle className="text-base font-semibold">Performance dos Últimos 9 Dias</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 18%)" />
-              <XAxis dataKey="name" stroke="hsl(0 0% 60%)" fontSize={12} />
-              <YAxis stroke="hsl(0 0% 60%)" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(0 0% 7%)",
-                  border: "1px solid hsl(0 0% 18%)",
-                  borderRadius: "8px",
-                  color: "white",
-                }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="faturamento" stroke="hsl(210 100% 56%)" name="Faturamento (R$)" strokeWidth={2} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="finalizadas" stroke="hsl(142 71% 45%)" name="Corridas Finalizadas" strokeWidth={2} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="canceladas" stroke="hsl(0 72% 51%)" name="Canceladas" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={320}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 18%)" />
+                <XAxis dataKey="name" stroke="hsl(0 0% 60%)" fontSize={12} />
+                <YAxis stroke="hsl(0 0% 60%)" fontSize={12} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(0 0% 7%)",
+                    border: "1px solid hsl(0 0% 18%)",
+                    borderRadius: "8px",
+                    color: "white",
+                  }}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="faturamento" stroke="hsl(210 100% 56%)" name="Faturamento (R$)" strokeWidth={2} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="finalizadas" stroke="hsl(142 71% 45%)" name="Corridas Finalizadas" strokeWidth={2} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="canceladas" stroke="hsl(0 72% 51%)" name="Canceladas" strokeWidth={2} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-12">Nenhum dado disponível.</p>
+          )}
         </CardContent>
       </Card>
 
@@ -126,20 +116,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm">
-              <div className="flex justify-between text-xs text-muted-foreground border-b border-border pb-2 mb-2">
-                <span>Nome</span>
-                <span>Viagens</span>
-                <span>Nota</span>
-              </div>
-              {topDrivers.map((d, i) => (
-                <div key={i} className="flex justify-between items-center py-1.5">
-                  <span className="text-sm">{d.nome}</span>
-                  <span className="text-sm">{d.viagens}</span>
-                  <span className="text-sm font-bold text-success">{d.nota}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground text-center py-4">Nenhum motorista registrado.</p>
           </CardContent>
         </Card>
       </div>
