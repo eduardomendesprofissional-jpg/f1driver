@@ -45,6 +45,7 @@ const App = () => (
             <Route path="despacho" element={<DespachoRapido />} />
             <Route path="whats/painel" element={<WhatsPainel />} />
             <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
+            <Route path="whats/clientes" element={<WhatsClientes />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
