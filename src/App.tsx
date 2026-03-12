@@ -43,6 +43,7 @@ const App = () => (
             <Route index element={<AdminDashboard />} />
             <Route path="despacho" element={<DespachoRapido />} />
             <Route path="whats/painel" element={<WhatsPainel />} />
+            <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
