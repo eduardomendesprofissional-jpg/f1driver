@@ -116,6 +116,7 @@ const SidebarItem = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
     <NavLink
       to={item.path!}
       end={item.path === "/admin"}
+      onClick={onNavigate}
       className={({ isActive }) =>
         `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors ${
           isActive
