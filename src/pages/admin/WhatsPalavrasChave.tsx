@@ -5,26 +5,35 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const WhatsPalavrasChave = () => {
   const [novaPalavra, setNovaPalavra] = useState("#MINHACENTRAL");
   const [palavras, setPalavras] = useState<{ palavra: string; categoria: string }[]>([]);
 
   const handleAdicionar = () => {
-    if (novaPalavra.trim()) {
-      setPalavras([...palavras, { palavra: novaPalavra.trim(), categoria: "-" }]);
-      setNovaPalavra("");
+    if (!novaPalavra.trim()) { toast.error("Digite uma palavra-chave."); return; }
+    if (palavras.some((p) => p.palavra.toLowerCase() === novaPalavra.trim().toLowerCase())) {
+      toast.error("Palavra já cadastrada."); return;
     }
+    setPalavras([...palavras, { palavra: novaPalavra.trim(), categoria: "-" }]);
+    setNovaPalavra("");
+    toast.success("Palavra-chave adicionada!");
   };
 
   const handleRemover = (index: number) => {
+    const p = palavras[index];
     setPalavras(palavras.filter((_, i) => i !== index));
+    toast.success(`"${p.palavra}" removida.`);
+  };
+
+  const handleAplicarTodos = () => {
+    toast.success("Configuração aplicada a todos os vínculos.");
   };
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Configuração Global */}
         <Card className="bg-card border-border overflow-hidden">
           <div className="bg-gradient-to-r from-teal-600 to-emerald-500 p-4">
             <div className="flex items-center gap-2 text-white font-bold">
@@ -39,9 +48,7 @@ const WhatsPalavrasChave = () => {
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-foreground">Categoria Padrão</label>
               <Select>
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
+                <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="carro">Carro</SelectItem>
                   <SelectItem value="moto">Moto</SelectItem>
@@ -49,16 +56,13 @@ const WhatsPalavrasChave = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full h-11 gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold">
+            <Button onClick={handleAplicarTodos} className="w-full h-11 gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold">
               ✅ Aplicar a Todos
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Atualiza Vínculos, WhatsApp e Palavras.
-            </p>
+            <p className="text-xs text-muted-foreground text-center">Atualiza Vínculos, WhatsApp e Palavras.</p>
           </CardContent>
         </Card>
 
-        {/* Palavras Gatilho */}
         <Card className="bg-card border-border overflow-hidden">
           <div className="bg-gradient-to-r from-violet-600 to-purple-500 p-4">
             <span className="text-white font-bold">Palavras Gatilho</span>
@@ -70,15 +74,12 @@ const WhatsPalavrasChave = () => {
                 <Input
                   value={novaPalavra}
                   onChange={(e) => setNovaPalavra(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAdicionar()}
                   placeholder="#MINHACENTRAL"
                   className="flex-1 bg-background border-border"
                 />
-                <Button
-                  onClick={handleAdicionar}
-                  className="gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold px-6"
-                >
-                  <Plus size={16} />
-                  Adicionar
+                <Button onClick={handleAdicionar} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold px-6">
+                  <Plus size={16} /> Adicionar
                 </Button>
               </div>
             </div>
@@ -96,9 +97,7 @@ const WhatsPalavrasChave = () => {
                 <TableBody>
                   {palavras.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground py-6 text-sm">
-                        Nenhuma palavra cadastrada.
-                      </TableCell>
+                      <TableCell colSpan={3} className="text-center text-muted-foreground py-6 text-sm">Nenhuma palavra cadastrada.</TableCell>
                     </TableRow>
                   ) : (
                     palavras.map((p, i) => (
