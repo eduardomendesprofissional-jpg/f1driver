@@ -21,6 +21,8 @@ import WhatsPainel from "./pages/admin/WhatsPainel";
 import WhatsPalavrasChave from "./pages/admin/WhatsPalavrasChave";
 import WhatsClientes from "./pages/admin/WhatsClientes";
 import CaixaResumo from "./pages/admin/CaixaResumo";
+import CaixaPosPago from "./pages/admin/CaixaPosPago";
+import CaixaCartao from "./pages/admin/CaixaCartao";
 
 const queryClient = new QueryClient();
 
