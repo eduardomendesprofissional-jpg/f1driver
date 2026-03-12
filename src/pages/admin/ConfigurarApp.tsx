@@ -2,111 +2,142 @@ import { Settings, Save } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ConfigurarApp = () => {
   return (
     <div className="space-y-6">
-      <Card className="bg-card border-border">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-1">
-            <Settings size={20} className="text-primary" />
-            <h2 className="text-lg font-bold text-primary">Configurar Aplicativo</h2>
+      {/* Lucros */}
+      <Card className="bg-card border-border relative">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-primary">Lucros</h2>
+              <p className="text-sm text-muted-foreground">Configure os ganhos por Viagem</p>
+              <p className="text-xs text-muted-foreground mt-0.5">* As informações inseridas abaixo irão refletir no relatório</p>
+            </div>
+            <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 h-10">
+              <Save size={16} />
+              Salvar
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground">Ajuste as configurações gerais do seu aplicativo.</p>
-        </CardContent>
-      </Card>
 
-      {/* Informações Gerais */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-5 space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Informações Gerais</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Nome do Aplicativo</label>
-              <Input defaultValue="F1 Driver" className="bg-background border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Telefone de Suporte</label>
-              <Input placeholder="(00) 00000-0000" className="bg-background border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">E-mail de Contato</label>
-              <Input placeholder="contato@f1driver.com" type="email" className="bg-background border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Moeda</label>
-              <Select defaultValue="brl">
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="brl">Real (BRL)</SelectItem>
-                  <SelectItem value="usd">Dólar (USD)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-[280px_1fr] items-center gap-y-4 mt-2">
+            <label className="text-sm text-foreground">Porcentagem por Corrida</label>
+            <Input defaultValue="0" className="bg-background border-border" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Configurações de Corrida */}
+      {/* Restrições */}
       <Card className="bg-card border-border">
-        <CardContent className="p-5 space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Configurações de Corrida</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Raio de Busca (km)</label>
-              <Input type="number" defaultValue="10" className="bg-background border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Tempo Máximo de Espera (min)</label>
-              <Input type="number" defaultValue="5" className="bg-background border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Taxa da Plataforma (%)</label>
-              <Input type="number" defaultValue="15" className="bg-background border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Valor Mínimo da Corrida (R$)</label>
-              <Input type="number" defaultValue="5.00" className="bg-background border-border" />
-            </div>
+        <CardContent className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-primary">Restriões</h2>
+            <p className="text-sm text-muted-foreground">Bloqueie ferramentas e informações</p>
+            <p className="text-xs text-muted-foreground mt-0.5">* Após alterado, os motoristas deverão ser notificados para reiniciar o aplicativo e surta os efeitos</p>
+          </div>
+
+          <div className="grid grid-cols-[280px_1fr] items-center gap-y-4">
+            <label className="text-sm text-foreground">
+              Ocultar o <strong>destino</strong> da corrida na tela de nova chamada?
+            </label>
+            <Select defaultValue="ocultar">
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ocultar">Ocultar</SelectItem>
+                <SelectItem value="mostrar">Mostrar</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <label className="text-sm text-foreground">
+              Ocultar o <strong>telefone do passageiro</strong> para o motorista?
+            </label>
+            <Select defaultValue="nao-ocultar">
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ocultar">Ocultar</SelectItem>
+                <SelectItem value="nao-ocultar">Não ocultar</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <label className="text-sm text-foreground">
+              Mostrar <strong>Tarifa Estimada</strong> para o motorista?
+            </label>
+            <Select defaultValue="mostrar">
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mostrar">Mostrar</SelectItem>
+                <SelectItem value="ocultar">Ocultar</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <label className="text-sm text-foreground">
+              Permitir que o motorista <strong>cancele</strong> corridas?
+            </label>
+            <Select defaultValue="permitir">
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="permitir">Permitir</SelectItem>
+                <SelectItem value="nao-permitir">Não permitir</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <label className="text-sm text-foreground">
+              Permitir passageiro <strong>ver o número de telefone</strong> do motorista?
+            </label>
+            <Select defaultValue="nao-permitir">
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="permitir">Permitir</SelectItem>
+                <SelectItem value="nao-permitir">No permitir</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Funcionalidades */}
+      {/* Central */}
       <Card className="bg-card border-border">
-        <CardContent className="p-5 space-y-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Funcionalidades</h3>
-          <div className="space-y-3">
-            {[
-              { label: "Pagamento por Cartão", desc: "Permitir pagamentos via cartão de crédito/débito" },
-              { label: "Pagamento por PIX", desc: "Habilitar pagamento via PIX" },
-              { label: "Corrida Agendada", desc: "Permitir que passageiros agendem corridas" },
-              { label: "Chat no App", desc: "Habilitar chat entre motorista e passageiro" },
-              { label: "Avaliação Obrigatória", desc: "Exigir avaliação após cada corrida" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.label}</p>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-                <Switch />
-              </div>
-            ))}
+        <CardContent className="p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-primary">Central</h2>
+            <p className="text-sm text-muted-foreground">Configure os meios de contato da sua empresa</p>
+            <p className="text-xs text-muted-foreground mt-0.5">* As informações inseridas abaixo refletirão no aplicativo motorista e passageiro</p>
+          </div>
+
+          <div className="grid grid-cols-[280px_1fr] items-center gap-y-4">
+            <label className="text-sm text-foreground">Valor mínimo para gerar desconto</label>
+            <Input className="bg-background border-border" />
+
+            <label className="text-sm text-foreground">
+              Valor (%) - Cashback do <strong>indicado do passageiro</strong>
+            </label>
+            <Input className="bg-background border-border" />
+
+            <label className="text-sm text-foreground">Valor (R$) - Indicação Motorista</label>
+            <Input className="bg-background border-border" />
+
+            <label className="text-sm text-foreground">Valor (R$) - Indicação Passageiro</label>
+            <Input className="bg-background border-border" />
+
+            <label className="text-sm text-foreground">
+              Valor (%) - Cashback do <strong>passageiro</strong>
+            </label>
+            <Input className="bg-background border-border" />
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-end">
-        <Button className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 h-11">
-          <Save size={16} />
-          Salvar Configurações
-        </Button>
-      </div>
     </div>
   );
 };
