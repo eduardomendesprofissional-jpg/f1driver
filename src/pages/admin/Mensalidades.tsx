@@ -4,8 +4,22 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useState } from "react";
+import { useTable } from "@/hooks/use-table";
+import { exportToCSV, exportToPDF } from "@/lib/table-utils";
+
+const headers = [
+  { key: "motorista", label: "Motorista" },
+  { key: "plano", label: "Plano" },
+  { key: "valor", label: "Valor" },
+  { key: "vencimento", label: "Vencimento" },
+  { key: "status", label: "Status" },
+];
 
 const Mensalidades = () => {
+  const [mensalidades] = useState<Record<string, unknown>[]>([]);
+  const table = useTable({ data: mensalidades, searchKeys: ["motorista", "plano"] });
+
   return (
     <div className="space-y-6">
       <Card className="bg-card border-border">
@@ -20,10 +34,10 @@ const Mensalidades = () => {
 
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary">CSV</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary">PDF</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => exportToCSV(mensalidades, headers, "mensalidades")}>CSV</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => exportToPDF(mensalidades, headers, "Mensalidades")}>PDF</Button>
             </div>
-            <Input placeholder="Buscar motorista..." className="w-44 h-8 text-xs bg-background border-border" />
+            <Input placeholder="Buscar motorista..." value={table.search} onChange={(e) => table.setSearch(e.target.value)} className="w-44 h-8 text-xs bg-background border-border" />
           </div>
 
           <div className="overflow-x-auto">
@@ -39,20 +53,31 @@ const Mensalidades = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhuma mensalidade registrada.
-                  </TableCell>
-                </TableRow>
+                {table.paginatedData.length > 0 ? table.paginatedData.map((m, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">{String(m.motorista)}</TableCell>
+                    <TableCell className="text-sm">{String(m.plano)}</TableCell>
+                    <TableCell className="text-sm">{String(m.valor)}</TableCell>
+                    <TableCell className="text-sm">{String(m.vencimento)}</TableCell>
+                    <TableCell><Badge variant="secondary" className="text-xs">{String(m.status)}</Badge></TableCell>
+                    <TableCell className="text-right text-sm">—</TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhuma mensalidade registrada.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
 
           <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>Mostrando 0 até 0 de 0 registros</span>
+            <span>{table.paginationLabel}</span>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Anterior</Button>
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Próximo</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canPrev} onClick={table.prev}>Anterior</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canNext} onClick={table.next}>Próximo</Button>
             </div>
           </div>
         </CardContent>

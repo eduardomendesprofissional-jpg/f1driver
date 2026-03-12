@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState } from "react";
+import { useTable } from "@/hooks/use-table";
 
 const CaixaCartao = () => {
-  const [perPage, setPerPage] = useState("10");
+  const [transacoes] = useState<Record<string, unknown>[]>([]);
+  const table = useTable({ data: transacoes, searchKeys: ["passageiro", "data"] });
 
   return (
     <div className="space-y-6">
@@ -17,13 +19,10 @@ const CaixaCartao = () => {
             <h2 className="text-lg font-bold text-emerald-500">Saldo Disponível (Cartão)</h2>
             <p className="text-sm text-muted-foreground">Compensado e pronto para saque</p>
             <p className="text-4xl font-bold text-emerald-500">R$ 0,00</p>
-            <Button disabled className="w-full h-11 bg-muted text-muted-foreground font-bold uppercase tracking-wider">
-              Saldo Insuficiente
-            </Button>
+            <Button disabled className="w-full h-11 bg-muted text-muted-foreground font-bold uppercase tracking-wider">Saldo Insuficiente</Button>
             <p className="text-xs text-emerald-500">Mínimo para saque: R$ 2,01</p>
           </CardContent>
         </Card>
-
         <Card className="bg-card border-border">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-2">
@@ -41,9 +40,7 @@ const CaixaCartao = () => {
               </TableHeader>
               <TableBody>
                 <TableRow className="bg-muted/30">
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6 text-sm">
-                    Nenhum saque.
-                  </TableCell>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6 text-sm">Nenhum saque.</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -59,10 +56,8 @@ const CaixaCartao = () => {
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Exibir</span>
-              <Select value={perPage} onValueChange={setPerPage}>
-                <SelectTrigger className="w-20 h-8 bg-background border-border text-xs">
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={String(table.pageSize)} onValueChange={(v) => table.setPageSize(Number(v))}>
+                <SelectTrigger className="w-20 h-8 bg-background border-border text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="10">10</SelectItem>
                   <SelectItem value="25">25</SelectItem>
@@ -71,7 +66,7 @@ const CaixaCartao = () => {
               </Select>
               <span>resultados por página</span>
             </div>
-            <Input placeholder="Buscar registros" className="w-44 h-8 text-xs bg-background border-border" />
+            <Input placeholder="Buscar registros" value={table.search} onChange={(e) => table.setSearch(e.target.value)} className="w-44 h-8 text-xs bg-background border-border" />
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -86,19 +81,28 @@ const CaixaCartao = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow className="bg-muted/30">
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhum registro encontrado
-                  </TableCell>
-                </TableRow>
+                {table.paginatedData.length > 0 ? table.paginatedData.map((t, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">{String(t.data)}</TableCell>
+                    <TableCell className="text-sm">{String(t.passageiro)}</TableCell>
+                    <TableCell className="text-sm">{String(t.valorOriginal)}</TableCell>
+                    <TableCell className="text-sm">{String(t.valorLiquido)}</TableCell>
+                    <TableCell className="text-sm">{String(t.statusPagamento)}</TableCell>
+                    <TableCell className="text-sm">{String(t.statusSaque)}</TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow className="bg-muted/30">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">Nenhum registro encontrado</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
           <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>Mostrando 0 até 0 de 0 registro(s)</span>
+            <span>{table.paginationLabel}</span>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Anterior</Button>
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Próximo</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canPrev} onClick={table.prev}>Anterior</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canNext} onClick={table.next}>Próximo</Button>
             </div>
           </div>
         </CardContent>

@@ -3,8 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useState } from "react";
+import { useTable } from "@/hooks/use-table";
 
 const SuporteEmergencial = () => {
+  const [chamados] = useState<Record<string, unknown>[]>([]);
+  const table = useTable({ data: chamados, searchKeys: ["usuario", "descricao", "tipo"] });
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 p-5 text-white">
@@ -42,7 +47,7 @@ const SuporteEmergencial = () => {
         <CardContent className="p-0">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border">
             <h3 className="text-sm font-bold text-foreground">Últimos Chamados</h3>
-            <Input placeholder="Buscar..." className="w-40 h-8 text-xs bg-background border-border" />
+            <Input placeholder="Buscar..." value={table.search} onChange={(e) => table.setSearch(e.target.value)} className="w-40 h-8 text-xs bg-background border-border" />
           </div>
           <Table>
             <TableHeader>
@@ -56,11 +61,20 @@ const SuporteEmergencial = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
-                  Nenhum chamado registrado.
-                </TableCell>
-              </TableRow>
+              {table.paginatedData.length > 0 ? table.paginatedData.map((c, i) => (
+                <TableRow key={i}>
+                  <TableCell className="text-sm">{String(c.id)}</TableCell>
+                  <TableCell className="text-sm">{String(c.tipo)}</TableCell>
+                  <TableCell className="text-sm">{String(c.usuario)}</TableCell>
+                  <TableCell className="text-sm">{String(c.descricao)}</TableCell>
+                  <TableCell className="text-sm">{String(c.dataHora)}</TableCell>
+                  <TableCell className="text-sm">{String(c.status)}</TableCell>
+                </TableRow>
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">Nenhum chamado registrado.</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
