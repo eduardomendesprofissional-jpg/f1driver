@@ -23,6 +23,10 @@ import WhatsClientes from "./pages/admin/WhatsClientes";
 import CaixaResumo from "./pages/admin/CaixaResumo";
 import CaixaPosPago from "./pages/admin/CaixaPosPago";
 import CaixaCartao from "./pages/admin/CaixaCartao";
+import ViagensEncerradas from "./pages/admin/ViagensEncerradas";
+import ViagensAndamento from "./pages/admin/ViagensAndamento";
+import ViagensRegistroChamadas from "./pages/admin/ViagensRegistroChamadas";
+import ViagensTodas from "./pages/admin/ViagensTodas";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +56,10 @@ const App = () => (
             <Route path="caixa/pre-pago" element={<CaixaResumo />} />
             <Route path="caixa/pos-pago" element={<CaixaPosPago />} />
             <Route path="caixa/cartao" element={<CaixaCartao />} />
+            <Route path="viagens/encerradas" element={<ViagensEncerradas />} />
+            <Route path="viagens/andamento" element={<ViagensAndamento />} />
+            <Route path="viagens/registro-chamadas" element={<ViagensRegistroChamadas />} />
+            <Route path="viagens/todas" element={<ViagensTodas />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
