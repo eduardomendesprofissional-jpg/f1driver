@@ -20,6 +20,7 @@ import DespachoRapido from "./pages/admin/DespachoRapido";
 import WhatsPainel from "./pages/admin/WhatsPainel";
 import WhatsPalavrasChave from "./pages/admin/WhatsPalavrasChave";
 import WhatsClientes from "./pages/admin/WhatsClientes";
+import CaixaResumo from "./pages/admin/CaixaResumo";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,9 @@ const App = () => (
             <Route path="whats/painel" element={<WhatsPainel />} />
             <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
             <Route path="whats/clientes" element={<WhatsClientes />} />
+            <Route path="caixa/pre-pago" element={<CaixaResumo />} />
+            <Route path="caixa/pos-pago" element={<CaixaResumo />} />
+            <Route path="caixa/cartao" element={<CaixaResumo />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
