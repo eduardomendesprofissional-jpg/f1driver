@@ -21,8 +21,9 @@ const navItems: NavItem[] = [
   {
     label: "Chamadas Whats", icon: MessageCircle,
     children: [
-      { label: "Enviar Mensagem", path: "/admin/whats/enviar" },
-      { label: "Histórico", path: "/admin/whats/historico" },
+      { label: "Painel de Solicitações", path: "/admin/whats/painel" },
+      { label: "Palavras Chave", path: "/admin/whats/palavras-chave" },
+      { label: "Meus Clientes", path: "/admin/whats/clientes" },
     ],
   },
   {
