@@ -4,8 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useState } from "react";
+import { useTable } from "@/hooks/use-table";
+import { exportToCSV, exportToPDF, printTable } from "@/lib/table-utils";
+import { toast } from "sonner";
+
+const headers = [
+  { key: "id", label: "ID" },
+  { key: "nome", label: "Motorista" },
+  { key: "email", label: "E-mail" },
+  { key: "categorias", label: "Categorias" },
+  { key: "veiculo", label: "Veículo" },
+  { key: "placa", label: "Placa" },
+];
 
 const Motoristas = () => {
+  const [motoristas] = useState<Record<string, unknown>[]>([]);
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+
+  const table = useTable({ data: motoristas, searchKeys: ["nome", "email", "placa", "veiculo"] });
+
+  const handleFiltrar = () => {
+    toast.info("Filtro aplicado para o período selecionado.");
+  };
+
   return (
     <div className="space-y-6">
       {/* Top 5 Performance */}
@@ -16,9 +39,9 @@ const Motoristas = () => {
             Top 5 Performance
           </button>
           <div className="flex items-center gap-2">
-            <Input type="date" className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
-            <Input type="date" className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
-            <Button size="sm" variant="outline" className="text-xs border-white/30 text-white hover:bg-white/10 gap-1">
+            <Input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
+            <Input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
+            <Button size="sm" variant="outline" onClick={handleFiltrar} className="text-xs border-white/30 text-white hover:bg-white/10 gap-1">
               <Search size={14} /> Filtrar
             </Button>
           </div>
@@ -50,11 +73,11 @@ const Motoristas = () => {
         <CardContent className="p-0">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border">
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1">📋 CSV</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1">📄 PDF</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1">🖨 Imprimir</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1" onClick={() => exportToCSV(motoristas, headers, "motoristas")}>📋 CSV</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1" onClick={() => exportToPDF(motoristas, headers, "Motoristas")}>📄 PDF</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1" onClick={() => printTable(motoristas, headers, "Motoristas")}>🖨 Imprimir</Button>
             </div>
-            <Input placeholder="Pesquisar motorista..." className="w-48 h-8 text-xs bg-background border-border" />
+            <Input placeholder="Pesquisar motorista..." value={table.search} onChange={(e) => table.setSearch(e.target.value)} className="w-48 h-8 text-xs bg-background border-border" />
           </div>
 
           <div className="overflow-x-auto">
@@ -72,20 +95,33 @@ const Motoristas = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhum motorista cadastrado.
-                  </TableCell>
-                </TableRow>
+                {table.paginatedData.length > 0 ? table.paginatedData.map((m, i) => (
+                  <TableRow key={i}>
+                    <TableCell><User size={14} className="text-muted-foreground" /></TableCell>
+                    <TableCell className="text-sm">{String(m.id)}</TableCell>
+                    <TableCell className="text-sm">{String(m.nome)}</TableCell>
+                    <TableCell className="text-sm">{String(m.email)}</TableCell>
+                    <TableCell className="text-sm">{String(m.categorias)}</TableCell>
+                    <TableCell className="text-sm">{String(m.veiculo)}</TableCell>
+                    <TableCell className="text-sm">{String(m.placa)}</TableCell>
+                    <TableCell><MoreVertical size={14} className="text-muted-foreground" /></TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhum motorista cadastrado.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
 
           <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>Mostrando 0 até 0 de 0 registros</span>
+            <span>{table.paginationLabel}</span>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Anterior</Button>
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Próximo</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canPrev} onClick={table.prev}>Anterior</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canNext} onClick={table.next}>Próximo</Button>
             </div>
           </div>
         </CardContent>

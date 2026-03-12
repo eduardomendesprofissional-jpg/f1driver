@@ -3,9 +3,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { useTable } from "@/hooks/use-table";
+import { exportToCSV, exportToPDF, printTable } from "@/lib/table-utils";
+
+const headers = [
+  { key: "id", label: "ID" },
+  { key: "motorista", label: "Motorista" },
+  { key: "passageiro", label: "Passageiro" },
+  { key: "status", label: "Status da Corrida" },
+  { key: "valor", label: "Valor da Corrida" },
+];
 
 const ViagensTodas = () => {
+  const [viagens] = useState<Record<string, unknown>[]>([]);
+  const table = useTable({ data: viagens, searchKeys: ["id", "motorista", "passageiro", "status"] });
+
   return (
     <div className="space-y-6">
       <Card className="bg-card border-border">
@@ -17,11 +30,11 @@ const ViagensTodas = () => {
 
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary">Print</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary">CSV</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary">PDF</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => printTable(viagens, headers, "Corridas")}>Print</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => exportToCSV(viagens, headers, "corridas")}>CSV</Button>
+              <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => exportToPDF(viagens, headers, "Corridas")}>PDF</Button>
             </div>
-            <Input placeholder="Procurar" className="w-40 h-8 text-xs bg-background border-border" />
+            <Input placeholder="Procurar" value={table.search} onChange={(e) => table.setSearch(e.target.value)} className="w-40 h-8 text-xs bg-background border-border" />
           </div>
 
           <div className="overflow-x-auto">
@@ -36,47 +49,35 @@ const ViagensTodas = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Sample data rows */}
-                {[
-                  { id: "802658000", motorista: "Antonio luiz colaço lira", passageiro: "Antônio Luiz colaço lira", status: "Finalizada", valor: "R$ 10.99" },
-                  { id: "659294000", motorista: "Antonio luiz colaço lira", passageiro: "Antônio Luiz colaço lira", status: "Cancelada pelo passageiro", valor: "R$ 9.99" },
-                  { id: "638961000", motorista: "Antonio luiz colaço lira", passageiro: "Antônio Luiz colaço lira", status: "Finalizada", valor: "R$ 170.7" },
-                  { id: "638254000", motorista: "Antonio luiz colaço lira", passageiro: "Antônio Luiz colaço lira", status: "Finalizada", valor: "R$ 32.66" },
-                  { id: "632795000", motorista: "Antonio luiz colaço lira", passageiro: "Antônio Luiz colaço lira", status: "Finalizada", valor: "R$ 97.95" },
-                ].map((row) => (
-                  <TableRow key={row.id}>
+                {table.paginatedData.length > 0 ? table.paginatedData.map((row, i) => (
+                  <TableRow key={i}>
                     <TableCell className="text-sm">
                       <div className="flex items-center gap-1.5">
                         <PlusSquare size={14} className="text-primary" />
-                        {row.id}
+                        {String(row.id)}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{row.motorista}</TableCell>
-                    <TableCell className="text-sm">{row.passageiro}</TableCell>
-                    <TableCell className="text-sm">
-                      {row.status === "Finalizada" ? (
-                        row.status
-                      ) : (
-                        <div>
-                          <span>{row.status}</span>
-                          <p className="text-xs text-muted-foreground">- Motivo: NÃO ESPECIFICADO</p>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">{row.valor}</TableCell>
+                    <TableCell className="text-sm">{String(row.motorista)}</TableCell>
+                    <TableCell className="text-sm">{String(row.passageiro)}</TableCell>
+                    <TableCell className="text-sm">{String(row.status)}</TableCell>
+                    <TableCell className="text-sm font-medium">{String(row.valor)}</TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhuma corrida registrada.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
 
           <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>1-10 de 11 registros</span>
+            <span>{table.paginationLabel}</span>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled>Previous</Button>
-              <Button size="sm" className="text-xs h-8 bg-primary text-primary-foreground">1</Button>
-              <Button variant="outline" size="sm" className="text-xs h-8">2</Button>
-              <Button variant="outline" size="sm" className="text-xs h-8">Next</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canPrev} onClick={table.prev}>Anterior</Button>
+              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canNext} onClick={table.next}>Próximo</Button>
             </div>
           </div>
         </CardContent>
