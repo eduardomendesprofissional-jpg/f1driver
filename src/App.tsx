@@ -39,6 +39,7 @@ const App = () => (
           <Route path="/driver" element={<DriverPanel />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="despacho" element={<DespachoRapido />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
