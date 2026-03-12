@@ -29,8 +29,9 @@ const navItems: NavItem[] = [
   {
     label: "Meu Caixa", icon: Wallet,
     children: [
-      { label: "Resumo", path: "/admin/caixa/resumo" },
-      { label: "Extrato", path: "/admin/caixa/extrato" },
+      { label: "Pré Pago", path: "/admin/caixa/pre-pago" },
+      { label: "Pós Pago", path: "/admin/caixa/pos-pago" },
+      { label: "Cartão", path: "/admin/caixa/cartao" },
     ],
   },
   {
