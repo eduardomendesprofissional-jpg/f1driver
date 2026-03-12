@@ -37,6 +37,15 @@ import CategoriasVeiculos from "./pages/admin/CategoriasVeiculos";
 import AnunciosBanners from "./pages/admin/AnunciosBanners";
 import RelatorioEstabelecimentos from "./pages/admin/RelatorioEstabelecimentos";
 import RelatorioViagens from "./pages/admin/RelatorioViagens";
+import MapaCalor from "./pages/admin/MapaCalor";
+import CuponsCriar from "./pages/admin/CuponsCriar";
+import CuponsListar from "./pages/admin/CuponsListar";
+import EstabelecimentosListar from "./pages/admin/EstabelecimentosListar";
+import EstabelecimentosCadastrar from "./pages/admin/EstabelecimentosCadastrar";
+import Mensalidades from "./pages/admin/Mensalidades";
+import MapaMotoristas from "./pages/admin/MapaMotoristas";
+import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
+import ConfigurarApp from "./pages/admin/ConfigurarApp";
 
 const queryClient = new QueryClient();
 
@@ -74,12 +83,21 @@ const App = () => (
             <Route path="passageiros" element={<Passageiros />} />
             <Route path="notificacao" element={<DispararNotificacao />} />
             <Route path="erros" element={<RelatorioErros />} />
+            <Route path="mapa-calor" element={<MapaCalor />} />
             <Route path="precificacao" element={<Precificacao />} />
             <Route path="nova-cidade" element={<NovaCidade />} />
             <Route path="categorias" element={<CategoriasVeiculos />} />
             <Route path="anuncios" element={<AnunciosBanners />} />
+            <Route path="cupons/criar" element={<CuponsCriar />} />
+            <Route path="cupons/listar" element={<CuponsListar />} />
+            <Route path="estabelecimentos/listar" element={<EstabelecimentosListar />} />
+            <Route path="estabelecimentos/cadastrar" element={<EstabelecimentosCadastrar />} />
             <Route path="relatorio-estabelecimentos" element={<RelatorioEstabelecimentos />} />
             <Route path="relatorio-viagens" element={<RelatorioViagens />} />
+            <Route path="mensalidades" element={<Mensalidades />} />
+            <Route path="mapa-motoristas" element={<MapaMotoristas />} />
+            <Route path="suporte" element={<SuporteEmergencial />} />
+            <Route path="configurar" element={<ConfigurarApp />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
