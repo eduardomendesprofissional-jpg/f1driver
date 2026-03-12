@@ -131,7 +131,7 @@ const SidebarItem = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
   );
 };
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   return (
     <aside className="w-56 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
       <div className="p-4 flex items-center gap-2">
@@ -143,7 +143,7 @@ const AdminSidebar = () => {
 
       <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => (
-          <SidebarItem key={item.label} item={item} />
+          <SidebarItem key={item.label} item={item} onNavigate={onNavigate} />
         ))}
       </nav>
     </aside>
