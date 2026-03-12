@@ -1,0 +1,129 @@
+import { MessageCircle, Filter, ChevronDown } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useState } from "react";
+
+const WhatsPainel = () => {
+  const [status, setStatus] = useState("aceitas-canceladas");
+  const today = new Date().toISOString().split("T")[0];
+
+  return (
+    <div className="space-y-6">
+      {/* Top Motoristas Banner */}
+      <div className="rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 p-5 text-white">
+        <button className="flex items-center gap-2 text-lg font-bold">
+          <MessageCircle size={22} />
+          Top Motoristas (Aceites)
+          <ChevronDown size={18} />
+        </button>
+
+        <div className="mt-4 bg-white/10 rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/20 hover:bg-transparent">
+                <TableHead className="text-white/80 text-xs font-semibold">POS.</TableHead>
+                <TableHead className="text-white/80 text-xs font-semibold">MOTORISTA</TableHead>
+                <TableHead className="text-white/80 text-xs font-semibold text-center">ACEITAS</TableHead>
+                <TableHead className="text-white/80 text-xs font-semibold text-right">ÚLTIMA</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="border-white/10 hover:bg-white/5">
+                <TableCell colSpan={4} className="text-center text-white/60 py-6 text-sm">
+                  Sem dados para o período.
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-4 md:p-5">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Início</label>
+              <Input type="date" defaultValue={today} className="bg-background border-border" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fim</label>
+              <Input type="date" defaultValue={today} className="bg-background border-border" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aceitas-canceladas">Aceitas e Canceladas</SelectItem>
+                  <SelectItem value="aceitas">Aceitas</SelectItem>
+                  <SelectItem value="canceladas">Canceladas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cidade</label>
+              <Input placeholder="Cidade..." className="bg-background border-border" />
+            </div>
+            <Button className="h-10 gap-2 bg-emerald-500 hover:bg-emerald-600 text-white col-span-2 md:col-span-1">
+              <Filter size={16} />
+              Filtrar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Histórico */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-bold text-emerald-500">Histórico (Aceitas & Canceladas)</h2>
+
+        <Card className="bg-card border-border">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <Button variant="outline" size="sm" className="text-xs">CSV</Button>
+              <Input placeholder="Buscar..." className="w-40 h-8 text-xs bg-background border-border" />
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-xs font-semibold">STATUS</TableHead>
+                    <TableHead className="text-xs font-semibold">PASSAGEIRO</TableHead>
+                    <TableHead className="text-xs font-semibold">ENDEREÇOS</TableHead>
+                    <TableHead className="text-xs font-semibold">VALOR</TableHead>
+                    <TableHead className="text-xs font-semibold">MOTORISTA</TableHead>
+                    <TableHead className="text-xs font-semibold">DATA</TableHead>
+                    <TableHead className="text-xs font-semibold">AÇÃO</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhum registro encontrado
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border text-xs text-muted-foreground">
+              <span>Mostrando 0 até 0 de 0 registros</span>
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" className="text-xs h-8" disabled>Anterior</Button>
+                <Button variant="outline" size="sm" className="text-xs h-8" disabled>Próximo</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default WhatsPainel;

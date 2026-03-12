@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DespachoRapido from "./pages/admin/DespachoRapido";
+import WhatsPainel from "./pages/admin/WhatsPainel";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="despacho" element={<DespachoRapido />} />
+            <Route path="whats/painel" element={<WhatsPainel />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
