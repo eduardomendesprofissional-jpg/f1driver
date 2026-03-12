@@ -16,6 +16,7 @@ import HomePage from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import DespachoRapido from "./pages/admin/DespachoRapido";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/driver" element={<DriverPanel />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="despacho" element={<DespachoRapido />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
