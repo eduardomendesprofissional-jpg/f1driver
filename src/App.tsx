@@ -41,6 +41,7 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="despacho" element={<DespachoRapido />} />
+            <Route path="whats/painel" element={<WhatsPainel />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
