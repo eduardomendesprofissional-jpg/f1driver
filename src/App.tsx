@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DespachoRapido from "./pages/admin/DespachoRapido";
+import WhatsPainel from "./pages/admin/WhatsPainel";
 
 const queryClient = new QueryClient();
 
