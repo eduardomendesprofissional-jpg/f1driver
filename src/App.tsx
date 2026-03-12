@@ -20,6 +20,7 @@ import DespachoRapido from "./pages/admin/DespachoRapido";
 import WhatsPainel from "./pages/admin/WhatsPainel";
 import WhatsPalavrasChave from "./pages/admin/WhatsPalavrasChave";
 import WhatsClientes from "./pages/admin/WhatsClientes";
+import CaixaResumo from "./pages/admin/CaixaResumo";
 
 const queryClient = new QueryClient();
 
