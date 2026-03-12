@@ -14,6 +14,8 @@ import ProfileScreen from "./pages/ProfileScreen";
 import DriverPanel from "./pages/DriverPanel";
 import HomePage from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,9 @@ const App = () => (
           <Route path="/history" element={<HistoryScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/driver" element={<DriverPanel />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
