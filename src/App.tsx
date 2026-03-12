@@ -27,6 +27,16 @@ import ViagensEncerradas from "./pages/admin/ViagensEncerradas";
 import ViagensAndamento from "./pages/admin/ViagensAndamento";
 import ViagensRegistroChamadas from "./pages/admin/ViagensRegistroChamadas";
 import ViagensTodas from "./pages/admin/ViagensTodas";
+import Motoristas from "./pages/admin/Motoristas";
+import Passageiros from "./pages/admin/Passageiros";
+import DispararNotificacao from "./pages/admin/DispararNotificacao";
+import RelatorioErros from "./pages/admin/RelatorioErros";
+import Precificacao from "./pages/admin/Precificacao";
+import NovaCidade from "./pages/admin/NovaCidade";
+import CategoriasVeiculos from "./pages/admin/CategoriasVeiculos";
+import AnunciosBanners from "./pages/admin/AnunciosBanners";
+import RelatorioEstabelecimentos from "./pages/admin/RelatorioEstabelecimentos";
+import RelatorioViagens from "./pages/admin/RelatorioViagens";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +70,16 @@ const App = () => (
             <Route path="viagens/andamento" element={<ViagensAndamento />} />
             <Route path="viagens/registro-chamadas" element={<ViagensRegistroChamadas />} />
             <Route path="viagens/todas" element={<ViagensTodas />} />
+            <Route path="motoristas" element={<Motoristas />} />
+            <Route path="passageiros" element={<Passageiros />} />
+            <Route path="notificacao" element={<DispararNotificacao />} />
+            <Route path="erros" element={<RelatorioErros />} />
+            <Route path="precificacao" element={<Precificacao />} />
+            <Route path="nova-cidade" element={<NovaCidade />} />
+            <Route path="categorias" element={<CategoriasVeiculos />} />
+            <Route path="anuncios" element={<AnunciosBanners />} />
+            <Route path="relatorio-estabelecimentos" element={<RelatorioEstabelecimentos />} />
+            <Route path="relatorio-viagens" element={<RelatorioViagens />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
