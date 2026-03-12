@@ -21,6 +21,8 @@ import WhatsPainel from "./pages/admin/WhatsPainel";
 import WhatsPalavrasChave from "./pages/admin/WhatsPalavrasChave";
 import WhatsClientes from "./pages/admin/WhatsClientes";
 import CaixaResumo from "./pages/admin/CaixaResumo";
+import CaixaPosPago from "./pages/admin/CaixaPosPago";
+import CaixaCartao from "./pages/admin/CaixaCartao";
 
 const queryClient = new QueryClient();
 
@@ -48,8 +50,8 @@ const App = () => (
             <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
             <Route path="whats/clientes" element={<WhatsClientes />} />
             <Route path="caixa/pre-pago" element={<CaixaResumo />} />
-            <Route path="caixa/pos-pago" element={<CaixaResumo />} />
-            <Route path="caixa/cartao" element={<CaixaResumo />} />
+            <Route path="caixa/pos-pago" element={<CaixaPosPago />} />
+            <Route path="caixa/cartao" element={<CaixaCartao />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
