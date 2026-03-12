@@ -37,8 +37,10 @@ const navItems: NavItem[] = [
   {
     label: "Viagens", icon: Car,
     children: [
-      { label: "Em andamento", path: "/admin/viagens/andamento" },
-      { label: "Finalizadas", path: "/admin/viagens/finalizadas" },
+      { label: "Encerradas", path: "/admin/viagens/encerradas" },
+      { label: "Em Andamento", path: "/admin/viagens/andamento" },
+      { label: "Registro de Chamadas", path: "/admin/viagens/registro-chamadas" },
+      { label: "Todas as Viagens", path: "/admin/viagens/todas" },
     ],
   },
   { label: "Motoristas", icon: Users, path: "/admin/motoristas" },
