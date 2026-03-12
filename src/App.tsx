@@ -56,6 +56,10 @@ const App = () => (
             <Route path="caixa/pre-pago" element={<CaixaResumo />} />
             <Route path="caixa/pos-pago" element={<CaixaPosPago />} />
             <Route path="caixa/cartao" element={<CaixaCartao />} />
+            <Route path="viagens/encerradas" element={<ViagensEncerradas />} />
+            <Route path="viagens/andamento" element={<ViagensAndamento />} />
+            <Route path="viagens/registro-chamadas" element={<ViagensRegistroChamadas />} />
+            <Route path="viagens/todas" element={<ViagensTodas />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
