@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import DespachoRapido from "./pages/admin/DespachoRapido";
 import WhatsPainel from "./pages/admin/WhatsPainel";
 import WhatsPalavrasChave from "./pages/admin/WhatsPalavrasChave";
+import WhatsClientes from "./pages/admin/WhatsClientes";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="despacho" element={<DespachoRapido />} />
             <Route path="whats/painel" element={<WhatsPainel />} />
             <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
+            <Route path="whats/clientes" element={<WhatsClientes />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
