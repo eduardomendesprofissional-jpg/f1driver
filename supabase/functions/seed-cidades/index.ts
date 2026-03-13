@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     const cidades = data.map((m) => ({
       nome: m.nome,
-      uf: m.microrregiao.mesorregiao.UF.sigla,
+      uf: m.microrregiao?.mesorregiao?.UF?.sigla || "BR",
     }));
 
     // Insert in batches of 500
