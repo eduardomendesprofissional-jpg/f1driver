@@ -216,7 +216,7 @@ const Precificacao = () => {
       </Card>
 
       {cidadeSelecionada && (
-        <Card className="bg-card border-border">
+        <Card id="tabela-precos" className="bg-card border-border">
           <CardContent className="p-0">
             <div className="px-5 py-3 flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground">
