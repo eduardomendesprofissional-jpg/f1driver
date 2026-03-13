@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Navigation, DollarSign, MapPin, Check, X, Power } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { DollarSign, Power } from "lucide-react";
+import MapboxMap from "@/components/MapboxMap";
 
 const DriverPanel = () => {
   const [online, setOnline] = useState(false);
@@ -22,22 +21,12 @@ const DriverPanel = () => {
         </button>
       </div>
 
-      {/* Mock Map */}
-      <div className="flex-1 relative bg-[#0a0a0a] min-h-[300px]">
-        <div className="absolute inset-0 opacity-10">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={`h-${i}`} className="absolute w-full h-px bg-primary" style={{ top: `${i * 5}%` }} />
-          ))}
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={`v-${i}`} className="absolute h-full w-px bg-primary" style={{ left: `${i * 5}%` }} />
-          ))}
-        </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="w-4 h-4 rounded-full bg-primary animate-pulse-glow" />
-        </div>
+      {/* Real Map */}
+      <div className="flex-1 relative min-h-[300px]">
+        <MapboxMap className="absolute inset-0 w-full h-full" zoom={14} />
 
         {!online && (
-          <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10">
             <p className="text-muted-foreground font-semibold">Fique online para receber corridas</p>
           </div>
         )}
