@@ -1,5 +1,6 @@
 import { Map, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import MapboxMap from "@/components/MapboxMap";
 
 const MapaMotoristas = () => {
   return (
@@ -16,13 +17,11 @@ const MapaMotoristas = () => {
 
       <Card className="bg-card border-border">
         <CardContent className="p-5">
-          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center gap-2">
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center gap-2 mb-4">
             <Info size={16} className="text-primary" />
-            <p className="text-sm text-muted-foreground">O mapa será exibido aqui com a localização dos motoristas online.</p>
+            <p className="text-sm text-muted-foreground">O mapa exibe a localização dos motoristas online.</p>
           </div>
-          <div className="mt-4 w-full h-[400px] bg-muted/30 rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground text-sm">Nenhum motorista online no momento.</p>
-          </div>
+          <MapboxMap className="w-full h-[500px] rounded-lg overflow-hidden" />
         </CardContent>
       </Card>
     </div>

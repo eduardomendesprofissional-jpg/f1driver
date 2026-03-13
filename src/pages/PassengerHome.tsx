@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Search, Clock, Star, Navigation } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import MapboxMap from "@/components/MapboxMap";
 
 const PassengerHome = () => {
   const navigate = useNavigate();
@@ -11,23 +12,9 @@ const PassengerHome = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {/* Mock Dark Map */}
+      {/* Real Map */}
       <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[#0a0a0a]">
-          <div className="absolute inset-0 opacity-10">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div key={`h-${i}`} className="absolute w-full h-px bg-primary" style={{ top: `${i * 5}%` }} />
-            ))}
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div key={`v-${i}`} className="absolute h-full w-px bg-primary" style={{ left: `${i * 5}%` }} />
-            ))}
-          </div>
-          {/* User location dot */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-4 h-4 rounded-full bg-primary animate-pulse-glow" />
-            <div className="absolute -inset-4 rounded-full bg-primary/10 animate-ping" />
-          </div>
-        </div>
+        <MapboxMap className="absolute inset-0 w-full h-full" zoom={14} />
       </div>
 
       {/* Bottom Search Panel */}
