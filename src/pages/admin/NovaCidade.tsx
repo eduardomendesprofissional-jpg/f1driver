@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
@@ -38,7 +38,7 @@ const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
 };
 
 const NovaCidade = () => {
-  const [cidades, setCidades] = useState<{ nome: string; uf: string }[]>([]);
+  const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [showSugestoes, setShowSugestoes] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -47,6 +47,42 @@ const NovaCidade = () => {
     queryKey: ["cidades-brasil"],
     queryFn: fetchCidadesBR,
     staleTime: Infinity,
+  });
+
+  const { data: cidades = [], isLoading: loadingCobertura } = useQuery({
+    queryKey: ["cidades-cobertura"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cidades_cobertura")
+        .select("id, nome, uf")
+        .order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async (cidade: { nome: string; uf: string }) => {
+      const { error } = await supabase.from("cidades_cobertura").insert({ nome: cidade.nome, uf: cidade.uf });
+      if (error) throw error;
+    },
+    onSuccess: (_, cidade) => {
+      toast.success(`${cidade.nome} - ${cidade.uf} adicionada com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ["cidades-cobertura"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cidades_cobertura").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cidade removida.");
+      queryClient.invalidateQueries({ queryKey: ["cidades-cobertura"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const sugestoes =
@@ -77,10 +113,9 @@ const NovaCidade = () => {
       toast.error("Cidade já cadastrada.");
       return;
     }
-    setCidades([...cidades, cidade]);
+    addMutation.mutate(cidade);
     setBusca("");
     setShowSugestoes(false);
-    toast.success(`${cidade.nome} - ${cidade.uf} adicionada com sucesso!`);
   };
 
   const handleAdicionar = () => {
@@ -96,12 +131,6 @@ const NovaCidade = () => {
     } else {
       toast.error("Cidade não encontrada no banco de dados.");
     }
-  };
-
-  const handleRemover = (index: number) => {
-    const cidade = cidades[index];
-    setCidades(cidades.filter((_, i) => i !== index));
-    toast.success(`${cidade.nome} removida.`);
   };
 
   return (
@@ -164,7 +193,7 @@ const NovaCidade = () => {
                 </div>
               )}
             </div>
-            <Button onClick={handleAdicionar} className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8">
+            <Button onClick={handleAdicionar} disabled={addMutation.isPending} className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8">
               <Plus size={16} /> ADICIONAR
             </Button>
           </div>
@@ -187,9 +216,16 @@ const NovaCidade = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {cidades.length > 0 ? (
-                cidades.map((c, i) => (
-                  <TableRow key={i}>
+              {loadingCobertura ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8">
+                    <Loader2 size={16} className="animate-spin inline mr-2" />
+                    <span className="text-sm text-muted-foreground">Carregando...</span>
+                  </TableCell>
+                </TableRow>
+              ) : cidades.length > 0 ? (
+                cidades.map((c) => (
+                  <TableRow key={c.id}>
                     <TableCell className="text-sm font-medium">{c.nome}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="text-xs">{c.uf}</Badge>
@@ -198,7 +234,8 @@ const NovaCidade = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemover(i)}
+                        onClick={() => removeMutation.mutate(c.id)}
+                        disabled={removeMutation.isPending}
                         className="text-rose-400 hover:text-rose-500 hover:bg-rose-500/10"
                       >
                         <Trash2 size={14} />

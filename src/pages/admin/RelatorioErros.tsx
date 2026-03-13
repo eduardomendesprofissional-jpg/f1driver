@@ -5,14 +5,16 @@ import { useState } from "react";
 import { useTable } from "@/hooks/use-table";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const RelatorioErros = () => {
   const [erros] = useState<Record<string, unknown>[]>([]);
   const table = useTable({ data: erros, searchKeys: ["passageiro", "categoria", "erro"] });
 
+  const navigate = useNavigate();
+
   const handleEditar = () => {
-    toast.info("Redirecionando para a Tabela de Preços...");
+    navigate("/admin/precificacao");
   };
 
   return (
