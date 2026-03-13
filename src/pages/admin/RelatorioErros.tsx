@@ -11,8 +11,10 @@ const RelatorioErros = () => {
   const [erros] = useState<Record<string, unknown>[]>([]);
   const table = useTable({ data: erros, searchKeys: ["passageiro", "categoria", "erro"] });
 
+  const navigate = useNavigate();
+
   const handleEditar = () => {
-    toast.info("Redirecionando para a Tabela de Preços...");
+    navigate("/admin/precificacao");
   };
 
   return (
