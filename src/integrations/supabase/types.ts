@@ -14,7 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cidades_brasil: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: number
+          nome: string
+          uf: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: number
+          nome: string
+          uf: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: number
+          nome?: string
+          uf?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
