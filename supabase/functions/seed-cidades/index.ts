@@ -8,10 +8,10 @@ const corsHeaders = {
 
 interface IBGEMunicipio {
   nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
-        sigla: string;
+  microrregiao?: {
+    mesorregiao?: {
+      UF?: {
+        sigla?: string;
       };
     };
   };
