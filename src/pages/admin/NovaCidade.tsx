@@ -8,27 +8,17 @@ import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
-
-interface IBGEMunicipio {
-  nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
-        sigla: string;
-      };
-    };
-  };
-}
+import { supabase } from "@/integrations/supabase/client";
 
 const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
-  const res = await fetch(
-    "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome"
-  );
-  const data: IBGEMunicipio[] = await res.json();
-  return data.map((m) => ({
-    nome: m.nome,
-    uf: m.microrregiao.mesorregiao.UF.sigla,
-  }));
+  const { data, error } = await supabase
+    .from("cidades_brasil")
+    .select("nome, uf")
+    .eq("ativo", true)
+    .order("nome");
+
+  if (error) throw error;
+  return data || [];
 };
 
 const NovaCidade = () => {
@@ -38,7 +28,7 @@ const NovaCidade = () => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const { data: todasCidades = [], isLoading } = useQuery({
-    queryKey: ["cidades-ibge"],
+    queryKey: ["cidades-brasil"],
     queryFn: fetchCidadesBR,
     staleTime: Infinity,
   });
@@ -88,17 +78,7 @@ const NovaCidade = () => {
     if (match) {
       handleSelecionar(match);
     } else {
-      const parts = busca.trim().split(" - ");
-      const nome = parts[0] || busca.trim();
-      const uf = parts[1] || "BR";
-      if (cidades.some((c) => c.nome.toLowerCase() === nome.toLowerCase())) {
-        toast.error("Cidade já cadastrada.");
-        return;
-      }
-      setCidades([...cidades, { nome, uf }]);
-      setBusca("");
-      setShowSugestoes(false);
-      toast.success(`${nome} adicionada com sucesso!`);
+      toast.error("Cidade não encontrada no banco de dados.");
     }
   };
 
