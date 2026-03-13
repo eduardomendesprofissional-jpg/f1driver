@@ -163,7 +163,7 @@ const Precificacao = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 p-5 text-white">
+      <div className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 p-5 text-white flex items-center justify-between">
         <div className="flex items-center gap-2">
           <DollarSign size={22} />
           <div>
@@ -171,6 +171,16 @@ const Precificacao = () => {
             <p className="text-xs text-white/80">Gerencie a precificação por cidade e categoria de veículo.</p>
           </div>
         </div>
+        <Button
+          size="sm"
+          className="gap-2 bg-white/20 hover:bg-white/30 text-white font-bold"
+          onClick={() => {
+            const el = document.getElementById("tabela-precos");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }}
+        >
+          <Edit2 size={16} /> Editar Tabela de Preços
+        </Button>
       </div>
 
       <Card className="bg-card border-border">
@@ -206,7 +216,7 @@ const Precificacao = () => {
       </Card>
 
       {cidadeSelecionada && (
-        <Card className="bg-card border-border">
+        <Card id="tabela-precos" className="bg-card border-border">
           <CardContent className="p-0">
             <div className="px-5 py-3 flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground">
