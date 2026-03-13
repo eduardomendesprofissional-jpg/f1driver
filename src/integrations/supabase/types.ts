@@ -38,6 +38,74 @@ export type Database = {
         }
         Relationships: []
       }
+      cidades_cobertura: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          uf: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          uf: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          uf?: string
+        }
+        Relationships: []
+      }
+      precificacao: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          cidade_id: string
+          created_at: string
+          id: string
+          preco_base: number
+          preco_km: number
+          preco_minuto: number
+          taxa_minima: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          cidade_id: string
+          created_at?: string
+          id?: string
+          preco_base?: number
+          preco_km?: number
+          preco_minuto?: number
+          taxa_minima?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          cidade_id?: string
+          created_at?: string
+          id?: string
+          preco_base?: number
+          preco_km?: number
+          preco_minuto?: number
+          taxa_minima?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "precificacao_cidade_id_fkey"
+            columns: ["cidade_id"]
+            isOneToOne: false
+            referencedRelation: "cidades_cobertura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
