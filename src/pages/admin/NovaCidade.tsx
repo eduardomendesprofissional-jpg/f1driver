@@ -11,14 +11,30 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
-  const { data, error } = await supabase
-    .from("cidades_brasil")
-    .select("nome, uf")
-    .eq("ativo", true)
-    .order("nome");
+  const allCidades: { nome: string; uf: string }[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  let hasMore = true;
 
-  if (error) throw error;
-  return data || [];
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from("cidades_brasil")
+      .select("nome, uf")
+      .eq("ativo", true)
+      .order("nome")
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+    if (data && data.length > 0) {
+      allCidades.push(...data);
+      from += pageSize;
+      hasMore = data.length === pageSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allCidades;
 };
 
 const NovaCidade = () => {
