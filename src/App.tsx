@@ -64,6 +64,7 @@ const App = () => (
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/login" element={<LoginScreen />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Protected user routes */}
             <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
