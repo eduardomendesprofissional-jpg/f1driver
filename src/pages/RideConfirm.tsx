@@ -1,8 +1,10 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft } from "lucide-react";
+import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRide, RideEstimate } from "@/hooks/useRide";
+import { toast } from "sonner";
 
 const paymentMethods = [
   { id: "pix", label: "Pix", icon: QrCode },
@@ -12,10 +14,31 @@ const paymentMethods = [
 
 const RideConfirm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { origem, destino } = (location.state as any) || {};
   const [selectedPayment, setSelectedPayment] = useState("pix");
+  const { estimate, estimating, createRide, creating } = useRide();
+  const [est, setEst] = useState<RideEstimate | null>(null);
 
-  const handleConfirm = () => {
-    navigate("/ride-active");
+  useEffect(() => {
+    if (!origem || !destino) {
+      navigate("/passenger");
+      return;
+    }
+    estimate(origem, destino).then((r) => {
+      if (r) setEst(r);
+      else toast.error("Não foi possível calcular a rota.");
+    });
+  }, []);
+
+  const handleConfirm = async () => {
+    if (!est) return;
+    const ride = await createRide(est, selectedPayment);
+    if (ride) {
+      navigate("/ride-active", { state: { rideId: ride.id } });
+    } else {
+      toast.error("Erro ao solicitar corrida.");
+    }
   };
 
   return (
@@ -44,27 +67,39 @@ const RideConfirm = () => {
             <div className="flex-1 space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground">Origem</p>
-                <p className="text-sm font-semibold">—</p>
+                <p className="text-sm font-semibold truncate">{origem?.endereco || "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Destino</p>
-                <p className="text-sm font-semibold">—</p>
+                <p className="text-sm font-semibold truncate">{destino?.endereco || "—"}</p>
               </div>
             </div>
           </div>
 
           <div className="h-px bg-border" />
 
-          <div className="flex justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Tempo estimado</p>
-              <p className="text-lg font-bold">—</p>
+          {estimating ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="animate-spin text-primary" size={24} />
             </div>
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Valor estimado</p>
-              <p className="text-lg font-bold text-primary">—</p>
+          ) : (
+            <div className="flex justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Distância</p>
+                <p className="text-lg font-bold">{est ? `${est.distancia_km} km` : "—"}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Tempo estimado</p>
+                <p className="text-lg font-bold">{est ? `${est.duracao_min} min` : "—"}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Valor estimado</p>
+                <p className="text-lg font-bold text-primary">
+                  {est ? `R$ ${est.valor.toFixed(2)}` : "—"}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </motion.div>
 
         {/* Payment Methods */}
@@ -93,8 +128,13 @@ const RideConfirm = () => {
 
       {/* Confirm Button */}
       <div className="p-4">
-        <Button onClick={handleConfirm} className="w-full h-14 text-base font-bold glow-blue">
-          Confirmar corrida
+        <Button
+          onClick={handleConfirm}
+          className="w-full h-14 text-base font-bold glow-blue"
+          disabled={!est || creating}
+        >
+          {creating ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+          {creating ? "Solicitando..." : "Confirmar corrida"}
         </Button>
       </div>
     </div>

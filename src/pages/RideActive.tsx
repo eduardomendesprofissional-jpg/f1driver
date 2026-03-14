@@ -1,13 +1,34 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageCircle, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MapboxMap from "@/components/MapboxMap";
+import { useRide } from "@/hooks/useRide";
+import { toast } from "sonner";
 
 const RideActive = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const rideId = (location.state as any)?.rideId;
   const [status, setStatus] = useState<"arriving" | "in_progress">("arriving");
+  const { updateRideStatus } = useRide();
+
+  const handleCancel = async () => {
+    if (rideId) await updateRideStatus(rideId, "cancelada");
+    toast.info("Corrida cancelada.");
+    navigate("/passenger");
+  };
+
+  const handleBoard = async () => {
+    if (rideId) await updateRideStatus(rideId, "em_andamento");
+    setStatus("in_progress");
+  };
+
+  const handleFinish = async () => {
+    if (rideId) await updateRideStatus(rideId, "finalizada");
+    navigate("/rating", { state: { rideId } });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
@@ -20,7 +41,7 @@ const RideActive = () => {
           <div className="bg-card border border-border rounded-full px-4 py-2 flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${status === "arriving" ? "bg-primary animate-pulse" : "bg-success"}`} />
             <span className="text-xs font-semibold">
-              {status === "arriving" ? "Motorista a caminho" : "Em viagem"}
+              {status === "arriving" ? "Aguardando motorista" : "Em viagem"}
             </span>
           </div>
         </div>
@@ -34,10 +55,10 @@ const RideActive = () => {
       >
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-xl font-bold text-primary">
-            —
+            M
           </div>
           <div className="flex-1">
-            <p className="font-bold">—</p>
+            <p className="font-bold">Aguardando...</p>
             <div className="flex items-center gap-1">
               <Star size={14} className="text-primary fill-primary" />
               <span className="text-sm text-muted-foreground">—</span>
@@ -59,13 +80,13 @@ const RideActive = () => {
               <Button
                 variant="destructive"
                 className="flex-1 h-12 font-bold"
-                onClick={() => navigate("/passenger")}
+                onClick={handleCancel}
               >
                 <X size={16} className="mr-2" /> Cancelar
               </Button>
               <Button
                 className="flex-1 h-12 font-bold"
-                onClick={() => setStatus("in_progress")}
+                onClick={handleBoard}
               >
                 Embarcar
               </Button>
@@ -73,7 +94,7 @@ const RideActive = () => {
           ) : (
             <Button
               className="w-full h-12 font-bold"
-              onClick={() => navigate("/rating")}
+              onClick={handleFinish}
             >
               Finalizar viagem
             </Button>
