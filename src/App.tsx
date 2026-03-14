@@ -49,6 +49,7 @@ import Mensalidades from "./pages/admin/Mensalidades";
 import MapaMotoristas from "./pages/admin/MapaMotoristas";
 import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
 import ConfigurarApp from "./pages/admin/ConfigurarApp";
+import AdminLogin from "./pages/admin/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/login" element={<LoginScreen />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Protected user routes */}
             <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
