@@ -49,6 +49,7 @@ import Mensalidades from "./pages/admin/Mensalidades";
 import MapaMotoristas from "./pages/admin/MapaMotoristas";
 import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
 import ConfigurarApp from "./pages/admin/ConfigurarApp";
+import AdminLogin from "./pages/admin/AdminLogin";
 
 const queryClient = new QueryClient();
 
