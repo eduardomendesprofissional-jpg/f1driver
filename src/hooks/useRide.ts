@@ -98,6 +98,12 @@ export const useRide = () => {
         .select()
         .single();
       if (error) throw error;
+
+      // Dispatch to nearest driver
+      if (data?.id) {
+        await supabase.rpc("dispatch_ride", { p_ride_id: data.id });
+      }
+
       return data;
     } catch (err) {
       console.error("Erro ao criar corrida:", err);
