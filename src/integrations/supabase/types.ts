@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_locations: {
+        Row: {
+          driver_id: string
+          id: string
+          lat: number
+          lng: number
+          online: boolean
+          updated_at: string
+        }
+        Insert: {
+          driver_id: string
+          id?: string
+          lat: number
+          lng: number
+          online?: boolean
+          updated_at?: string
+        }
+        Update: {
+          driver_id?: string
+          id?: string
+          lat?: number
+          lng?: number
+          online?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       precificacao: {
         Row: {
           ativo: boolean
@@ -190,6 +217,7 @@ export type Database = {
           id: string
           iniciada_em: string | null
           motorista_id: string | null
+          motorista_tentativas: string[] | null
           origem_endereco: string
           origem_lat: number
           origem_lng: number
@@ -212,6 +240,7 @@ export type Database = {
           id?: string
           iniciada_em?: string | null
           motorista_id?: string | null
+          motorista_tentativas?: string[] | null
           origem_endereco: string
           origem_lat: number
           origem_lng: number
@@ -234,6 +263,7 @@ export type Database = {
           id?: string
           iniciada_em?: string | null
           motorista_id?: string | null
+          motorista_tentativas?: string[] | null
           origem_endereco?: string
           origem_lat?: number
           origem_lng?: number
@@ -248,7 +278,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      dispatch_ride: { Args: { p_ride_id: string }; Returns: string }
+      find_nearest_driver: {
+        Args: { p_exclude?: string[]; p_lat: number; p_lng: number }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
