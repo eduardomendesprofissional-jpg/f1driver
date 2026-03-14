@@ -16,11 +16,11 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (user.email !== ADMIN_EMAIL) {
-    return <Navigate to="/passenger" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
