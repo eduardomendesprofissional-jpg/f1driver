@@ -136,6 +136,113 @@ export type Database = {
         }
         Relationships: []
       }
+      ratings: {
+        Row: {
+          avaliado_id: string
+          avaliador_id: string
+          comentario: string | null
+          created_at: string
+          id: string
+          nota: number
+          ride_id: string
+        }
+        Insert: {
+          avaliado_id: string
+          avaliador_id: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          nota: number
+          ride_id: string
+        }
+        Update: {
+          avaliado_id?: string
+          avaliador_id?: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          nota?: number
+          ride_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rides: {
+        Row: {
+          aceita_em: string | null
+          cancelada_em: string | null
+          categoria: string
+          created_at: string
+          destino_endereco: string
+          destino_lat: number
+          destino_lng: number
+          distancia_km: number | null
+          duracao_min: number | null
+          finalizada_em: string | null
+          forma_pagamento: string
+          id: string
+          iniciada_em: string | null
+          motorista_id: string | null
+          origem_endereco: string
+          origem_lat: number
+          origem_lng: number
+          passageiro_id: string
+          status: string
+          valor: number | null
+        }
+        Insert: {
+          aceita_em?: string | null
+          cancelada_em?: string | null
+          categoria?: string
+          created_at?: string
+          destino_endereco: string
+          destino_lat: number
+          destino_lng: number
+          distancia_km?: number | null
+          duracao_min?: number | null
+          finalizada_em?: string | null
+          forma_pagamento?: string
+          id?: string
+          iniciada_em?: string | null
+          motorista_id?: string | null
+          origem_endereco: string
+          origem_lat: number
+          origem_lng: number
+          passageiro_id: string
+          status?: string
+          valor?: number | null
+        }
+        Update: {
+          aceita_em?: string | null
+          cancelada_em?: string | null
+          categoria?: string
+          created_at?: string
+          destino_endereco?: string
+          destino_lat?: number
+          destino_lng?: number
+          distancia_km?: number | null
+          duracao_min?: number | null
+          finalizada_em?: string | null
+          forma_pagamento?: string
+          id?: string
+          iniciada_em?: string | null
+          motorista_id?: string | null
+          origem_endereco?: string
+          origem_lat?: number
+          origem_lng?: number
+          passageiro_id?: string
+          status?: string
+          valor?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
