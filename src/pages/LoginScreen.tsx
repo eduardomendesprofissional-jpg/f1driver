@@ -122,6 +122,10 @@ const LoginScreen = () => {
           <Button type="submit" className="w-full h-12 text-base font-bold glow-blue" disabled={loading}>
             {loading ? <Loader2 className="animate-spin" size={20} /> : isSignUp ? "Criar Conta" : "Entrar"}
           </Button>
+
+          {!isSignUp && (
+            <ForgotPassword />
+          )}
         </form>
 
         <p className="text-sm text-muted-foreground">
