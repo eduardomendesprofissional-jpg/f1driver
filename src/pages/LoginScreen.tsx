@@ -8,6 +8,65 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo-f1driver.jpeg";
 
+const ForgotPassword = () => {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleReset = async () => {
+    if (!email) {
+      toast.error("Digite seu e-mail.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-sm text-primary hover:underline self-end"
+      >
+        Esqueci minha senha
+      </button>
+    );
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-3 p-4 bg-secondary rounded-lg">
+      <p className="text-sm text-foreground font-medium">Recuperar senha</p>
+      <Input
+        type="email"
+        placeholder="Seu e-mail"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="bg-background border-border h-10 text-foreground placeholder:text-muted-foreground"
+      />
+      <div className="flex gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
+          Cancelar
+        </Button>
+        <Button type="button" size="sm" onClick={handleReset} disabled={loading}>
+          {loading ? <Loader2 className="animate-spin" size={16} /> : "Enviar"}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const LoginScreen = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
