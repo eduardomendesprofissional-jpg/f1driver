@@ -86,6 +86,36 @@ export type Database = {
         }
         Relationships: []
       }
+      metodos_pagamento: {
+        Row: {
+          created_at: string
+          dados: Json
+          id: string
+          label: string
+          padrao: boolean
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          label: string
+          padrao?: boolean
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          label?: string
+          padrao?: boolean
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       precificacao: {
         Row: {
           ativo: boolean
@@ -136,30 +166,36 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          cpf: string | null
           created_at: string
           id: string
           nome: string | null
           telefone: string | null
           tipo: string
           updated_at: string
+          verificacao_facial: boolean
         }
         Insert: {
           avatar_url?: string | null
+          cpf?: string | null
           created_at?: string
           id: string
           nome?: string | null
           telefone?: string | null
           tipo?: string
           updated_at?: string
+          verificacao_facial?: boolean
         }
         Update: {
           avatar_url?: string | null
+          cpf?: string | null
           created_at?: string
           id?: string
           nome?: string | null
           telefone?: string | null
           tipo?: string
           updated_at?: string
+          verificacao_facial?: boolean
         }
         Relationships: []
       }
