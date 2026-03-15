@@ -51,6 +51,7 @@ import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
 import ConfigurarApp from "./pages/admin/ConfigurarApp";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
+import EnviosScreen from "./pages/EnviosScreen";
 
 const queryClient = new QueryClient();
 
