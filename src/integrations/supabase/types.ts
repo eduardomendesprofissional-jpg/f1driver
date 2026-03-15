@@ -273,6 +273,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rotas_salvas: {
+        Row: {
+          destino_endereco: string
+          destino_lat: number
+          destino_lng: number
+          id: string
+          origem_endereco: string
+          origem_lat: number
+          origem_lng: number
+          usado_em: string
+          user_id: string
+          vezes_usado: number
+        }
+        Insert: {
+          destino_endereco: string
+          destino_lat: number
+          destino_lng: number
+          id?: string
+          origem_endereco: string
+          origem_lat: number
+          origem_lng: number
+          usado_em?: string
+          user_id: string
+          vezes_usado?: number
+        }
+        Update: {
+          destino_endereco?: string
+          destino_lat?: number
+          destino_lng?: number
+          id?: string
+          origem_endereco?: string
+          origem_lat?: number
+          origem_lng?: number
+          usado_em?: string
+          user_id?: string
+          vezes_usado?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
