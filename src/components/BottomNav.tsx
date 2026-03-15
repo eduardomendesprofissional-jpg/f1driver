@@ -1,19 +1,28 @@
 import { useNavigate } from "react-router-dom";
-import { Home, Clock, User } from "lucide-react";
+import { Home, Clock, User, Package } from "lucide-react";
 
 interface BottomNavProps {
-  active: "home" | "history" | "profile";
+  active: "home" | "history" | "profile" | "envios";
   role: "passenger" | "driver";
 }
 
 const BottomNav = ({ active, role }: BottomNavProps) => {
   const navigate = useNavigate();
 
-  const items = [
-    { id: "home" as const, icon: Home, label: "Início", path: role === "passenger" ? "/passenger" : "/driver" },
+  const passengerItems = [
+    { id: "home" as const, icon: Home, label: "Início", path: "/passenger" },
+    { id: "envios" as const, icon: Package, label: "Envios", path: "/envios" },
     { id: "history" as const, icon: Clock, label: "Histórico", path: "/history" },
     { id: "profile" as const, icon: User, label: "Perfil", path: "/profile" },
   ];
+
+  const driverItems = [
+    { id: "home" as const, icon: Home, label: "Início", path: "/driver" },
+    { id: "history" as const, icon: Clock, label: "Histórico", path: "/history" },
+    { id: "profile" as const, icon: User, label: "Perfil", path: "/profile" },
+  ];
+
+  const items = role === "passenger" ? passengerItems : driverItems;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around py-2 px-4 z-40">
