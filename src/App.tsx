@@ -50,6 +50,7 @@ import MapaMotoristas from "./pages/admin/MapaMotoristas";
 import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
 import ConfigurarApp from "./pages/admin/ConfigurarApp";
 import AdminLogin from "./pages/admin/AdminLogin";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/home" element={<HomePage />} />
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Protected user routes */}
             <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
