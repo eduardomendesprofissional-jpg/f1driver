@@ -75,6 +75,7 @@ const App = () => (
             <Route path="/ride-active" element={<ProtectedRoute><RideActive /></ProtectedRoute>} />
             <Route path="/rating" element={<ProtectedRoute><RatingScreen /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryScreen /></ProtectedRoute>} />
+            <Route path="/envios" element={<ProtectedRoute><EnviosScreen /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
             <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
 
