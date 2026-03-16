@@ -1,12 +1,13 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Loader2, Clock, RotateCcw } from "lucide-react";
+import { MapPin, Search, Loader2, Clock, RotateCcw, Map } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import NearbyPlaces from "@/components/NearbyPlaces";
 import SafetyTips from "@/components/SafetyTips";
+import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -14,6 +15,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 const PassengerHome = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [destination, setDestination] = useState("");
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
   const { results, loading, search, clear } = useGoogleSearch();
@@ -47,6 +49,26 @@ const PassengerHome = () => {
       state: {
         origem: { endereco, lat: position.lat, lng: position.lng },
         destino: { endereco: place.place_name, lat: place.center[1], lng: place.center[0] },
+      },
+    });
+  };
+
+  const handleMapPickerConfirm = (lat: number, lng: number, addr: string) => {
+    if (!position || !endereco) return;
+    setMapPickerOpen(false);
+    setSearchOpen(false);
+    saveRoute({
+      origem_endereco: endereco,
+      origem_lat: position.lat,
+      origem_lng: position.lng,
+      destino_endereco: addr,
+      destino_lat: lat,
+      destino_lng: lng,
+    });
+    navigate("/ride-confirm", {
+      state: {
+        origem: { endereco, lat: position.lat, lng: position.lng },
+        destino: { endereco: addr, lat, lng },
       },
     });
   };
@@ -200,6 +222,14 @@ const PassengerHome = () => {
                 />
                 {loading && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
               </div>
+              {/* Selecionar no mapa */}
+              <button
+                onClick={() => setMapPickerOpen(true)}
+                className="w-full flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 mt-2"
+              >
+                <Map size={18} className="text-primary" />
+                <span className="text-sm text-primary font-semibold">Selecionar no mapa</span>
+              </button>
             </div>
             <div className="flex-1 p-4 overflow-y-auto">
               {destination.length < 3 && savedRoutes.length > 0 && (
@@ -264,6 +294,18 @@ const PassengerHome = () => {
               )}
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Map Picker Overlay */}
+      <AnimatePresence>
+        {mapPickerOpen && (
+          <MapPicker
+            initialCenter={position ? [position.lng, position.lat] : undefined}
+            userPosition={position}
+            onConfirm={handleMapPickerConfirm}
+            onClose={() => setMapPickerOpen(false)}
+          />
         )}
       </AnimatePresence>
 
