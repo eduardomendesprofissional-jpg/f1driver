@@ -500,6 +500,7 @@ export type Database = {
         Args: { p_exclude?: string[]; p_lat: number; p_lng: number }
         Returns: string
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
