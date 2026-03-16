@@ -47,26 +47,7 @@ const DriverPanel = () => {
   const handleSearchSelect = (lat: number, lng: number, address: string) => {
     setSearchCenter([lng, lat]);
     if (mapRef.current) {
-      mapRef.current.panTo({ lat, lng });
-      mapRef.current.setZoom(16);
-      if (searchMarkerRef.current) {
-        searchMarkerRef.current.setPosition({ lat, lng });
-      } else {
-        searchMarkerRef.current = new google.maps.Marker({
-          map: mapRef.current,
-          position: { lat, lng },
-          icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
-                <circle cx="16" cy="16" r="10" fill="#0d47a1" stroke="white" stroke-width="3"/>
-                <circle cx="16" cy="16" r="4" fill="white"/>
-              </svg>
-            `),
-            scaledSize: new google.maps.Size(32, 32),
-            anchor: new google.maps.Point(16, 16),
-          },
-        });
-      }
+      mapRef.current.flyTo({ center: [lng, lat], zoom: 16 });
     }
   };
   return (
