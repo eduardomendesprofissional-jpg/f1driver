@@ -158,6 +158,33 @@ const EnvioNovo = () => {
       console.error(error);
       return;
     }
+
+    // Send push notification to nearby online drivers
+    try {
+      const { data: onlineDrivers } = await supabase
+        .from("driver_locations")
+        .select("driver_id")
+        .eq("online", true)
+        .limit(10);
+
+      if (onlineDrivers?.length) {
+        await Promise.all(
+          onlineDrivers.map(({ driver_id }) =>
+            supabase.functions.invoke("send-push-notification", {
+              body: {
+                user_id: driver_id,
+                title: "📦 Novo envio disponível!",
+                body: `De ${coleta.endereco} → ${entrega.endereco} | R$ ${estimativa.valor.toFixed(2)}`,
+                data: { type: "envio" },
+              },
+            }).catch(() => {})
+          )
+        );
+      }
+    } catch {
+      // Non-blocking, envio was already created
+    }
+
     toast.success("Envio criado com sucesso!");
     navigate("/envios");
   };
