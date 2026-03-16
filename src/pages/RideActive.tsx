@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import MapboxMap from "@/components/MapboxMap";
+import GoogleMap from "@/components/GoogleMap";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,7 +46,7 @@ const RideActive = () => {
             .single();
           setDriverName(profile?.nome || "Motorista");
         }
-        // Calculate ETA using Mapbox Directions
+        // Calculate ETA using Google Directions
         fetchETA(data);
       }
     };
@@ -89,16 +89,17 @@ const RideActive = () => {
     return () => { supabase.removeChannel(channel); };
   }, [rideId]);
 
-  // Fetch ETA from Mapbox Directions API
+  // Fetch ETA from Google Directions API
   const fetchETA = async (rideData: any) => {
     if (!rideData) return;
     try {
       const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${rideData.origem_lng},${rideData.origem_lat};${rideData.destino_lng},${rideData.destino_lat}?access_token=pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw&overview=false`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${rideData.origem_lat},${rideData.origem_lng}&destination=${rideData.destino_lat},${rideData.destino_lng}&key=AIzaSyATM-_dHRXjCsdXyQYdN5KTg3Ile2DWzn0&language=pt-BR`
       );
       const data = await res.json();
-      if (data.routes?.[0]?.duration) {
-        setEta(Math.round(data.routes[0].duration / 60));
+      const leg = data.routes?.[0]?.legs?.[0];
+      if (leg?.duration?.value) {
+        setEta(Math.round(leg.duration.value / 60));
       }
     } catch {}
   };
@@ -191,7 +192,7 @@ const RideActive = () => {
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Map */}
       <div className="flex-1 relative">
-        <MapboxMap
+        <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={14}
           center={ride ? [ride.origem_lng, ride.origem_lat] : undefined}

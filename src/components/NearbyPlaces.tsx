@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { MapPin, Loader2 } from "lucide-react";
-
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
+import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
 
 const CATEGORIES = [
   { value: "restaurant", label: "Restaurantes", icon: "🍽️" },
   { value: "gas_station", label: "Postos", icon: "⛽" },
   { value: "pharmacy", label: "Farmácias", icon: "💊" },
-  { value: "shopping", label: "Lojas", icon: "🛒" },
+  { value: "shopping_mall", label: "Lojas", icon: "🛒" },
   { value: "hospital", label: "Hospitais", icon: "🏥" },
   { value: "bank", label: "Bancos", icon: "🏦" },
 ];
@@ -53,27 +52,18 @@ const NearbyPlaces = ({ userPosition, onSelectPlace }: NearbyPlacesProps) => {
     setLoading(true);
 
     try {
-      const params = new URLSearchParams({
-        access_token: MAPBOX_TOKEN,
-        language: "pt-BR",
-        country: "BR",
-        limit: "8",
-        types: "poi",
-        proximity: `${userPosition.lng},${userPosition.lat}`,
-      });
-
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(category)}.json?${params}`
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${userPosition.lat},${userPosition.lng}&radius=5000&type=${category}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
       );
       const data = await res.json();
 
-      const results: NearbyPlace[] = (data.features || []).map((f: any) => ({
-        id: f.id,
-        name: f.text || f.place_name?.split(",")[0],
-        address: f.place_name,
+      const results: NearbyPlace[] = (data.results || []).slice(0, 8).map((p: any) => ({
+        id: p.place_id,
+        name: p.name,
+        address: p.vicinity || p.formatted_address || "",
         category,
-        center: f.center as [number, number],
-        distance: getDistance(userPosition.lat, userPosition.lng, f.center[1], f.center[0]),
+        center: [p.geometry.location.lng, p.geometry.location.lat] as [number, number],
+        distance: getDistance(userPosition.lat, userPosition.lng, p.geometry.location.lat, p.geometry.location.lng),
       }));
 
       setPlaces(results);
@@ -84,18 +74,10 @@ const NearbyPlaces = ({ userPosition, onSelectPlace }: NearbyPlacesProps) => {
     }
   }, [userPosition, activeCategory]);
 
-  // Auto-load restaurants on mount if position available
-  useEffect(() => {
-    if (userPosition && !activeCategory && places.length === 0) {
-      // Don't auto-load, user picks a category
-    }
-  }, [userPosition]);
-
   return (
     <div className="space-y-3">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estabelecimentos próximos</p>
       
-      {/* Category chips - Uber style */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {CATEGORIES.map((cat) => (
           <button
@@ -119,7 +101,6 @@ const NearbyPlaces = ({ userPosition, onSelectPlace }: NearbyPlacesProps) => {
         </div>
       )}
 
-      {/* Results */}
       {places.length > 0 && (
         <div className="space-y-1 max-h-[180px] overflow-y-auto">
           {places.map((place) => (

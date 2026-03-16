@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import MapboxMap from "@/components/MapboxMap";
+import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import { useDriverLocation } from "@/hooks/useDriverLocation";
 import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
@@ -84,7 +84,7 @@ const DriverPanel = () => {
 
       {/* Real Map */}
       <div className="flex-1 relative min-h-[250px]">
-        <MapboxMap
+        <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
           center={position ? [position.lng, position.lat] : undefined}

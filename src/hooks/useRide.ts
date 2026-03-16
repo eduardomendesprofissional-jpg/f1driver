@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
+import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
 
 export interface RideEstimate {
   distancia_km: number;
@@ -27,21 +26,19 @@ export const useRide = () => {
   ): Promise<RideEstimate | null> => {
     setEstimating(true);
     try {
-      // Get route from Mapbox Directions API
       const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?access_token=${MAPBOX_TOKEN}&overview=false`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${origem.lat},${origem.lng}&destination=${destino.lat},${destino.lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
       );
       const data = await res.json();
-      const route = data.routes?.[0];
+      const route = data.routes?.[0]?.legs?.[0];
       if (!route) return null;
 
-      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
-      const duracao_min = Math.round(route.duration / 60);
+      const distancia_km = Math.round((route.distance.value / 1000) * 10) / 10;
+      const duracao_min = Math.round(route.duration.value / 60);
 
-      // Fetch pricing from DB — match category, current time and day of week
       const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
-      const currentDay = now.getDay(); // 0=Sun ... 6=Sat
+      const currentTime = now.toTimeString().slice(0, 5);
+      const currentDay = now.getDay();
 
       const { data: pricingRows } = await supabase
         .from("precificacao")
@@ -61,7 +58,6 @@ export const useRide = () => {
         valor = (Number(pricing.preco_base) + Number(pricing.preco_km) * distancia_km + Number(pricing.preco_minuto) * duracao_min) * mult;
         valor = Math.max(valor, Number(pricing.taxa_minima));
       } else {
-        // Fallback pricing
         valor = Math.max(5 + 2 * distancia_km + 0.5 * duracao_min, 8);
       }
       valor = Math.round(valor * 100) / 100;
@@ -108,12 +104,10 @@ export const useRide = () => {
         .single();
       if (error) throw error;
 
-      // Dispatch to nearest driver and send push notification
       if (data?.id) {
         const result = await supabase.rpc("dispatch_ride", { p_ride_id: data.id });
         const driverId = result.data;
         if (driverId) {
-          // Fire and forget push notification
           supabase.functions.invoke("send-push-notification", {
             body: {
               user_id: driverId,

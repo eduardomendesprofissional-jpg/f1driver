@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Search, Loader2, Clock, RotateCcw } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
-import MapboxMap from "@/components/MapboxMap";
+import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import NearbyPlaces from "@/components/NearbyPlaces";
-import { useMapboxSearch, MapboxPlace } from "@/hooks/useMapboxSearch";
+import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
 import { useGeolocation } from "@/hooks/useGeolocation";
 
@@ -15,7 +15,7 @@ const PassengerHome = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [destination, setDestination] = useState("");
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { results, loading, search, clear } = useMapboxSearch();
+  const { results, loading, search, clear } = useGoogleSearch();
   const { routes: savedRoutes, saveRoute } = useSavedRoutes();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -27,7 +27,7 @@ const PassengerHome = () => {
     }, 350);
   };
 
-  const handleSelectPlace = (place: MapboxPlace) => {
+  const handleSelectPlace = (place: GooglePlace) => {
     if (!position || !endereco) return;
     saveRoute({
       origem_endereco: endereco,
@@ -87,7 +87,7 @@ const PassengerHome = () => {
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Map */}
       <div className="flex-1 relative overflow-hidden">
-        <MapboxMap
+        <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
           center={position ? [position.lng, position.lat] : undefined}

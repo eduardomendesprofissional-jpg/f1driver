@@ -5,10 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-
-mapboxgl.accessToken = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
+import { loadMapsLibrary } from "@/lib/google-maps";
 
 interface EnvioData {
   id: string;
@@ -55,10 +52,10 @@ const EnvioTracking = () => {
   const [loading, setLoading] = useState(true);
 
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const driverMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const coletaMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const entregaMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const driverMarkerRef = useRef<google.maps.Marker | null>(null);
+  const coletaMarkerRef = useRef<google.maps.Marker | null>(null);
+  const entregaMarkerRef = useRef<google.maps.Marker | null>(null);
 
   // Fetch envio data
   const fetchEnvio = useCallback(async () => {
@@ -155,42 +152,49 @@ const EnvioTracking = () => {
   useEffect(() => {
     if (!mapContainer.current || mapRef.current || !envio) return;
 
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
-      center: [envio.coleta_lng, envio.coleta_lat],
-      zoom: 13,
+    loadMapsLibrary().then(() => {
+      if (!mapContainer.current || mapRef.current) return;
+
+      const map = new google.maps.Map(mapContainer.current, {
+        center: { lat: envio.coleta_lat, lng: envio.coleta_lng },
+        zoom: 13,
+        disableDefaultUI: true,
+        zoomControl: true,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+        ],
+      });
+
+      // Coleta marker
+      coletaMarkerRef.current = new google.maps.Marker({
+        map,
+        position: { lat: envio.coleta_lat, lng: envio.coleta_lng },
+        title: "Coleta: " + envio.coleta_endereco,
+        label: { text: "📦", fontSize: "16px" },
+      });
+
+      // Entrega marker
+      entregaMarkerRef.current = new google.maps.Marker({
+        map,
+        position: { lat: envio.entrega_lat, lng: envio.entrega_lng },
+        title: "Entrega: " + envio.entrega_endereco,
+        label: { text: "📍", fontSize: "16px" },
+      });
+
+      // Fit bounds
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat: envio.coleta_lat, lng: envio.coleta_lng });
+      bounds.extend({ lat: envio.entrega_lat, lng: envio.entrega_lng });
+      map.fitBounds(bounds, 60);
+
+      mapRef.current = map;
     });
-
-    map.on("load", () => {
-      // Coleta marker (blue)
-      const coletaEl = document.createElement("div");
-      coletaEl.className = "flex items-center justify-center";
-      coletaEl.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;background:hsl(217,91%,60%);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">📦</span></div>`;
-      coletaMarkerRef.current = new mapboxgl.Marker({ element: coletaEl })
-        .setLngLat([envio.coleta_lng, envio.coleta_lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText("Coleta: " + envio.coleta_endereco))
-        .addTo(map);
-
-      // Entrega marker (red)
-      const entregaEl = document.createElement("div");
-      entregaEl.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;background:hsl(0,84%,60%);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;">📍</span></div>`;
-      entregaMarkerRef.current = new mapboxgl.Marker({ element: entregaEl })
-        .setLngLat([envio.entrega_lng, envio.entrega_lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText("Entrega: " + envio.entrega_endereco))
-        .addTo(map);
-
-      // Fit bounds to show both markers
-      const bounds = new mapboxgl.LngLatBounds()
-        .extend([envio.coleta_lng, envio.coleta_lat])
-        .extend([envio.entrega_lng, envio.entrega_lat]);
-      map.fitBounds(bounds, { padding: 60 });
-    });
-
-    mapRef.current = map;
 
     return () => {
-      map.remove();
       mapRef.current = null;
     };
   }, [envio]);
@@ -200,13 +204,13 @@ const EnvioTracking = () => {
     if (!mapRef.current || driverLat === null || driverLng === null) return;
 
     if (driverMarkerRef.current) {
-      driverMarkerRef.current.setLngLat([driverLng, driverLat]);
+      driverMarkerRef.current.setPosition({ lat: driverLat, lng: driverLng });
     } else {
-      const el = document.createElement("div");
-      el.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;background:hsl(142,71%,45%);border:3px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;">🚗</span></div>`;
-      driverMarkerRef.current = new mapboxgl.Marker({ element: el })
-        .setLngLat([driverLng, driverLat])
-        .addTo(mapRef.current);
+      driverMarkerRef.current = new google.maps.Marker({
+        map: mapRef.current,
+        position: { lat: driverLat, lng: driverLng },
+        label: { text: "🚗", fontSize: "18px" },
+      });
     }
   }, [driverLat, driverLng]);
 

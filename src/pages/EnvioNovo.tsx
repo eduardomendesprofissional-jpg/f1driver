@@ -7,12 +7,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMapboxSearch, MapboxPlace } from "@/hooks/useMapboxSearch";
+import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
+import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
 
 const TAMANHOS = [
   { id: "pequeno", label: "Pequeno", desc: "Até 30cm, cabe na mão", icon: "📦", multiplicador: 1 },
@@ -42,7 +42,7 @@ const EnvioNovo = () => {
   // Address state
   const [searchingField, setSearchingField] = useState<"coleta" | "entrega" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { results, loading: searching, search, clear } = useMapboxSearch();
+  const { results, loading: searching, search, clear } = useGoogleSearch();
 
   const [coleta, setColeta] = useState<{ endereco: string; lat: number; lng: number } | null>(null);
   const [entrega, setEntrega] = useState<{ endereco: string; lat: number; lng: number } | null>(null);
@@ -60,10 +60,10 @@ const EnvioNovo = () => {
         const { latitude, longitude } = pos.coords;
         try {
           const res = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
           );
           const data = await res.json();
-          const name = data.features?.[0]?.place_name || "Sua localização";
+          const name = data.results?.[0]?.formatted_address || "Sua localização";
           setColeta({ lat: latitude, lng: longitude, endereco: name });
         } catch {
           setColeta({ lat: latitude, lng: longitude, endereco: "Sua localização" });
@@ -81,7 +81,7 @@ const EnvioNovo = () => {
     }, 350);
   };
 
-  const handleSelectPlace = (place: MapboxPlace) => {
+  const handleSelectPlace = (place: GooglePlace) => {
     const addr = { endereco: place.place_name, lat: place.center[1], lng: place.center[0] };
     if (searchingField === "coleta") {
       setColeta(addr);
@@ -99,15 +99,15 @@ const EnvioNovo = () => {
     setCalculando(true);
     try {
       const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${coleta.lng},${coleta.lat};${entrega.lng},${entrega.lat}?access_token=${MAPBOX_TOKEN}&overview=false`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${coleta.lat},${coleta.lng}&destination=${entrega.lat},${entrega.lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
       );
       const data = await res.json();
-      const route = data.routes?.[0];
+      const route = data.routes?.[0]?.legs?.[0];
       if (!route) {
         toast.error("Não foi possível calcular a rota.");
         return;
       }
-      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
+      const distancia_km = Math.round((route.distance.value / 1000) * 10) / 10;
 
       // Delivery pricing: base + per km + size multiplier + weight surcharge
       const pesoNum = parseFloat(peso) || 1;

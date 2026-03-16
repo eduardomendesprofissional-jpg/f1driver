@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
 
 export interface GeoPosition {
   lat: number;
@@ -7,8 +8,6 @@ export interface GeoPosition {
 
 type PermissionStatus = "prompt" | "granted" | "denied" | "unsupported";
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
-
 export const useGeolocation = () => {
   const [position, setPosition] = useState<GeoPosition | null>(null);
   const [endereco, setEndereco] = useState<string | null>(null);
@@ -16,7 +15,6 @@ export const useGeolocation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check permission status on mount
   useEffect(() => {
     if (!navigator.geolocation) {
       setPermission("unsupported");
@@ -28,18 +26,16 @@ export const useGeolocation = () => {
       if (result.state === "granted") {
         requestLocation();
       }
-    }).catch(() => {
-      // permissions API not supported, try requesting directly
-    });
+    }).catch(() => {});
   }, []);
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
       );
       const data = await res.json();
-      return data.features?.[0]?.place_name || "Sua localização";
+      return data.results?.[0]?.formatted_address || "Sua localização";
     } catch {
       return "Sua localização";
     }
@@ -76,7 +72,6 @@ export const useGeolocation = () => {
     );
   }, [reverseGeocode]);
 
-  // Watch position for continuous updates
   useEffect(() => {
     if (permission !== "granted" || !navigator.geolocation) return;
 
