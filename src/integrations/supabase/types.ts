@@ -347,7 +347,10 @@ export type Database = {
           categoria: string
           cidade_id: string
           created_at: string
+          hora_fim: string | null
+          hora_inicio: string | null
           id: string
+          multiplicador: number
           preco_base: number
           preco_km: number
           preco_minuto: number
@@ -359,7 +362,10 @@ export type Database = {
           categoria?: string
           cidade_id: string
           created_at?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
           id?: string
+          multiplicador?: number
           preco_base?: number
           preco_km?: number
           preco_minuto?: number
@@ -371,7 +377,10 @@ export type Database = {
           categoria?: string
           cidade_id?: string
           created_at?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
           id?: string
+          multiplicador?: number
           preco_base?: number
           preco_km?: number
           preco_minuto?: number

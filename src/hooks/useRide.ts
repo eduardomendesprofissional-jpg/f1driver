@@ -38,18 +38,25 @@ export const useRide = () => {
       const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
       const duracao_min = Math.round(route.duration / 60);
 
-      // Fetch pricing from DB
-      const { data: pricing } = await supabase
+      // Fetch pricing from DB — match category and current time
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+
+      const { data: pricingRows } = await supabase
         .from("precificacao")
         .select("*")
-        .eq("categoria", "Comum")
+        .eq("categoria", "Carro")
         .eq("ativo", true)
-        .limit(1)
-        .single();
+        .lte("hora_inicio", currentTime)
+        .gte("hora_fim", currentTime)
+        .limit(1);
+
+      const pricing = pricingRows?.[0];
 
       let valor: number;
       if (pricing) {
-        valor = Number(pricing.preco_base) + Number(pricing.preco_km) * distancia_km + Number(pricing.preco_minuto) * duracao_min;
+        const mult = Number((pricing as any).multiplicador ?? 1);
+        valor = (Number(pricing.preco_base) + Number(pricing.preco_km) * distancia_km + Number(pricing.preco_minuto) * duracao_min) * mult;
         valor = Math.max(valor, Number(pricing.taxa_minima));
       } else {
         // Fallback pricing

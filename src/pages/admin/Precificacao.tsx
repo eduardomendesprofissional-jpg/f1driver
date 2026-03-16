@@ -1,4 +1,4 @@
-import { DollarSign, Info, Plus, Trash2, Save, Loader2, Edit2 } from "lucide-react";
+import { DollarSign, Info, Plus, Trash2, Save, Loader2, Edit2, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -24,16 +24,20 @@ interface PrecoRow {
   preco_km: number;
   preco_minuto: number;
   taxa_minima: number;
+  hora_inicio: string;
+  hora_fim: string;
+  multiplicador: number;
   ativo: boolean;
   isNew?: boolean;
   isEditing?: boolean;
 }
 
-const CATEGORIAS = ["Comum", "Luxo", "Moto", "Van"];
+const CATEGORIAS = ["Carro", "Carro Black", "Moto", "Van"];
 
 const Precificacao = () => {
   const queryClient = useQueryClient();
   const [cidadeSelecionada, setCidadeSelecionada] = useState<string>("");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("");
   const [precos, setPrecos] = useState<PrecoRow[]>([]);
 
   const { data: cidades = [], isLoading: loadingCidades } = useQuery({
@@ -49,23 +53,40 @@ const Precificacao = () => {
   });
 
   const { data: precosDB = [], isLoading: loadingPrecos } = useQuery({
-    queryKey: ["precificacao", cidadeSelecionada],
+    queryKey: ["precificacao", cidadeSelecionada, categoriaSelecionada],
     queryFn: async () => {
-      if (!cidadeSelecionada) return [];
+      if (!cidadeSelecionada || !categoriaSelecionada) return [];
       const { data, error } = await supabase
         .from("precificacao")
         .select("*")
         .eq("cidade_id", cidadeSelecionada)
-        .order("categoria");
+        .eq("categoria", categoriaSelecionada)
+        .order("created_at");
       if (error) throw error;
       return data;
+    },
+    enabled: !!cidadeSelecionada && !!categoriaSelecionada,
+  });
+
+  // Get existing categories for this city to show badges
+  const { data: categoriasExistentes = [] } = useQuery({
+    queryKey: ["precificacao-categorias", cidadeSelecionada],
+    queryFn: async () => {
+      if (!cidadeSelecionada) return [];
+      const { data, error } = await supabase
+        .from("precificacao")
+        .select("categoria")
+        .eq("cidade_id", cidadeSelecionada);
+      if (error) throw error;
+      const unique = [...new Set(data.map((d: any) => d.categoria))];
+      return unique as string[];
     },
     enabled: !!cidadeSelecionada,
   });
 
   useEffect(() => {
     setPrecos(
-      precosDB.map((p) => ({
+      precosDB.map((p: any) => ({
         id: p.id,
         cidade_id: p.cidade_id,
         categoria: p.categoria,
@@ -73,11 +94,19 @@ const Precificacao = () => {
         preco_km: Number(p.preco_km),
         preco_minuto: Number(p.preco_minuto),
         taxa_minima: Number(p.taxa_minima),
+        hora_inicio: p.hora_inicio || "00:00",
+        hora_fim: p.hora_fim || "23:59",
+        multiplicador: Number(p.multiplicador ?? 1),
         ativo: p.ativo,
         isEditing: false,
       }))
     );
   }, [precosDB]);
+
+  // Reset categoria when city changes
+  useEffect(() => {
+    setCategoriaSelecionada("");
+  }, [cidadeSelecionada]);
 
   const saveMutation = useMutation({
     mutationFn: async (row: PrecoRow) => {
@@ -88,6 +117,9 @@ const Precificacao = () => {
         preco_km: row.preco_km,
         preco_minuto: row.preco_minuto,
         taxa_minima: row.taxa_minima,
+        hora_inicio: row.hora_inicio,
+        hora_fim: row.hora_fim,
+        multiplicador: row.multiplicador,
         ativo: row.ativo,
         updated_at: new Date().toISOString(),
       };
@@ -101,7 +133,7 @@ const Precificacao = () => {
     },
     onSuccess: () => {
       toast.success("Preço salvo com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["precificacao", cidadeSelecionada] });
+      queryClient.invalidateQueries({ queryKey: ["precificacao"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -112,28 +144,25 @@ const Precificacao = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Preço removido!");
-      queryClient.invalidateQueries({ queryKey: ["precificacao", cidadeSelecionada] });
+      toast.success("Faixa de preço removida!");
+      queryClient.invalidateQueries({ queryKey: ["precificacao"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const handleAddCategoria = () => {
-    const usadas = precos.map((p) => p.categoria);
-    const disponivel = CATEGORIAS.find((c) => !usadas.includes(c));
-    if (!disponivel) {
-      toast.error("Todas as categorias já foram adicionadas.");
-      return;
-    }
+  const handleAddFaixa = () => {
     setPrecos([
       ...precos,
       {
         cidade_id: cidadeSelecionada,
-        categoria: disponivel,
+        categoria: categoriaSelecionada,
         preco_base: 5,
         preco_km: 2,
         preco_minuto: 0.5,
         taxa_minima: 8,
+        hora_inicio: "00:00",
+        hora_fim: "23:59",
+        multiplicador: 1.0,
         ativo: true,
         isNew: true,
         isEditing: true,
@@ -163,32 +192,23 @@ const Precificacao = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 p-5 text-white flex items-center justify-between">
+      {/* Header */}
+      <div className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 p-5 text-white">
         <div className="flex items-center gap-2">
           <DollarSign size={22} />
           <div>
             <h1 className="text-lg font-bold">Tabela de Preços</h1>
-            <p className="text-xs text-white/80">Gerencie a precificação por cidade e categoria de veículo.</p>
+            <p className="text-xs text-white/80">Gerencie a precificação por cidade, categoria e faixa de horário.</p>
           </div>
         </div>
-        <Button
-          size="sm"
-          className="gap-2 bg-white/20 hover:bg-white/30 text-white font-bold"
-          onClick={() => {
-            const el = document.getElementById("tabela-precos");
-            el?.scrollIntoView({ behavior: "smooth" });
-          }}
-        >
-          <Edit2 size={16} /> Editar Tabela de Preços
-        </Button>
       </div>
 
+      {/* Step 1: Select City */}
       <Card className="bg-card border-border">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-foreground">Selecionar Cidade</h2>
-          </div>
-
+          <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">1</Badge> Selecionar Cidade
+          </h2>
           {loadingCidades ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Loader2 size={16} className="animate-spin" /> Carregando cidades...
@@ -196,7 +216,7 @@ const Precificacao = () => {
           ) : cidades.length === 0 ? (
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2">
               <Info size={14} className="text-amber-400" />
-              <p className="text-xs text-amber-300">Nenhuma cidade de cobertura cadastrada. Vá em <strong>Área de Cobertura</strong> para adicionar cidades primeiro.</p>
+              <p className="text-xs text-amber-300">Nenhuma cidade cadastrada. Vá em <strong>Área de Cobertura</strong> primeiro.</p>
             </div>
           ) : (
             <Select value={cidadeSelecionada} onValueChange={setCidadeSelecionada}>
@@ -215,15 +235,58 @@ const Precificacao = () => {
         </CardContent>
       </Card>
 
+      {/* Step 2: Select Vehicle Category */}
       {cidadeSelecionada && (
+        <Card className="bg-card border-border">
+          <CardContent className="p-5">
+            <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">2</Badge> Tipo de Veículo
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIAS.map((cat) => {
+                const exists = categoriasExistentes.includes(cat);
+                const selected = categoriaSelecionada === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoriaSelecionada(cat)}
+                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
+                      selected
+                        ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
+                        : "border-border bg-secondary text-muted-foreground hover:border-emerald-500/50"
+                    }`}
+                  >
+                    {cat}
+                    {exists && !selected && (
+                      <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1" /> = já possui preços configurados
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Pricing Table */}
+      {cidadeSelecionada && categoriaSelecionada && (
         <Card id="tabela-precos" className="bg-card border-border">
           <CardContent className="p-0">
             <div className="px-5 py-3 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-foreground">
-                Categorias & Preços ({precos.length})
-              </p>
-              <Button size="sm" onClick={handleAddCategoria} className="gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs">
-                <Plus size={14} /> Adicionar Categoria
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Faixas de Preço — {categoriaSelecionada}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  <Clock size={10} className="inline mr-1" />
+                  Defina preços diferentes por faixa de horário (ex: noturno, pico)
+                </p>
+              </div>
+              <Button size="sm" onClick={handleAddFaixa} className="gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs">
+                <Plus size={14} /> Adicionar Faixa
               </Button>
             </div>
 
@@ -232,17 +295,23 @@ const Precificacao = () => {
                 <Loader2 size={16} className="animate-spin" /> Carregando preços...
               </div>
             ) : precos.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma categoria cadastrada para esta cidade.</p>
+              <div className="text-center py-8 space-y-2">
+                <p className="text-sm text-muted-foreground">Nenhuma faixa de preço para <strong>{categoriaSelecionada}</strong> nesta cidade.</p>
+                <Button size="sm" onClick={handleAddFaixa} variant="outline" className="gap-1 text-xs">
+                  <Plus size={14} /> Criar primeira faixa
+                </Button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="text-xs font-semibold">Categoria</TableHead>
+                      <TableHead className="text-xs font-semibold">Horário</TableHead>
                       <TableHead className="text-xs font-semibold">Base (R$)</TableHead>
                       <TableHead className="text-xs font-semibold">Por Km (R$)</TableHead>
                       <TableHead className="text-xs font-semibold">Por Min (R$)</TableHead>
                       <TableHead className="text-xs font-semibold">Taxa Mín (R$)</TableHead>
+                      <TableHead className="text-xs font-semibold">Multiplicador</TableHead>
                       <TableHead className="text-xs font-semibold">Status</TableHead>
                       <TableHead className="text-xs font-semibold text-center">Ações</TableHead>
                     </TableRow>
@@ -252,18 +321,25 @@ const Precificacao = () => {
                       <TableRow key={row.id || `new-${i}`}>
                         <TableCell>
                           {row.isEditing ? (
-                            <Select value={row.categoria} onValueChange={(v) => updateRow(i, "categoria", v)}>
-                              <SelectTrigger className="w-28 h-8 text-xs bg-background border-border">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {CATEGORIAS.map((c) => (
-                                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="time"
+                                value={row.hora_inicio}
+                                onChange={(e) => updateRow(i, "hora_inicio", e.target.value)}
+                                className="w-24 h-8 text-xs bg-background border-border"
+                              />
+                              <span className="text-xs text-muted-foreground">às</span>
+                              <Input
+                                type="time"
+                                value={row.hora_fim}
+                                onChange={(e) => updateRow(i, "hora_fim", e.target.value)}
+                                className="w-24 h-8 text-xs bg-background border-border"
+                              />
+                            </div>
                           ) : (
-                            <Badge variant="secondary" className="text-xs">{row.categoria}</Badge>
+                            <span className="text-sm font-mono">
+                              {row.hora_inicio} – {row.hora_fim}
+                            </span>
                           )}
                         </TableCell>
                         {(["preco_base", "preco_km", "preco_minuto", "taxa_minima"] as const).map((field) => (
@@ -283,7 +359,27 @@ const Precificacao = () => {
                           </TableCell>
                         ))}
                         <TableCell>
-                          <Badge variant={row.ativo ? "default" : "outline"} className="text-xs cursor-pointer" onClick={() => { updateRow(i, "ativo", !row.ativo); updateRow(i, "isEditing", true); }}>
+                          {row.isEditing ? (
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0.1"
+                              value={row.multiplicador}
+                              onChange={(e) => updateRow(i, "multiplicador", parseFloat(e.target.value) || 1)}
+                              className="w-20 h-8 text-xs bg-background border-border"
+                            />
+                          ) : (
+                            <Badge variant={row.multiplicador > 1 ? "destructive" : "secondary"} className="text-xs">
+                              {row.multiplicador}x
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={row.ativo ? "default" : "outline"}
+                            className="text-xs cursor-pointer"
+                            onClick={() => { updateRow(i, "ativo", !row.ativo); updateRow(i, "isEditing", true); }}
+                          >
                             {row.ativo ? "Ativo" : "Inativo"}
                           </Badge>
                         </TableCell>
