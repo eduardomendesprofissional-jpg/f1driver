@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MapPin, Info, Flame, TrendingUp, Clock, Store } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import MapboxMap from "@/components/MapboxMap";
-import MapboxPOISearch from "@/components/MapboxPOISearch";
+import GoogleMap from "@/components/GoogleMap";
 import { supabase } from "@/integrations/supabase/client";
-import mapboxgl from "mapbox-gl";
 
 interface RidePoint {
   lat: number;
@@ -26,7 +24,7 @@ const MapaCalor = () => {
   const [regions, setRegions] = useState<RegionSummary[]>([]);
   const [period, setPeriod] = useState("7d");
   const [loading, setLoading] = useState(true);
-  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   const fetchRideData = useCallback(async () => {
     setLoading(true);
@@ -47,7 +45,6 @@ const MapaCalor = () => {
       return;
     }
 
-    // Build heatmap points from origins (where demand happens)
     const heatPoints: RidePoint[] = rides.map((r) => ({
       lat: r.origem_lat,
       lng: r.origem_lng,
@@ -56,7 +53,6 @@ const MapaCalor = () => {
 
     setPoints(heatPoints);
 
-    // Cluster into regions using a simple grid (0.01 degree ≈ 1km)
     const grid: Record<string, { count: number; totalValue: number; lat: number; lng: number }> = {};
     rides.forEach((r) => {
       const key = `${(r.origem_lat * 100).toFixed(0)}_${(r.origem_lng * 100).toFixed(0)}`;
@@ -85,62 +81,40 @@ const MapaCalor = () => {
     fetchRideData();
   }, [fetchRideData]);
 
-  // Add heatmap layer when map is ready and points change
+  // Add circle markers as heatmap visualization
   useEffect(() => {
     if (!mapInstance || points.length === 0) return;
 
-    const sourceId = "ride-heat";
-    const layerId = "ride-heatmap";
-
-    const geojson: GeoJSON.FeatureCollection = {
-      type: "FeatureCollection",
-      features: points.map((p) => ({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [p.lng, p.lat] },
-        properties: { weight: p.weight },
-      })),
-    };
-
-    // Remove existing layer/source if any
-    if (mapInstance.getLayer(layerId)) mapInstance.removeLayer(layerId);
-    if (mapInstance.getSource(sourceId)) mapInstance.removeSource(sourceId);
-
-    mapInstance.addSource(sourceId, { type: "geojson", data: geojson });
-
-    mapInstance.addLayer({
-      id: layerId,
-      type: "heatmap",
-      source: sourceId,
-      paint: {
-        "heatmap-weight": ["get", "weight"],
-        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 15, 3],
-        "heatmap-color": [
-          "interpolate",
-          ["linear"],
-          ["heatmap-density"],
-          0, "rgba(0,0,0,0)",
-          0.1, "hsl(210, 100%, 60%)",
-          0.3, "hsl(160, 80%, 50%)",
-          0.5, "hsl(60, 90%, 55%)",
-          0.7, "hsl(35, 95%, 55%)",
-          1, "hsl(0, 85%, 55%)",
-        ],
-        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 20, 15, 40],
-        "heatmap-opacity": 0.8,
-      },
+    const circles: google.maps.Circle[] = [];
+    
+    points.forEach((p) => {
+      const circle = new google.maps.Circle({
+        map: mapInstance,
+        center: { lat: p.lat, lng: p.lng },
+        radius: 500,
+        fillColor: p.weight > 0.7 ? "#ef4444" : p.weight > 0.4 ? "#f59e0b" : "#3b82f6",
+        fillOpacity: 0.3 + p.weight * 0.4,
+        strokeWeight: 0,
+      });
+      circles.push(circle);
     });
 
-    // Fit bounds to points
+    // Fit bounds
     if (points.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      points.forEach((p) => bounds.extend([p.lng, p.lat]));
-      mapInstance.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 1200 });
+      const bounds = new google.maps.LatLngBounds();
+      points.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
+      mapInstance.fitBounds(bounds, 60);
     } else {
-      mapInstance.flyTo({ center: [points[0].lng, points[0].lat], zoom: 13, duration: 1200 });
+      mapInstance.setCenter({ lat: points[0].lat, lng: points[0].lng });
+      mapInstance.setZoom(13);
     }
+
+    return () => {
+      circles.forEach((c) => c.setMap(null));
+    };
   }, [mapInstance, points]);
 
-  const handleMapReady = useCallback((map: mapboxgl.Map) => {
+  const handleMapReady = useCallback((map: google.maps.Map) => {
     setMapInstance(map);
   }, []);
 
@@ -152,7 +126,6 @@ const MapaCalor = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <Card className="bg-card border-border">
         <CardContent className="p-5">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -178,7 +151,6 @@ const MapaCalor = () => {
         </CardContent>
       </Card>
 
-      {/* Map */}
       <Card className="bg-card border-border">
         <CardContent className="p-4">
           {loading && points.length === 0 ? (
@@ -191,31 +163,15 @@ const MapaCalor = () => {
               <p className="text-muted-foreground">Nenhuma corrida encontrada neste período.</p>
             </div>
           ) : (
-            <MapboxMap
+            <GoogleMap
               className="w-full h-[500px] rounded-lg overflow-hidden"
               showUserMarker={false}
-              showPOIs={true}
               onMapReady={handleMapReady}
             />
           )}
         </CardContent>
       </Card>
 
-      {/* POI Search */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Store size={16} className="text-primary" />
-            <h3 className="text-sm font-semibold">Estabelecimentos Próximos</h3>
-          </div>
-          <MapboxPOISearch
-            map={mapInstance}
-            center={points.length > 0 ? [points[0].lng, points[0].lat] : undefined}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Region Stats */}
       {regions.length > 0 && (
         <Card className="bg-card border-border">
           <CardContent className="p-5">
@@ -251,7 +207,6 @@ const MapaCalor = () => {
         </Card>
       )}
 
-      {/* Legend */}
       <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
