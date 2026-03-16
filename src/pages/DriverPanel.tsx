@@ -47,6 +47,12 @@ const DriverPanel = () => {
         <h1 className="text-lg font-bold">Painel do Motorista</h1>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => navigate("/driver/wallet")}
+            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Wallet size={20} />
+          </button>
+          <button
             onClick={() => navigate("/driver/inbox")}
             className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
           >
