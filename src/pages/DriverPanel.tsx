@@ -114,6 +114,13 @@ const DriverPanel = () => {
         </div>
       </div>
 
+      {/* Safety Tips when offline */}
+      {!online && (
+        <div className="px-4 py-4 bg-card">
+          <SafetyTips role="driver" />
+        </div>
+      )}
+
       {/* Tabs */}
       {online && (
         <div className="flex border-b border-border bg-card">

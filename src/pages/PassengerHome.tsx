@@ -157,6 +157,11 @@ const PassengerHome = () => {
             onSelectPlace={handleSelectNearby}
           />
         </div>
+
+        {/* Safety Tips */}
+        <div className="mt-5">
+          <SafetyTips role="passenger" />
+        </div>
       </motion.div>
 
       {/* Search Overlay */}
