@@ -64,10 +64,13 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
             >
               <MapPin size={14} className="text-[#4fc3f7] mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                {place.text && place.text !== place.place_name && (
-                  <p className="text-xs text-white font-semibold truncate">{place.text}</p>
+                <p className="text-xs text-white font-semibold truncate">{place.text}</p>
+                {place.category && (
+                  <p className="text-[10px] text-[#4fc3f7]/80 truncate">{place.category}</p>
                 )}
-                <p className="text-[11px] text-white/60 truncate">{place.place_name}</p>
+                <p className="text-[11px] text-white/60 truncate">
+                  {place.place_name !== place.text ? place.place_name : ""}
+                </p>
               </div>
               {place.distance && (
                 <span className="text-[10px] text-[#4fc3f7] font-medium shrink-0 whitespace-nowrap">{place.distance}</span>

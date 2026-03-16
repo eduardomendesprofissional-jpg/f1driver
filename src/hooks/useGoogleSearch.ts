@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { searchFoursquarePlaces, FoursquarePlace } from "@/lib/foursquare";
 
 export interface GooglePlace {
   id: string;
@@ -7,18 +7,12 @@ export interface GooglePlace {
   text: string;
   center: [number, number]; // [lng, lat]
   distance?: string;
+  category?: string;
 }
 
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function formatDistance(km: number): string {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)} m`;
+  return `${(meters / 1000).toFixed(1)} km`;
 }
 
 export const useGoogleSearch = () => {
@@ -32,44 +26,30 @@ export const useGoogleSearch = () => {
     }
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        access_token: MAPBOX_TOKEN,
-        language: "pt",
-        country: "BR",
-        limit: "10",
-        types: "poi,address,place,neighborhood,locality,district,region,postcode",
-        fuzzyMatch: "true",
-      });
-      if (proximity) {
-        params.set("proximity", `${proximity[0]},${proximity[1]}`);
-      }
+      // proximity is [lng, lat], Foursquare needs (lat, lng)
+      const lat = proximity ? proximity[1] : -15.7801;
+      const lng = proximity ? proximity[0] : -47.9292;
 
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?${params}`
-      );
-      const data = await res.json();
+      const fsqResults = await searchFoursquarePlaces(query, lat, lng);
 
-      const places: GooglePlace[] = (data.features || []).map((f: any) => {
-        const center = f.center as [number, number];
-        const dist = proximity
-          ? haversineDistance(proximity[1], proximity[0], center[1], center[0])
-          : undefined;
-        return {
-          id: f.id,
-          text: f.text || "",
-          place_name: f.place_name,
-          center,
-          distance: dist !== undefined ? formatDistance(dist) : undefined,
-        };
-      });
-      // Sort by distance if proximity available
-      if (proximity) {
-        places.sort((a, b) => {
-          const dA = haversineDistance(proximity[1], proximity[0], a.center[1], a.center[0]);
-          const dB = haversineDistance(proximity[1], proximity[0], b.center[1], b.center[0]);
-          return dA - dB;
+      const places: GooglePlace[] = fsqResults
+        .filter((p: FoursquarePlace) => p.geocodes?.main)
+        .map((p: FoursquarePlace) => {
+          const coords = p.geocodes!.main!;
+          const address = p.location.formatted_address || p.location.address || "";
+          const category = p.categories?.[0]?.name || "";
+          const fullName = [p.name, address].filter(Boolean).join(" - ");
+
+          return {
+            id: p.fsq_id,
+            text: p.name,
+            place_name: fullName,
+            center: [coords.longitude, coords.latitude] as [number, number],
+            distance: p.distance !== undefined ? formatDistance(p.distance) : undefined,
+            category,
+          };
         });
-      }
+
       setResults(places);
     } catch {
       setResults([]);
