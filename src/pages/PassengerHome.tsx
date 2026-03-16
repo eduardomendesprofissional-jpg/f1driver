@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Loader2, Clock, RotateCcw, Map } from "lucide-react";
+import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigation } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
@@ -111,108 +111,157 @@ const PassengerHome = () => {
 
   const showPermissionBanner = permission !== "granted";
 
+  const serviceButtons = [
+    { icon: Car, label: "Corrida", action: () => setSearchOpen(true) },
+    { icon: Package, label: "Envio", action: () => navigate("/envios/novo") },
+  ];
+
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {/* Map */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Full-screen Map */}
+      <div className="absolute inset-0">
         <GoogleMap
-          className="absolute inset-0 w-full h-full"
+          className="w-full h-full"
           zoom={15}
           center={position ? [position.lng, position.lat] : undefined}
         />
-        {showPermissionBanner && (
+      </div>
+
+      {/* Permission Banner */}
+      {showPermissionBanner && (
+        <div className="absolute top-4 left-4 right-4 z-30">
           <LocationPermissionBanner
             permission={permission as any}
             loading={geoLoading}
             error={geoError}
             onRequest={requestLocation}
           />
-        )}
-      </div>
-
-      {/* Bottom Panel - Uber style */}
-      <motion.div
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        className="bg-card border-t border-border rounded-t-3xl p-5 pb-24 shadow-[0_-4px_30px_rgba(0,0,0,0.15)]"
-      >
-        {/* Search bar */}
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="w-full flex items-center gap-3 bg-secondary rounded-xl px-4 py-4 text-left"
-        >
-          <Search size={20} className="text-primary" />
-          <span className="text-muted-foreground font-medium">Para onde?</span>
-        </button>
-
-        {/* Current location */}
-        <div className="mt-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <p className="text-sm text-foreground truncate">
-              {geoLoading ? "Obtendo localização..." : endereco || "Localização não disponível"}
-            </p>
-          </div>
         </div>
+      )}
 
-        {/* Saved routes */}
-        {savedRoutes.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Rotas recentes</p>
-            <div className="space-y-1">
-              {savedRoutes.slice(0, 3).map((route) => (
+      {/* Current location pill - floating */}
+      {!showPermissionBanner && endereco && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-5 left-4 right-4 z-20"
+        >
+          <div className="flex items-center gap-2.5 bg-card/90 backdrop-blur-xl rounded-2xl px-4 py-3 shadow-lg border border-border/50">
+            <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <Navigation size={14} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Sua localização</p>
+              <p className="text-xs text-foreground truncate font-medium">
+                {geoLoading ? "Obtendo localização..." : endereco}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Bottom Sheet - inDrive style */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <motion.div
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="bg-card/95 backdrop-blur-xl border-t border-border/50 rounded-t-[28px] shadow-[0_-8px_40px_rgba(0,0,0,0.3)]"
+        >
+          {/* Handle bar */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+          </div>
+
+          <div className="px-5 pb-28">
+            {/* Search button - inDrive style prominent */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="w-full flex items-center gap-3.5 bg-primary rounded-2xl px-5 py-4 text-left group transition-all active:scale-[0.98] shadow-lg"
+              style={{ boxShadow: '0 4px 20px hsl(210 100% 56% / 0.35)' }}
+            >
+              <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                <Search size={18} className="text-primary-foreground" />
+              </div>
+              <span className="text-primary-foreground font-semibold text-[15px]">Para onde vamos?</span>
+            </button>
+
+            {/* Service categories */}
+            <div className="flex gap-3 mt-4">
+              {serviceButtons.map((svc) => (
                 <button
-                  key={route.id}
-                  onClick={() => handleSelectSavedRoute(route)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors text-left"
+                  key={svc.label}
+                  onClick={svc.action}
+                  className="flex-1 flex flex-col items-center gap-2 bg-secondary/80 hover:bg-secondary rounded-2xl py-4 transition-all active:scale-[0.97]"
                 >
-                  <RotateCcw size={16} className="text-primary shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground truncate">{route.destino_endereco}</p>
-                    <p className="text-[10px] text-muted-foreground">{route.vezes_usado}x utilizada</p>
+                  <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <svc.icon size={22} className="text-primary" />
                   </div>
+                  <span className="text-xs font-semibold text-foreground">{svc.label}</span>
                 </button>
               ))}
             </div>
+
+            {/* Recent routes */}
+            {savedRoutes.length > 0 && (
+              <div className="mt-5">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Recentes</p>
+                <div className="space-y-1">
+                  {savedRoutes.slice(0, 3).map((route) => (
+                    <button
+                      key={route.id}
+                      onClick={() => handleSelectSavedRoute(route)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/80 transition-all active:scale-[0.98] text-left"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                        <RotateCcw size={14} className="text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground truncate font-medium">{route.destino_endereco}</p>
+                        <p className="text-[10px] text-muted-foreground">{route.vezes_usado}x utilizada</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Nearby Establishments */}
-        <div className="mt-5">
-          <NearbyPlaces
-            userPosition={position}
-            onSelectPlace={handleSelectNearby}
-          />
-        </div>
-
-        {/* Safety Tips */}
-        <div className="mt-5">
-          <SafetyTips role="passenger" />
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Search Overlay */}
       <AnimatePresence>
         {searchOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ type: "spring", damping: 28, stiffness: 350 }}
             className="fixed inset-0 z-50 bg-background flex flex-col"
           >
-            <div className="p-4 space-y-3">
+            {/* Header */}
+            <div className="p-4 pb-2 space-y-3">
               <div className="flex items-center gap-3">
-                <button onClick={() => { setSearchOpen(false); clear(); setDestination(""); }} className="text-foreground p-2">✕</button>
-                <h2 className="text-lg font-bold">Para onde?</h2>
+                <button
+                  onClick={() => { setSearchOpen(false); clear(); setDestination(""); }}
+                  className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-muted transition-colors"
+                >
+                  ✕
+                </button>
+                <h2 className="text-lg font-bold text-foreground">Para onde?</h2>
               </div>
-              <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
-                <div className="w-3 h-3 rounded-full bg-primary" />
+
+              {/* Origin display */}
+              <div className="flex items-center gap-3 bg-secondary rounded-2xl px-4 py-3">
+                <div className="w-3 h-3 rounded-full bg-primary ring-4 ring-primary/20" />
                 <span className="text-sm text-muted-foreground truncate">
                   {endereco || "Localização não disponível"}
                 </span>
               </div>
-              <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
-                <MapPin size={14} className="text-primary" />
+
+              {/* Destination input */}
+              <div className="flex items-center gap-3 bg-secondary rounded-2xl px-4 py-3 ring-2 ring-primary/30">
+                <MapPin size={16} className="text-primary shrink-0" />
                 <input
                   autoFocus
                   value={destination}
@@ -220,31 +269,39 @@ const PassengerHome = () => {
                   placeholder="Digite o destino"
                   className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                 />
-                {loading && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
+                {loading && <Loader2 size={16} className="animate-spin text-primary" />}
               </div>
-              {/* Selecionar no mapa */}
+
+              {/* Map picker button */}
               <button
                 onClick={() => setMapPickerOpen(true)}
-                className="w-full flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 mt-2"
+                className="w-full flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 transition-all active:scale-[0.98]"
               >
-                <Map size={18} className="text-primary" />
+                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
+                  <Map size={16} className="text-primary" />
+                </div>
                 <span className="text-sm text-primary font-semibold">Selecionar no mapa</span>
               </button>
             </div>
-            <div className="flex-1 p-4 overflow-y-auto">
+
+            {/* Results */}
+            <div className="flex-1 px-4 pb-4 overflow-y-auto">
+              {/* Saved routes when not searching */}
               {destination.length < 3 && savedRoutes.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Rotas recentes</p>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Rotas recentes</p>
                   <div className="space-y-1">
                     {savedRoutes.map((route) => (
                       <button
                         key={route.id}
                         onClick={() => handleSelectSavedRoute(route)}
-                        className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary transition-colors text-left"
+                        className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary transition-all active:scale-[0.98] text-left"
                       >
-                        <Clock size={16} className="text-primary mt-0.5 shrink-0" />
+                        <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 mt-0.5">
+                          <Clock size={14} className="text-primary" />
+                        </div>
                         <div className="min-w-0">
-                          <p className="text-sm text-foreground truncate">{route.destino_endereco}</p>
+                          <p className="text-sm text-foreground truncate font-medium">{route.destino_endereco}</p>
                           <p className="text-[10px] text-muted-foreground">{route.vezes_usado}x utilizada</p>
                         </div>
                       </button>
@@ -253,6 +310,7 @@ const PassengerHome = () => {
                 </div>
               )}
 
+              {/* Search results */}
               {results.length > 0 ? (
                 <div className="space-y-1">
                   {results.map((place) => (
@@ -260,36 +318,44 @@ const PassengerHome = () => {
                       key={place.id}
                       onClick={() => handleSelectPlace(place)}
                       disabled={place.blocked}
-                      className={`w-full flex items-start gap-3 p-3 rounded-xl transition-colors text-left ${
+                      className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left ${
                         place.blocked
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-secondary"
+                          ? "opacity-40 cursor-not-allowed"
+                          : "hover:bg-secondary active:scale-[0.98]"
                       }`}
                     >
-                      <MapPin size={18} className={`mt-0.5 shrink-0 ${place.blocked ? "text-destructive" : "text-primary"}`} />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        place.blocked ? "bg-destructive/10" : "bg-secondary"
+                      }`}>
+                        <MapPin size={16} className={place.blocked ? "text-destructive" : "text-primary"} />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm text-foreground">{place.place_name}</span>
+                        <span className="text-sm text-foreground font-medium">{place.place_name}</span>
                         {place.blocked && (
-                          <p className="text-[10px] text-destructive font-medium">Acima de 25 km — indisponível</p>
+                          <p className="text-[10px] text-destructive font-semibold mt-0.5">Acima de 25 km — indisponível</p>
                         )}
                       </div>
                       {place.distance && (
-                        <span className={`text-[10px] font-medium shrink-0 ${place.blocked ? "text-destructive" : "text-muted-foreground"}`}>{place.distance}</span>
+                        <span className={`text-[10px] font-semibold shrink-0 mt-1 ${place.blocked ? "text-destructive" : "text-muted-foreground"}`}>
+                          {place.distance}
+                        </span>
                       )}
                     </button>
                   ))}
                 </div>
               ) : destination.length >= 3 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Nenhum resultado encontrado.</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-3">
+                    <Search size={24} className="text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Nenhum resultado encontrado</p>
+                </div>
               ) : null}
 
-              {/* Nearby places inside search overlay */}
+              {/* Nearby places */}
               {destination.length < 3 && (
                 <div className="mt-4">
-                  <NearbyPlaces
-                    userPosition={position}
-                    onSelectPlace={handleSelectNearby}
-                  />
+                  <NearbyPlaces userPosition={position} onSelectPlace={handleSelectNearby} />
                 </div>
               )}
             </div>
@@ -297,7 +363,7 @@ const PassengerHome = () => {
         )}
       </AnimatePresence>
 
-      {/* Map Picker Overlay */}
+      {/* Map Picker */}
       <AnimatePresence>
         {mapPickerOpen && (
           <MapPicker
