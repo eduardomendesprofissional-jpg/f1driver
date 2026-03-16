@@ -10,6 +10,7 @@ interface MapboxMapProps {
   zoom?: number;
   style?: string;
   showUserMarker?: boolean;
+  showPOIs?: boolean;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
