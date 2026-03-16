@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SafetyTips from "@/components/SafetyTips";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
