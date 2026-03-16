@@ -209,6 +209,36 @@ export type Database = {
         }
         Relationships: []
       }
+      indicacoes: {
+        Row: {
+          bonus_valor: number
+          created_at: string
+          id: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          bonus_valor?: number
+          created_at?: string
+          id?: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          bonus_valor?: number
+          created_at?: string
+          id?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       metodos_pagamento: {
         Row: {
           created_at: string
@@ -235,6 +265,36 @@ export type Database = {
           label?: string
           padrao?: boolean
           tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          mensagem: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem: string
+          tipo?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          tipo?: string
+          titulo?: string
           user_id?: string
         }
         Relationships: []
@@ -290,6 +350,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           cnh: string | null
+          codigo_indicacao: string | null
           cpf: string | null
           created_at: string
           id: string
@@ -306,6 +367,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           cnh?: string | null
+          codigo_indicacao?: string | null
           cpf?: string | null
           created_at?: string
           id: string
@@ -322,6 +384,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           cnh?: string | null
+          codigo_indicacao?: string | null
           cpf?: string | null
           created_at?: string
           id?: string
