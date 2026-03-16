@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 export interface GeoPosition {
   lat: number;
@@ -30,11 +31,11 @@ export const useGeolocation = () => {
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      const { loadMapsLibrary } = await import("@/lib/google-maps");
-      await loadMapsLibrary();
-      const geocoder = new google.maps.Geocoder();
-      const response = await geocoder.geocode({ location: { lat, lng } });
-      return response.results?.[0]?.formatted_address || "Sua localização";
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
+      );
+      const data = await res.json();
+      return data.features?.[0]?.place_name || "Sua localização";
     } catch {
       return "Sua localização";
     }

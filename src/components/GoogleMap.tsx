@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { loadMapsLibrary } from "@/lib/google-maps";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
-interface GoogleMapProps {
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+interface MapboxMapProps {
   className?: string;
   center?: [number, number]; // [lng, lat]
   zoom?: number;
   showUserMarker?: boolean;
-  onMapReady?: (map: google.maps.Map) => void;
+  onMapReady?: (map: any) => void;
 }
 
 const GoogleMap = ({
@@ -15,47 +19,35 @@ const GoogleMap = ({
   zoom = 12,
   showUserMarker = true,
   onMapReady,
-}: GoogleMapProps) => {
+}: MapboxMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
-    loadMapsLibrary().then(() => {
-      if (!mapContainer.current || mapRef.current) return;
+    const initCenter: [number, number] = center || [-47.9292, -15.7801];
 
-      const initCenter = center
-        ? { lat: center[1], lng: center[0] }
-        : { lat: -15.7801, lng: -47.9292 };
+    const map = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: initCenter,
+      zoom: center ? zoom : 4,
+      attributionControl: false,
+    });
 
-      const map = new google.maps.Map(mapContainer.current, {
-        center: initCenter,
-        zoom: center ? zoom : 4,
-        disableDefaultUI: true,
-        zoomControl: true,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#0a0f1e" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#ffffff" }] },
-          { elementType: "labels.text.stroke", stylers: [{ color: "#0a0f1e" }] },
-          { featureType: "road", elementType: "geometry", stylers: [{ color: "#1a2744" }] },
-          { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#1e3a6e" }] },
-          { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#0d47a1" }] },
-          { featureType: "water", elementType: "geometry", stylers: [{ color: "#001133" }] },
-          { featureType: "poi", stylers: [{ visibility: "off" }] },
-          { featureType: "transit", stylers: [{ visibility: "off" }] },
-          { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#4fc3f7" }] },
-        ],
-      });
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
 
+    map.on("load", () => {
       mapRef.current = map;
       setLoaded(true);
-      onMapReady?.(map);
+      onMapReady?.(map as any);
     });
 
     return () => {
+      map.remove();
       mapRef.current = null;
       markerRef.current = null;
     };
@@ -64,27 +56,23 @@ const GoogleMap = ({
   useEffect(() => {
     if (!mapRef.current || !center || !loaded) return;
 
-    const pos = { lat: center[1], lng: center[0] };
-    mapRef.current.panTo(pos);
-    mapRef.current.setZoom(zoom);
+    mapRef.current.flyTo({ center, zoom, duration: 800 });
 
     if (showUserMarker) {
       if (markerRef.current) {
-        markerRef.current.setPosition(pos);
+        markerRef.current.setLngLat(center);
       } else {
-        markerRef.current = new google.maps.Marker({
-          map: mapRef.current,
-          position: pos,
-          icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-                <circle cx="12" cy="12" r="8" fill="#276EF1" stroke="white" stroke-width="3"/>
-              </svg>
-            `),
-            scaledSize: new google.maps.Size(24, 24),
-            anchor: new google.maps.Point(12, 12),
-          },
-        });
+        const el = document.createElement("div");
+        el.style.width = "18px";
+        el.style.height = "18px";
+        el.style.borderRadius = "50%";
+        el.style.backgroundColor = "#276EF1";
+        el.style.border = "3px solid white";
+        el.style.boxShadow = "0 0 8px rgba(39,110,241,0.6)";
+
+        markerRef.current = new mapboxgl.Marker({ element: el })
+          .setLngLat(center)
+          .addTo(mapRef.current);
       }
     }
   }, [center?.[0], center?.[1], showUserMarker, loaded]);

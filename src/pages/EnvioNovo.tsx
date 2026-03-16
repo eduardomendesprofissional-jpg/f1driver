@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 const TAMANHOS = [
   { id: "pequeno", label: "Pequeno", desc: "Até 30cm, cabe na mão", icon: "📦", multiplicador: 1 },
@@ -60,10 +60,10 @@ const EnvioNovo = () => {
         const { latitude, longitude } = pos.coords;
         try {
           const res = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
           );
           const data = await res.json();
-          const name = data.results?.[0]?.formatted_address || "Sua localização";
+          const name = data.features?.[0]?.place_name || "Sua localização";
           setColeta({ lat: latitude, lng: longitude, endereco: name });
         } catch {
           setColeta({ lat: latitude, lng: longitude, endereco: "Sua localização" });
@@ -99,24 +99,23 @@ const EnvioNovo = () => {
     setCalculando(true);
     try {
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${coleta.lat},${coleta.lng}&destination=${entrega.lat},${entrega.lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${coleta.lng},${coleta.lat};${entrega.lng},${entrega.lat}?access_token=${MAPBOX_TOKEN}&overview=false`
       );
       const data = await res.json();
-      const route = data.routes?.[0]?.legs?.[0];
+      const route = data.routes?.[0];
       if (!route) {
         toast.error("Não foi possível calcular a rota.");
         return;
       }
-      const distancia_km = Math.round((route.distance.value / 1000) * 10) / 10;
+      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
 
-      // Delivery pricing: base + per km + size multiplier + weight surcharge
       const pesoNum = parseFloat(peso) || 1;
       const tamInfo = TAMANHOS.find(t => t.id === tamanho) || TAMANHOS[0];
       const base = 8;
       const perKm = 2.5;
       const weightSurcharge = pesoNum > 5 ? (pesoNum - 5) * 1.5 : 0;
       let valor = (base + perKm * distancia_km + weightSurcharge) * tamInfo.multiplicador;
-      valor = Math.max(valor, 12); // minimum
+      valor = Math.max(valor, 12);
       valor = Math.round(valor * 100) / 100;
 
       setEstimativa({ distancia_km, valor });

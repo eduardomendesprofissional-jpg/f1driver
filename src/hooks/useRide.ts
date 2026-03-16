@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 export interface RideEstimate {
   distancia_km: number;
@@ -27,14 +27,14 @@ export const useRide = () => {
     setEstimating(true);
     try {
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${origem.lat},${origem.lng}&destination=${destino.lat},${destino.lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?access_token=${MAPBOX_TOKEN}&language=pt-BR&overview=false`
       );
       const data = await res.json();
-      const route = data.routes?.[0]?.legs?.[0];
+      const route = data.routes?.[0];
       if (!route) return null;
 
-      const distancia_km = Math.round((route.distance.value / 1000) * 10) / 10;
-      const duracao_min = Math.round(route.duration.value / 60);
+      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
+      const duracao_min = Math.round(route.duration / 60);
 
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5);

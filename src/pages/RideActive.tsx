@@ -8,6 +8,7 @@ import EmergencyFAB from "@/components/EmergencyFAB";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 const DISPATCH_TIMEOUT = 15;
 const WAIT_TIMER_SECONDS = 180; // 3 minutes
@@ -108,17 +109,17 @@ const RideActive = () => {
     return () => { supabase.removeChannel(channel); };
   }, [rideId]);
 
-  // Fetch ETA from Google Directions API
+  // Fetch ETA from Mapbox Directions API
   const fetchETA = async (rideData: any) => {
     if (!rideData) return;
     try {
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${rideData.origem_lat},${rideData.origem_lng}&destination=${rideData.destino_lat},${rideData.destino_lng}&key=AIzaSyATM-_dHRXjCsdXyQYdN5KTg3Ile2DWzn0&language=pt-BR`
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${rideData.origem_lng},${rideData.origem_lat};${rideData.destino_lng},${rideData.destino_lat}?access_token=${MAPBOX_TOKEN}&overview=false`
       );
       const data = await res.json();
-      const leg = data.routes?.[0]?.legs?.[0];
-      if (leg?.duration?.value) {
-        setEta(Math.round(leg.duration.value / 60));
+      const route = data.routes?.[0];
+      if (route?.duration) {
+        setEta(Math.round(route.duration / 60));
       }
     } catch {}
   };

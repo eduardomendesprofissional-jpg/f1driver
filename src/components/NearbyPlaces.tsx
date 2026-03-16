@@ -1,14 +1,14 @@
 import { useState, useCallback } from "react";
 import { MapPin, Loader2 } from "lucide-react";
-import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 const CATEGORIES = [
-  { value: "restaurant", label: "Restaurantes", icon: "🍽️" },
-  { value: "gas_station", label: "Postos", icon: "⛽" },
-  { value: "pharmacy", label: "Farmácias", icon: "💊" },
-  { value: "shopping_mall", label: "Lojas", icon: "🛒" },
-  { value: "hospital", label: "Hospitais", icon: "🏥" },
-  { value: "bank", label: "Bancos", icon: "🏦" },
+  { value: "restaurant", label: "Restaurantes", icon: "🍽️", mapboxCategory: "restaurant" },
+  { value: "gas_station", label: "Postos", icon: "⛽", mapboxCategory: "fuel" },
+  { value: "pharmacy", label: "Farmácias", icon: "💊", mapboxCategory: "pharmacy" },
+  { value: "shopping_mall", label: "Lojas", icon: "🛒", mapboxCategory: "shop" },
+  { value: "hospital", label: "Hospitais", icon: "🏥", mapboxCategory: "hospital" },
+  { value: "bank", label: "Bancos", icon: "🏦", mapboxCategory: "bank" },
 ];
 
 interface NearbyPlace {
@@ -51,19 +51,21 @@ const NearbyPlaces = ({ userPosition, onSelectPlace }: NearbyPlacesProps) => {
     setActiveCategory(category);
     setLoading(true);
 
+    const cat = CATEGORIES.find(c => c.value === category);
+
     try {
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${userPosition.lat},${userPosition.lng}&radius=5000&type=${category}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cat?.mapboxCategory || category)}.json?access_token=${MAPBOX_TOKEN}&proximity=${userPosition.lng},${userPosition.lat}&language=pt-BR&limit=8&types=poi&country=BR`
       );
       const data = await res.json();
 
-      const results: NearbyPlace[] = (data.results || []).slice(0, 8).map((p: any) => ({
-        id: p.place_id,
-        name: p.name,
-        address: p.vicinity || p.formatted_address || "",
+      const results: NearbyPlace[] = (data.features || []).map((f: any) => ({
+        id: f.id,
+        name: f.text || f.place_name,
+        address: f.place_name || "",
         category,
-        center: [p.geometry.location.lng, p.geometry.location.lat] as [number, number],
-        distance: getDistance(userPosition.lat, userPosition.lng, p.geometry.location.lat, p.geometry.location.lng),
+        center: f.center as [number, number],
+        distance: getDistance(userPosition.lat, userPosition.lng, f.center[1], f.center[0]),
       }));
 
       setPlaces(results);
