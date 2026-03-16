@@ -78,6 +78,7 @@ export const useDriverEnvios = (online: boolean) => {
     }
     toast.success("Envio aceito!");
     fetchEnvios();
+    notifyPassenger(envioId, "🚗 Motorista a caminho!", "Um motorista aceitou seu envio e está indo para o ponto de coleta.");
     return true;
   };
 
