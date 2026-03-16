@@ -20,6 +20,7 @@ const MapboxMap = ({
   zoom = 12,
   style = "mapbox://styles/mapbox/dark-v11",
   showUserMarker = true,
+  showPOIs = false,
   onMapReady,
 }: MapboxMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
