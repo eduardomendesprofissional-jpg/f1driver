@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, CreditCard, Settings, ChevronRight, ArrowLeft, LogOut,
   Camera, Shield, CheckCircle2, Plus, Trash2, Star, Edit2, Save, X,
-  Fingerprint, AlertCircle, Car
+  Fingerprint, AlertCircle, Car, FileText, Palette
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
