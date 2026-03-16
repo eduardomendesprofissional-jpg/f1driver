@@ -48,12 +48,27 @@ export const useGoogleSearch = () => {
       );
       const data = await res.json();
 
-      const places: GooglePlace[] = (data.features || []).map((f: any) => ({
-        id: f.id,
-        text: f.text || "",
-        place_name: f.place_name,
-        center: f.center as [number, number],
-      }));
+      const places: GooglePlace[] = (data.features || []).map((f: any) => {
+        const center = f.center as [number, number];
+        const dist = proximity
+          ? haversineDistance(proximity[1], proximity[0], center[1], center[0])
+          : undefined;
+        return {
+          id: f.id,
+          text: f.text || "",
+          place_name: f.place_name,
+          center,
+          distance: dist !== undefined ? formatDistance(dist) : undefined,
+        };
+      });
+      // Sort by distance if proximity available
+      if (proximity) {
+        places.sort((a, b) => {
+          const dA = haversineDistance(proximity[1], proximity[0], a.center[1], a.center[0]);
+          const dB = haversineDistance(proximity[1], proximity[0], b.center[1], b.center[0]);
+          return dA - dB;
+        });
+      }
       setResults(places);
     } catch {
       setResults([]);
