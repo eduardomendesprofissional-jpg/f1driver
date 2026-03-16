@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
+import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
 
 const TAMANHOS = [
   { id: "pequeno", label: "Pequeno", desc: "Até 30cm, cabe na mão", icon: "📦", multiplicador: 1 },
