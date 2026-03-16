@@ -30,6 +30,11 @@ const PassengerHome = () => {
 
   const handleSelectPlace = (place: GooglePlace) => {
     if (!position || !endereco) return;
+    if (place.blocked) {
+      const { toast } = await import("sonner");
+      toast.error("Destino acima de 25 km. Escolha um destino mais próximo.");
+      return;
+    }
     saveRoute({
       origem_endereco: endereco,
       origem_lat: position.lat,
