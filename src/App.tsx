@@ -59,6 +59,8 @@ import DriverProfileScreen from "./pages/DriverProfileScreen";
 import DriverSettings from "./pages/DriverSettings";
 import DriverInbox from "./pages/DriverInbox";
 import DriverReferral from "./pages/DriverReferral";
+import PassengerInbox from "./pages/PassengerInbox";
+import PassengerReferral from "./pages/PassengerReferral";
 
 const queryClient = new QueryClient();
 
