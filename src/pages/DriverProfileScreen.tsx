@@ -93,6 +93,9 @@ const DriverProfileScreen = () => {
     }
     setLoading(false);
   };
+  const fetchPayments = async () => {
+    const { data } = await supabase
+      .from("metodos_pagamento")
       .select("*")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
