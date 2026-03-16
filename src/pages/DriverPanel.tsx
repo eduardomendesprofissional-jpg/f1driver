@@ -22,7 +22,9 @@ const DriverPanel = () => {
   const [online, setOnline] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [tab, setTab] = useState<"corridas" | "envios">("corridas");
-
+  const [searchCenter, setSearchCenter] = useState<[number, number] | undefined>();
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const { position, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
 
   useDriverLocation(online);
