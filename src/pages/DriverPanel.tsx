@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import SafetyTips from "@/components/SafetyTips";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import GoogleMap from "@/components/GoogleMap";
+import DriverMapSearch from "@/components/DriverMapSearch";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import { useDriverLocation } from "@/hooks/useDriverLocation";
 import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
