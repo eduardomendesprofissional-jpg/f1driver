@@ -42,7 +42,7 @@ const EnvioNovo = () => {
   // Address state
   const [searchingField, setSearchingField] = useState<"coleta" | "entrega" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { results, loading: searching, search, clear } = useMapboxSearch();
+  const { results, loading: searching, search, clear } = useGoogleSearch();
 
   const [coleta, setColeta] = useState<{ endereco: string; lat: number; lng: number } | null>(null);
   const [entrega, setEntrega] = useState<{ endereco: string; lat: number; lng: number } | null>(null);
