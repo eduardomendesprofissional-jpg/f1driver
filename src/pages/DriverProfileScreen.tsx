@@ -172,6 +172,7 @@ const DriverProfileScreen = () => {
     toast.success("Dados do veículo salvos!");
   };
 
+  const startFacialVerification = async () => {
     toast.info("Iniciando verificação facial...");
     setTimeout(async () => {
       await supabase.from("profiles").update({ verificacao_facial: true }).eq("id", user!.id);
