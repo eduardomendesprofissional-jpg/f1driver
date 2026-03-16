@@ -222,6 +222,14 @@ const PassengerHome = () => {
                 />
                 {loading && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
               </div>
+              {/* Selecionar no mapa */}
+              <button
+                onClick={() => setMapPickerOpen(true)}
+                className="w-full flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 mt-2"
+              >
+                <Map size={18} className="text-primary" />
+                <span className="text-sm text-primary font-semibold">Selecionar no mapa</span>
+              </button>
             </div>
             <div className="flex-1 p-4 overflow-y-auto">
               {destination.length < 3 && savedRoutes.length > 0 && (
