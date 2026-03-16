@@ -93,7 +93,8 @@ const EnviosScreen = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="bg-card border border-border rounded-xl p-4 space-y-2"
+                    onClick={() => navigate(`/envios/${envio.id}`)}
+                    className="bg-card border border-border rounded-xl p-4 space-y-2 cursor-pointer hover:border-primary/40 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

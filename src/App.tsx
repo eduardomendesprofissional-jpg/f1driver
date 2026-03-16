@@ -54,7 +54,6 @@ import ResetPassword from "./pages/ResetPassword";
 import EnviosScreen from "./pages/EnviosScreen";
 import EnvioNovo from "./pages/EnvioNovo";
 import EnvioTracking from "./pages/EnvioTracking";
-import EnvioNovo from "./pages/EnvioNovo";
 import DriverProfileScreen from "./pages/DriverProfileScreen";
 
 const queryClient = new QueryClient();
