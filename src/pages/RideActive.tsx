@@ -595,6 +595,11 @@ const RideActive = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Emergency FAB - visible during active ride states */}
+      {(status === "aceita" || status === "aguardando" || status === "em_andamento") && (
+        <EmergencyFAB />
+      )}
     </div>
   );
 };
