@@ -81,36 +81,61 @@ const MapaCalor = () => {
     fetchRideData();
   }, [fetchRideData]);
 
-  // Add circle markers as heatmap visualization
+  // Add circle layers as heatmap visualization using Mapbox
   useEffect(() => {
     if (!mapInstance || points.length === 0) return;
 
-    const circles: google.maps.Circle[] = [];
+    const sourceId = "heatmap-points";
     
-    points.forEach((p) => {
-      const circle = new google.maps.Circle({
-        map: mapInstance,
-        center: { lat: p.lat, lng: p.lng },
-        radius: 500,
-        fillColor: p.weight > 0.7 ? "#ef4444" : p.weight > 0.4 ? "#f59e0b" : "#3b82f6",
-        fillOpacity: 0.3 + p.weight * 0.4,
-        strokeWeight: 0,
-      });
-      circles.push(circle);
+    // Remove existing source/layer if present
+    if (mapInstance.getSource(sourceId)) {
+      mapInstance.removeLayer("heatmap-circles");
+      mapInstance.removeSource(sourceId);
+    }
+
+    const geojson = {
+      type: "FeatureCollection" as const,
+      features: points.map((p, i) => ({
+        type: "Feature" as const,
+        properties: { weight: p.weight, id: i },
+        geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
+      })),
+    };
+
+    mapInstance.addSource(sourceId, { type: "geojson", data: geojson });
+    mapInstance.addLayer({
+      id: "heatmap-circles",
+      type: "circle",
+      source: sourceId,
+      paint: {
+        "circle-radius": 20,
+        "circle-color": [
+          "interpolate", ["linear"], ["get", "weight"],
+          0, "#3b82f6",
+          0.4, "#f59e0b",
+          0.7, "#ef4444",
+        ],
+        "circle-opacity": ["interpolate", ["linear"], ["get", "weight"], 0, 0.3, 1, 0.7],
+      },
     });
 
     // Fit bounds
     if (points.length > 1) {
-      const bounds = new google.maps.LatLngBounds();
-      points.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
-      mapInstance.fitBounds(bounds, 60);
+      const lngs = points.map(p => p.lng);
+      const lats = points.map(p => p.lat);
+      mapInstance.fitBounds(
+        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+        { padding: 60 }
+      );
     } else {
-      mapInstance.setCenter({ lat: points[0].lat, lng: points[0].lng });
-      mapInstance.setZoom(13);
+      mapInstance.flyTo({ center: [points[0].lng, points[0].lat], zoom: 13 });
     }
 
     return () => {
-      circles.forEach((c) => c.setMap(null));
+      if (mapInstance.getSource(sourceId)) {
+        mapInstance.removeLayer("heatmap-circles");
+        mapInstance.removeSource(sourceId);
+      }
     };
   }, [mapInstance, points]);
 
