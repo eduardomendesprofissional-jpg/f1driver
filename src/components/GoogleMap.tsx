@@ -10,7 +10,7 @@ interface MapboxMapProps {
   center?: [number, number]; // [lng, lat]
   zoom?: number;
   showUserMarker?: boolean;
-  onMapReady?: (map: mapboxgl.Map) => void;
+  onMapReady?: (map: any) => void;
 }
 
 const GoogleMap = ({
