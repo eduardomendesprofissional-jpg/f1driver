@@ -44,8 +44,8 @@ export const useDriverEnvios = (online: boolean) => {
       .in("status", ["pendente", "coletado"])
       .order("created_at", { ascending: false });
 
-    setPendingEnvios((pending as DriverEnvio[]) || []);
-    setMyEnvios((mine as DriverEnvio[]) || []);
+    setPendingEnvios((pending as unknown as DriverEnvio[]) || []);
+    setMyEnvios((mine as unknown as DriverEnvio[]) || []);
     setLoading(false);
   }, [user, online]);
 
