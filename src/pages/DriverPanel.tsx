@@ -7,10 +7,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MapboxMap from "@/components/MapboxMap";
+import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import { useDriverLocation } from "@/hooks/useDriverLocation";
 import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useDriverEnvios } from "@/hooks/useDriverEnvios";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DriverPanel = () => {
@@ -18,6 +20,8 @@ const DriverPanel = () => {
   const [online, setOnline] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [tab, setTab] = useState<"corridas" | "envios">("corridas");
+
+  const { position, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
 
   useDriverLocation(online);
   usePushNotifications(online);
@@ -34,6 +38,7 @@ const DriverPanel = () => {
   };
 
   const envioCount = pendingEnvios.length + myEnvios.length;
+  const showPermissionBanner = permission !== "granted";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -53,8 +58,20 @@ const DriverPanel = () => {
 
       {/* Real Map */}
       <div className="flex-1 relative min-h-[250px]">
-        <MapboxMap className="absolute inset-0 w-full h-full" zoom={14} />
-        {!online && (
+        <MapboxMap
+          className="absolute inset-0 w-full h-full"
+          zoom={15}
+          center={position ? [position.lng, position.lat] : undefined}
+        />
+        {showPermissionBanner && (
+          <LocationPermissionBanner
+            permission={permission as any}
+            loading={geoLoading}
+            error={geoError}
+            onRequest={requestLocation}
+          />
+        )}
+        {!showPermissionBanner && !online && (
           <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10">
             <p className="text-muted-foreground font-semibold">Fique online para receber corridas</p>
           </div>
@@ -105,7 +122,6 @@ const DriverPanel = () => {
       <AnimatePresence mode="wait">
         {online && tab === "corridas" && (
           <motion.div key="corridas" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            {/* Ride Request Card */}
             <AnimatePresence>
               {currentRequest && (
                 <motion.div
@@ -190,8 +206,6 @@ const DriverPanel = () => {
 
         {online && tab === "envios" && (
           <motion.div key="envios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 space-y-4 overflow-y-auto max-h-[50vh]">
-
-            {/* My active envios */}
             {myEnvios.length > 0 && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
@@ -211,7 +225,6 @@ const DriverPanel = () => {
                         <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
                       </div>
                     </div>
-
                     <div className="space-y-1.5">
                       <div className="flex items-start gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
@@ -225,7 +238,6 @@ const DriverPanel = () => {
                         <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
                       </div>
                     </div>
-
                     <div className="flex gap-2 text-xs text-muted-foreground">
                       <span>{envio.tamanho}</span>
                       <span>•</span>
@@ -237,12 +249,8 @@ const DriverPanel = () => {
                         </>
                       )}
                     </div>
-
                     {envio.status === "pendente" && (
-                      <Button
-                        className="w-full h-11 font-bold"
-                        onClick={() => markColetado(envio.id)}
-                      >
+                      <Button className="w-full h-11 font-bold" onClick={() => markColetado(envio.id)}>
                         <CheckCircle size={16} className="mr-2" />
                         Marcar como Coletado
                       </Button>
@@ -261,7 +269,6 @@ const DriverPanel = () => {
               </div>
             )}
 
-            {/* Pending envios available */}
             {pendingEnvios.length > 0 && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -276,7 +283,6 @@ const DriverPanel = () => {
                       </div>
                       <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
                     </div>
-
                     <div className="space-y-1.5">
                       <div className="flex items-start gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
@@ -287,7 +293,6 @@ const DriverPanel = () => {
                         <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
                       </div>
                     </div>
-
                     <div className="flex gap-2 text-xs text-muted-foreground">
                       <span>{envio.tamanho}</span>
                       <span>•</span>
@@ -301,7 +306,6 @@ const DriverPanel = () => {
                       <span>•</span>
                       <span>{envio.forma_pagamento}</span>
                     </div>
-
                     <Button
                       variant="outline"
                       className="w-full h-11 font-bold border-primary text-primary hover:bg-primary/10"
