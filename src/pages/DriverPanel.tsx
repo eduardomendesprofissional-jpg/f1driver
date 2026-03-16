@@ -82,14 +82,21 @@ const DriverPanel = () => {
             <Settings size={20} />
           </button>
         </div>
+      </div>
+
+      {/* Botão Iniciar/Parar centralizado e pulsante */}
+      <div className="flex justify-center py-3">
         <button
           onClick={() => setOnline(!online)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
-            online ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
+          className={`relative flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg ${
+            online
+              ? "bg-blue-400 text-white shadow-blue-400/40"
+              : "bg-blue-900 text-blue-200 shadow-blue-900/40"
           }`}
         >
-          <Power size={16} />
-          {online ? "Online" : "Offline"}
+          <span className={`absolute inset-0 rounded-full ${online ? "bg-blue-400" : "bg-blue-900"} animate-[pulse-btn_2s_ease-in-out_infinite] opacity-40`} />
+          <Power size={18} className="relative z-10" />
+          <span className="relative z-10">{online ? "Parar" : "Iniciar"}</span>
         </button>
       </div>
 
