@@ -204,13 +204,13 @@ const EnvioTracking = () => {
     if (!mapRef.current || driverLat === null || driverLng === null) return;
 
     if (driverMarkerRef.current) {
-      driverMarkerRef.current.setLngLat([driverLng, driverLat]);
+      driverMarkerRef.current.setPosition({ lat: driverLat, lng: driverLng });
     } else {
-      const el = document.createElement("div");
-      el.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;background:hsl(142,71%,45%);border:3px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;">🚗</span></div>`;
-      driverMarkerRef.current = new mapboxgl.Marker({ element: el })
-        .setLngLat([driverLng, driverLat])
-        .addTo(mapRef.current);
+      driverMarkerRef.current = new google.maps.Marker({
+        map: mapRef.current,
+        position: { lat: driverLat, lng: driverLng },
+        label: { text: "🚗", fontSize: "18px" },
+      });
     }
   }, [driverLat, driverLng]);
 
