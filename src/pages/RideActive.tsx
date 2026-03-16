@@ -46,7 +46,7 @@ const RideActive = () => {
             .single();
           setDriverName(profile?.nome || "Motorista");
         }
-        // Calculate ETA using Mapbox Directions
+        // Calculate ETA using Google Directions
         fetchETA(data);
       }
     };
