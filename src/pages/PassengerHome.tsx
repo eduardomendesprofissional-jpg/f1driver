@@ -28,7 +28,7 @@ const PassengerHome = () => {
     }, 350);
   };
 
-  const handleSelectPlace = (place: GooglePlace) => {
+  const handleSelectPlace = async (place: GooglePlace) => {
     if (!position || !endereco) return;
     if (place.blocked) {
       const { toast } = await import("sonner");
