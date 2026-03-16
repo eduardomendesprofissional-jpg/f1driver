@@ -22,6 +22,10 @@ interface Profile {
   avatar_url: string | null;
   cpf: string | null;
   verificacao_facial: boolean;
+  cnh: string | null;
+  veiculo_placa: string | null;
+  veiculo_modelo: string | null;
+  veiculo_cor: string | null;
 }
 
 interface PaymentMethod {
