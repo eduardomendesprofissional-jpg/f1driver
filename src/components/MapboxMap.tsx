@@ -45,6 +45,15 @@ const MapboxMap = ({
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
+      // Show POI labels if enabled
+      if (showPOIs) {
+        const poiLayers = map.getStyle().layers?.filter(
+          (l) => l.id.includes("poi") || l.id.includes("label")
+        );
+        poiLayers?.forEach((l) => {
+          try { map.setLayoutProperty(l.id, "visibility", "visible"); } catch {}
+        });
+      }
       onMapReady?.(map);
     });
 
