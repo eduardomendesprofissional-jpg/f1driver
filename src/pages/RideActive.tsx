@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/GoogleMap";
 import { useRide } from "@/hooks/useRide";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const DISPATCH_TIMEOUT = 15;
+const WAIT_TIMER_SECONDS = 180; // 3 minutes
 
 const RideActive = () => {
   const navigate = useNavigate();
@@ -19,9 +20,12 @@ const RideActive = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [redispatchAttempt, setRedispatchAttempt] = useState(0);
   const [eta, setEta] = useState<number | null>(null);
+  const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
+  const [waitExpired, setWaitExpired] = useState(false);
   const { updateRideStatus } = useRide();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const redispatchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const waitTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load ride and subscribe to changes
   useEffect(() => {
@@ -46,8 +50,19 @@ const RideActive = () => {
             .single();
           setDriverName(profile?.nome || "Motorista");
         }
-        // Calculate ETA using Google Directions
         fetchETA(data);
+
+        // Resume wait timer if already arrived
+        if (data.status === "aguardando" && data.chegou_em) {
+          const elapsed = Math.floor((Date.now() - new Date(data.chegou_em).getTime()) / 1000);
+          const remaining = Math.max(0, WAIT_TIMER_SECONDS - elapsed);
+          if (remaining > 0) {
+            setWaitCountdown(remaining);
+          } else {
+            setWaitExpired(true);
+            setWaitCountdown(0);
+          }
+        }
       }
     };
 
@@ -74,6 +89,9 @@ const RideActive = () => {
           if (updated.status === "aceita" && !isDriver) {
             toast.success("Motorista aceitou sua corrida!");
             fetchETA(updated);
+          }
+          if (updated.status === "aguardando" && !isDriver) {
+            toast.info("Motorista chegou ao local! Dirija-se ao veículo.");
           }
           if (updated.status === "finalizada") {
             navigate("/rating", { state: { rideId } });
@@ -139,6 +157,33 @@ const RideActive = () => {
     };
   }, [ride?.status, ride?.motorista_id, isDriver, redispatchAttempt]);
 
+  // Wait timer countdown (when status is "aguardando")
+  useEffect(() => {
+    if (ride?.status !== "aguardando" || waitCountdown === null) {
+      if (waitTimerRef.current) clearInterval(waitTimerRef.current);
+      return;
+    }
+
+    if (waitCountdown <= 0) {
+      setWaitExpired(true);
+      return;
+    }
+
+    waitTimerRef.current = setInterval(() => {
+      setWaitCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          setWaitExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (waitTimerRef.current) clearInterval(waitTimerRef.current);
+    };
+  }, [ride?.status, waitCountdown !== null]);
+
   const status = ride?.status || "solicitada";
 
   const handleCancel = async () => {
@@ -147,8 +192,40 @@ const RideActive = () => {
     navigate(isDriver ? "/driver" : "/passenger");
   };
 
+  const handleArrived = async () => {
+    if (!rideId) return;
+    const { error } = await supabase
+      .from("rides")
+      .update({ status: "aguardando", chegou_em: new Date().toISOString() })
+      .eq("id", rideId);
+    if (!error) {
+      setWaitCountdown(WAIT_TIMER_SECONDS);
+      setWaitExpired(false);
+      toast.success("Chegada confirmada! Aguardando passageiro...");
+    }
+  };
+
   const handleStart = async () => {
-    if (rideId) await updateRideStatus(rideId, "em_andamento");
+    if (rideId) {
+      const { error } = await supabase
+        .from("rides")
+        .update({ status: "em_andamento", iniciada_em: new Date().toISOString() })
+        .eq("id", rideId);
+      if (!error) {
+        setWaitCountdown(null);
+        setWaitExpired(false);
+      }
+    }
+  };
+
+  const handleNoShow = async () => {
+    if (!rideId) return;
+    await supabase
+      .from("rides")
+      .update({ status: "cancelada", cancelada_em: new Date().toISOString() })
+      .eq("id", rideId);
+    toast.info("Passageiro não compareceu. Corrida cancelada.");
+    navigate("/driver");
   };
 
   const handleFinish = async () => {
@@ -176,15 +253,23 @@ const RideActive = () => {
     );
   };
 
+  const formatWaitTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   const statusLabel: Record<string, string> = {
     solicitada: "Buscando motorista...",
     aceita: isDriver ? "Indo buscar passageiro" : "Motorista a caminho",
+    aguardando: isDriver ? "Aguardando passageiro" : "Motorista chegou!",
     em_andamento: "Em viagem",
   };
 
   const statusColor: Record<string, string> = {
     solicitada: "bg-muted-foreground animate-pulse",
     aceita: "bg-primary animate-pulse",
+    aguardando: "bg-amber-500",
     em_andamento: "bg-success",
   };
 
@@ -205,7 +290,7 @@ const RideActive = () => {
             <span className="text-xs font-semibold">
               {statusLabel[status] || status}
             </span>
-            {eta && status !== "solicitada" && (
+            {eta && status !== "solicitada" && status !== "aguardando" && (
               <span className="flex items-center gap-1 text-xs text-primary font-bold ml-1">
                 <Clock size={12} />
                 ~{eta} min
@@ -215,6 +300,12 @@ const RideActive = () => {
               <span className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
                 <Clock size={12} />
                 {countdown}s
+              </span>
+            )}
+            {status === "aguardando" && waitCountdown !== null && (
+              <span className={`flex items-center gap-1 text-xs font-bold ml-1 ${waitExpired ? "text-destructive" : "text-amber-500"}`}>
+                <Timer size={12} />
+                {waitExpired ? "Expirado" : formatWaitTime(waitCountdown)}
               </span>
             )}
           </div>
@@ -238,6 +329,83 @@ const RideActive = () => {
             )}
           </div>
         )}
+
+        {/* Wait timer overlay on map (driver) */}
+        <AnimatePresence>
+          {status === "aguardando" && isDriver && waitCountdown !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10"
+            >
+              <div className="bg-card/95 backdrop-blur border border-border rounded-2xl p-4 shadow-xl min-w-[200px]">
+                <div className="flex flex-col items-center gap-2">
+                  {!waitExpired ? (
+                    <>
+                      <div className="relative w-16 h-16">
+                        <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                          <circle cx="32" cy="32" r="28" fill="none" stroke="hsl(var(--secondary))" strokeWidth="4" />
+                          <circle
+                            cx="32" cy="32" r="28"
+                            fill="none"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 28}`}
+                            strokeDashoffset={`${2 * Math.PI * 28 * (1 - (waitCountdown / WAIT_TIMER_SECONDS))}`}
+                            className="transition-all duration-1000"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
+                          {formatWaitTime(waitCountdown)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Aguardando passageiro</p>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle size={28} className="text-destructive" />
+                      <p className="text-xs font-semibold text-destructive">Tempo de espera esgotado</p>
+                      <p className="text-[10px] text-muted-foreground text-center">
+                        Você pode cancelar por não comparecimento
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Wait timer overlay on map (passenger) */}
+        <AnimatePresence>
+          {status === "aguardando" && !isDriver && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10"
+            >
+              <div className="bg-card/95 backdrop-blur border border-amber-500/50 rounded-2xl p-4 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <CheckCircle2 size={20} className="text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">Motorista chegou!</p>
+                    <p className="text-xs text-muted-foreground">
+                      {waitCountdown !== null && waitCountdown > 0
+                        ? `Dirija-se ao veículo em ${formatWaitTime(waitCountdown)}`
+                        : "Tempo de espera esgotado"
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Bottom Card */}
@@ -294,8 +462,55 @@ const RideActive = () => {
           </div>
         )}
 
+        {/* Wait timer progress bar */}
+        {status === "aguardando" && waitCountdown !== null && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Timer size={12} />
+                Tempo de espera
+              </span>
+              <span className={`text-xs font-bold ${waitExpired ? "text-destructive" : "text-amber-500"}`}>
+                {waitExpired ? "Expirado" : formatWaitTime(waitCountdown)}
+              </span>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all duration-1000 ${
+                  waitExpired ? "bg-destructive" : waitCountdown < 60 ? "bg-amber-500" : "bg-primary"
+                }`}
+                style={{ width: `${Math.max(0, (waitCountdown / WAIT_TIMER_SECONDS) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Waze / Google Maps - Driver only */}
-        {isDriver && status !== "solicitada" && ride && (
+        {isDriver && (status === "aceita" || status === "aguardando") && ride && (
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant="outline"
+              className="flex-1 h-10 text-xs font-semibold"
+              onClick={openWaze}
+            >
+              <Navigation size={14} className="mr-1.5" />
+              Abrir no Waze
+              <ExternalLink size={10} className="ml-1 opacity-50" />
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 h-10 text-xs font-semibold"
+              onClick={openGoogleMaps}
+            >
+              <MapPin size={14} className="mr-1.5" />
+              Google Maps
+              <ExternalLink size={10} className="ml-1 opacity-50" />
+            </Button>
+          </div>
+        )}
+
+        {/* Navigation during trip */}
+        {isDriver && status === "em_andamento" && ride && (
           <div className="flex gap-2 mb-4">
             <Button
               variant="outline"
@@ -334,10 +549,38 @@ const RideActive = () => {
               <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleCancel}>
                 <X size={16} className="mr-2" /> Cancelar
               </Button>
-              <Button className="flex-1 h-12 font-bold" onClick={handleStart}>
-                Iniciar viagem
+              <Button className="flex-1 h-12 font-bold bg-amber-500 hover:bg-amber-600 text-white" onClick={handleArrived}>
+                <CheckCircle2 size={16} className="mr-2" /> Cheguei
               </Button>
             </>
+          )}
+          {status === "aguardando" && isDriver && (
+            <>
+              {waitExpired ? (
+                <>
+                  <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleNoShow}>
+                    <AlertTriangle size={16} className="mr-2" /> Não compareceu
+                  </Button>
+                  <Button className="flex-1 h-12 font-bold" onClick={handleStart}>
+                    Iniciar viagem
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleCancel}>
+                    <X size={16} className="mr-2" /> Cancelar
+                  </Button>
+                  <Button className="flex-1 h-12 font-bold" onClick={handleStart}>
+                    Iniciar viagem
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+          {status === "aguardando" && !isDriver && (
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+              <X size={16} className="mr-2" /> Cancelar corrida
+            </Button>
           )}
           {status === "em_andamento" && isDriver && (
             <Button className="w-full h-12 font-bold" onClick={handleFinish}>
