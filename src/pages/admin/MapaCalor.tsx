@@ -194,6 +194,7 @@ const MapaCalor = () => {
             <MapboxMap
               className="w-full h-[500px] rounded-lg overflow-hidden"
               showUserMarker={false}
+              showPOIs={true}
               onMapReady={handleMapReady}
             />
           )}
