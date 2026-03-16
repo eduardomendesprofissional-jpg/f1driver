@@ -1,6 +1,6 @@
 import { Map, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import MapboxMap from "@/components/MapboxMap";
+import GoogleMap from "@/components/GoogleMap";
 
 const MapaMotoristas = () => {
   return (
