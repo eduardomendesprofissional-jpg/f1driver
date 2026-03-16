@@ -497,6 +497,7 @@ export type Database = {
           aceita_em: string | null
           cancelada_em: string | null
           categoria: string
+          chegou_em: string | null
           created_at: string
           destino_endereco: string
           destino_lat: number
@@ -521,6 +522,7 @@ export type Database = {
           aceita_em?: string | null
           cancelada_em?: string | null
           categoria?: string
+          chegou_em?: string | null
           created_at?: string
           destino_endereco: string
           destino_lat: number
@@ -545,6 +547,7 @@ export type Database = {
           aceita_em?: string | null
           cancelada_em?: string | null
           categoria?: string
+          chegou_em?: string | null
           created_at?: string
           destino_endereco?: string
           destino_lat?: number

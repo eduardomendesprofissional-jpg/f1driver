@@ -1,0 +1,1 @@
+ALTER TABLE public.rides ADD COLUMN IF NOT EXISTS chegou_em timestamp with time zone DEFAULT NULL;
