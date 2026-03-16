@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import MapboxMap from "@/components/MapboxMap";
 import { useDriverLocation } from "@/hooks/useDriverLocation";
 import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DriverPanel = () => {
