@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink } from "lucide-react";
+import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MapboxMap from "@/components/MapboxMap";
 import { useRide } from "@/hooks/useRide";
