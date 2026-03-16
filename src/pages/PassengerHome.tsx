@@ -1,12 +1,13 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Loader2, Clock, RotateCcw } from "lucide-react";
+import { MapPin, Search, Loader2, Clock, RotateCcw, Map } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import NearbyPlaces from "@/components/NearbyPlaces";
 import SafetyTips from "@/components/SafetyTips";
+import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -14,6 +15,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 const PassengerHome = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [destination, setDestination] = useState("");
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
   const { results, loading, search, clear } = useGoogleSearch();
