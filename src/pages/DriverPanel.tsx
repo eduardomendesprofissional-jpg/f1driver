@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import MapboxMap from "@/components/MapboxMap";
+import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import { useDriverLocation } from "@/hooks/useDriverLocation";
 import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
