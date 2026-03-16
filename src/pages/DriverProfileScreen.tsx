@@ -79,20 +79,20 @@ const DriverProfileScreen = () => {
   const fetchProfile = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("nome, telefone, avatar_url, cpf, verificacao_facial")
+      .select("nome, telefone, avatar_url, cpf, verificacao_facial, cnh, veiculo_placa, veiculo_modelo, veiculo_cor")
       .eq("id", user!.id)
       .single();
     if (data) {
-      setProfile(data as Profile);
+      setProfile(data as unknown as Profile);
       setNameValue(data.nome || "");
       setCpfValue(data.cpf || "");
+      setCnhValue((data as any).cnh || "");
+      setPlacaValue((data as any).veiculo_placa || "");
+      setModeloValue((data as any).veiculo_modelo || "");
+      setCorValue((data as any).veiculo_cor || "");
     }
     setLoading(false);
   };
-
-  const fetchPayments = async () => {
-    const { data } = await supabase
-      .from("metodos_pagamento")
       .select("*")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
