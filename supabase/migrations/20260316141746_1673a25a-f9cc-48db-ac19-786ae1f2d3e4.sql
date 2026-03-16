@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status_aprovacao text NOT NULL DEFAULT 'pendente';
+COMMENT ON COLUMN public.profiles.status_aprovacao IS 'pendente = não enviou dados, em_analise = aguardando aprovação, aprovado = aprovado pelo admin';
