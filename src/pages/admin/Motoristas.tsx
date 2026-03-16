@@ -1,131 +1,287 @@
-import { Trophy, Search, User, MoreVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
-import { useTable } from "@/hooks/use-table";
-import { exportToCSV, exportToPDF, printTable } from "@/lib/table-utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const headers = [
-  { key: "id", label: "ID" },
-  { key: "nome", label: "Motorista" },
-  { key: "email", label: "E-mail" },
-  { key: "categorias", label: "Categorias" },
-  { key: "veiculo", label: "Veículo" },
-  { key: "placa", label: "Placa" },
-];
+interface DriverProfile {
+  id: string;
+  nome: string | null;
+  telefone: string | null;
+  avatar_url: string | null;
+  cpf: string | null;
+  cnh: string | null;
+  veiculo_placa: string | null;
+  veiculo_modelo: string | null;
+  veiculo_cor: string | null;
+  status_aprovacao: string;
+  created_at: string;
+}
+
+const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive"; icon: typeof CheckCircle2 }> = {
+  pendente: { label: "Pendente", variant: "secondary", icon: Clock },
+  em_analise: { label: "Em análise", variant: "default", icon: Clock },
+  aprovado: { label: "Aprovado", variant: "default", icon: CheckCircle2 },
+  rejeitado: { label: "Rejeitado", variant: "destructive", icon: XCircle },
+};
 
 const Motoristas = () => {
-  const [motoristas] = useState<Record<string, unknown>[]>([]);
-  const [dateStart, setDateStart] = useState("");
-  const [dateEnd, setDateEnd] = useState("");
+  const [drivers, setDrivers] = useState<DriverProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDriver, setSelectedDriver] = useState<DriverProfile | null>(null);
+  const [updating, setUpdating] = useState(false);
 
-  const table = useTable({ data: motoristas, searchKeys: ["nome", "email", "placa", "veiculo"] });
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
 
-  const handleFiltrar = () => {
-    toast.info("Filtro aplicado para o período selecionado.");
+  const fetchDrivers = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, nome, telefone, avatar_url, cpf, cnh, veiculo_placa, veiculo_modelo, veiculo_cor, status_aprovacao, created_at")
+      .eq("tipo", "motorista")
+      .order("created_at", { ascending: false });
+    if (!error && data) setDrivers(data as unknown as DriverProfile[]);
+    setLoading(false);
+  };
+
+  const updateStatus = async (driverId: string, status: string) => {
+    setUpdating(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ status_aprovacao: status } as any)
+      .eq("id", driverId);
+    setUpdating(false);
+    if (error) return toast.error("Erro ao atualizar status");
+    toast.success(status === "aprovado" ? "Motorista aprovado!" : "Motorista rejeitado");
+    setDrivers((prev) => prev.map((d) => d.id === driverId ? { ...d, status_aprovacao: status } : d));
+    setSelectedDriver((prev) => prev ? { ...prev, status_aprovacao: status } : null);
+
+    // Send push notification
+    supabase.functions.invoke("send-push-notification", {
+      body: {
+        user_id: driverId,
+        title: status === "aprovado" ? "✅ Cadastro aprovado!" : "❌ Cadastro não aprovado",
+        body: status === "aprovado"
+          ? "Seu cadastro foi aprovado! Agora você pode ficar online e receber corridas."
+          : "Seu cadastro não foi aprovado. Revise seus dados e envie novamente.",
+        data: { type: "approval_status", status },
+      },
+    }).catch(() => {});
+  };
+
+  const filtered = drivers.filter((d) => {
+    const q = searchQuery.toLowerCase();
+    return !q || [d.nome, d.cpf, d.veiculo_placa, d.veiculo_modelo].some((v) => v?.toLowerCase().includes(q));
+  });
+
+  const counts = {
+    total: drivers.length,
+    pendente: drivers.filter((d) => d.status_aprovacao === "pendente").length,
+    em_analise: drivers.filter((d) => d.status_aprovacao === "em_analise").length,
+    aprovado: drivers.filter((d) => d.status_aprovacao === "aprovado").length,
   };
 
   return (
     <div className="space-y-6">
-      {/* Top 5 Performance */}
-      <div className="rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 p-5 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <button className="flex items-center gap-2 text-lg font-bold">
-            <Trophy size={22} />
-            Top 5 Performance
-          </button>
-          <div className="flex items-center gap-2">
-            <Input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
-            <Input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} className="h-8 text-xs bg-white/10 border-white/20 text-white w-36" />
-            <Button size="sm" variant="outline" onClick={handleFiltrar} className="text-xs border-white/30 text-white hover:bg-white/10 gap-1">
-              <Search size={14} /> Filtrar
-            </Button>
-          </div>
-        </div>
-
-        <Table>
-          <TableHeader>
-            <TableRow className="border-white/20 hover:bg-transparent">
-              <TableHead className="text-white/70 text-xs">POS.</TableHead>
-              <TableHead className="text-white/70 text-xs">MOTORISTA</TableHead>
-              <TableHead className="text-blue-300 text-xs text-center">FINALIZADAS (1)</TableHead>
-              <TableHead className="text-yellow-300 text-xs text-center">CANC. MOTORISTA (D)</TableHead>
-              <TableHead className="text-rose-300 text-xs text-center">CANC. PASSAGEIRO (P)</TableHead>
-              <TableHead className="text-white/70 text-xs text-right">APROV.</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow className="border-white/10 hover:bg-white/5">
-              <TableCell colSpan={6} className="text-center text-white/50 py-8 text-sm">
-                Nenhum dado disponível.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total", value: counts.total, color: "text-foreground" },
+          { label: "Pendentes", value: counts.pendente, color: "text-muted-foreground" },
+          { label: "Em análise", value: counts.em_analise, color: "text-amber-500" },
+          { label: "Aprovados", value: counts.aprovado, color: "text-success" },
+        ].map((s) => (
+          <Card key={s.label} className="bg-card border-border">
+            <CardContent className="p-4 text-center">
+              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Listagem de Motoristas */}
+      {/* Table */}
       <Card className="bg-card border-border">
         <CardContent className="p-0">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1" onClick={() => exportToCSV(motoristas, headers, "motoristas")}>📋 CSV</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1" onClick={() => exportToPDF(motoristas, headers, "Motoristas")}>📄 PDF</Button>
-              <Button variant="outline" size="sm" className="text-xs text-primary border-primary gap-1" onClick={() => printTable(motoristas, headers, "Motoristas")}>🖨 Imprimir</Button>
+            <h2 className="font-semibold text-sm">Motoristas cadastrados</h2>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-48 h-8 text-xs"
+              />
             </div>
-            <Input placeholder="Pesquisar motorista..." value={table.search} onChange={(e) => table.setSearch(e.target.value)} className="w-48 h-8 text-xs bg-background border-border" />
           </div>
 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-8"></TableHead>
-                  <TableHead className="text-xs font-semibold">ID</TableHead>
                   <TableHead className="text-xs font-semibold">Motorista</TableHead>
-                  <TableHead className="text-xs font-semibold">E-mail / Status</TableHead>
-                  <TableHead className="text-xs font-semibold">Categorias</TableHead>
+                  <TableHead className="text-xs font-semibold">CPF</TableHead>
                   <TableHead className="text-xs font-semibold">Veículo</TableHead>
                   <TableHead className="text-xs font-semibold">Placa</TableHead>
-                  <TableHead className="text-xs font-semibold">Ações</TableHead>
+                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                  <TableHead className="text-xs font-semibold text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {table.paginatedData.length > 0 ? table.paginatedData.map((m, i) => (
-                  <TableRow key={i}>
-                    <TableCell><User size={14} className="text-muted-foreground" /></TableCell>
-                    <TableCell className="text-sm">{String(m.id)}</TableCell>
-                    <TableCell className="text-sm">{String(m.nome)}</TableCell>
-                    <TableCell className="text-sm">{String(m.email)}</TableCell>
-                    <TableCell className="text-sm">{String(m.categorias)}</TableCell>
-                    <TableCell className="text-sm">{String(m.veiculo)}</TableCell>
-                    <TableCell className="text-sm">{String(m.placa)}</TableCell>
-                    <TableCell><MoreVertical size={14} className="text-muted-foreground" /></TableCell>
-                  </TableRow>
-                )) : (
+                {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8 text-sm">
-                      Nenhum motorista cadastrado.
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                     </TableCell>
                   </TableRow>
-                )}
+                ) : filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhum motorista encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : filtered.map((d) => {
+                  const st = STATUS_MAP[d.status_aprovacao] || STATUS_MAP.pendente;
+                  const StIcon = st.icon;
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-8 h-8">
+                            {d.avatar_url ? <AvatarImage src={d.avatar_url} /> : null}
+                            <AvatarFallback className="text-xs bg-secondary">{d.nome?.charAt(0)?.toUpperCase() || "M"}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium">{d.nome || "Sem nome"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.cpf || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.veiculo_modelo || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.veiculo_placa || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant={st.variant} className="text-[10px] gap-1">
+                          <StIcon size={10} />
+                          {st.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelectedDriver(d)}>
+                          <Eye size={14} /> Ver
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
-
-          <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-            <span>{table.paginationLabel}</span>
-            <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canPrev} onClick={table.prev}>Anterior</Button>
-              <Button variant="outline" size="sm" className="text-xs h-8" disabled={!table.canNext} onClick={table.next}>Próximo</Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
+
+      {/* Detail Dialog */}
+      <Dialog open={!!selectedDriver} onOpenChange={() => setSelectedDriver(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User size={18} />
+              Dados do Motorista
+            </DialogTitle>
+          </DialogHeader>
+          {selectedDriver && (() => {
+            const st = STATUS_MAP[selectedDriver.status_aprovacao] || STATUS_MAP.pendente;
+            const StIcon = st.icon;
+            return (
+              <div className="space-y-4">
+                {/* Avatar + Name */}
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-16 h-16">
+                    {selectedDriver.avatar_url ? <AvatarImage src={selectedDriver.avatar_url} /> : null}
+                    <AvatarFallback className="bg-secondary text-primary text-lg">
+                      {selectedDriver.nome?.charAt(0)?.toUpperCase() || "M"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-bold text-foreground">{selectedDriver.nome || "Sem nome"}</p>
+                    <Badge variant={st.variant} className="text-[10px] gap-1 mt-1">
+                      <StIcon size={10} />
+                      {st.label}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Personal */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Shield size={12} /> Dados Pessoais
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-muted-foreground">CPF:</span> <span className="font-medium">{selectedDriver.cpf || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Telefone:</span> <span className="font-medium">{selectedDriver.telefone || "—"}</span></div>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1"><FileText size={12} /> CNH:</span>
+                    <span className="font-medium ml-5">{selectedDriver.cnh || "—"}</span>
+                  </div>
+                </div>
+
+                {/* Vehicle */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Car size={12} /> Veículo
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-muted-foreground">Modelo:</span> <span className="font-medium">{selectedDriver.veiculo_modelo || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Cor:</span> <span className="font-medium">{selectedDriver.veiculo_cor || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Placa:</span> <span className="font-medium">{selectedDriver.veiculo_placa || "—"}</span></div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {selectedDriver.status_aprovacao === "em_analise" && (
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-11 font-bold border-destructive text-destructive hover:bg-destructive/10"
+                      onClick={() => updateStatus(selectedDriver.id, "pendente")}
+                      disabled={updating}
+                    >
+                      <XCircle size={16} className="mr-2" />
+                      Rejeitar
+                    </Button>
+                    <Button
+                      className="flex-1 h-11 font-bold bg-success hover:bg-success/90 text-success-foreground"
+                      onClick={() => updateStatus(selectedDriver.id, "aprovado")}
+                      disabled={updating}
+                    >
+                      <CheckCircle2 size={16} className="mr-2" />
+                      Aprovar
+                    </Button>
+                  </div>
+                )}
+
+                {selectedDriver.status_aprovacao === "aprovado" && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 font-bold border-destructive text-destructive hover:bg-destructive/10"
+                    onClick={() => updateStatus(selectedDriver.id, "pendente")}
+                    disabled={updating}
+                  >
+                    Revogar aprovação
+                  </Button>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
