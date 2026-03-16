@@ -56,8 +56,14 @@ const DriverProfileScreen = () => {
 
   const [editingName, setEditingName] = useState(false);
   const [editingCPF, setEditingCPF] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(false);
+  const [editingCNH, setEditingCNH] = useState(false);
   const [nameValue, setNameValue] = useState("");
   const [cpfValue, setCpfValue] = useState("");
+  const [cnhValue, setCnhValue] = useState("");
+  const [placaValue, setPlacaValue] = useState("");
+  const [modeloValue, setModeloValue] = useState("");
+  const [corValue, setCorValue] = useState("");
 
   const [addingPayment, setAddingPayment] = useState(false);
   const [newPaymentType, setNewPaymentType] = useState("pix");
