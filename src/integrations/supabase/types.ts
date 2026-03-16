@@ -347,6 +347,7 @@ export type Database = {
           categoria: string
           cidade_id: string
           created_at: string
+          dias_semana: number[]
           hora_fim: string | null
           hora_inicio: string | null
           id: string
@@ -362,6 +363,7 @@ export type Database = {
           categoria?: string
           cidade_id: string
           created_at?: string
+          dias_semana?: number[]
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
@@ -377,6 +379,7 @@ export type Database = {
           categoria?: string
           cidade_id?: string
           created_at?: string
+          dias_semana?: number[]
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
