@@ -52,10 +52,10 @@ const EnvioTracking = () => {
   const [loading, setLoading] = useState(true);
 
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const driverMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const coletaMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const entregaMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const driverMarkerRef = useRef<google.maps.Marker | null>(null);
+  const coletaMarkerRef = useRef<google.maps.Marker | null>(null);
+  const entregaMarkerRef = useRef<google.maps.Marker | null>(null);
 
   // Fetch envio data
   const fetchEnvio = useCallback(async () => {
