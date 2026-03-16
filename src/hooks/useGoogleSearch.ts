@@ -36,8 +36,9 @@ export const useGoogleSearch = () => {
         access_token: MAPBOX_TOKEN,
         language: "pt",
         country: "BR",
-        limit: "5",
-        types: "poi,address,place",
+        limit: "10",
+        types: "poi,address,place,neighborhood,locality,district,region,postcode",
+        fuzzyMatch: "true",
       });
       if (proximity) {
         params.set("proximity", `${proximity[0]},${proximity[1]}`);
