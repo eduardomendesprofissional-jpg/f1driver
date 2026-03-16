@@ -27,7 +27,7 @@ const PassengerHome = () => {
     }, 350);
   };
 
-  const handleSelectPlace = (place: MapboxPlace) => {
+  const handleSelectPlace = (place: GooglePlace) => {
     if (!position || !endereco) return;
     saveRoute({
       origem_endereco: endereco,
