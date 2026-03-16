@@ -227,9 +227,17 @@ const PassengerHome = () => {
                 </div>
               ) : destination.length >= 3 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Nenhum resultado encontrado.</p>
-              ) : savedRoutes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Digite pelo menos 3 caracteres.</p>
               ) : null}
+
+              {/* Nearby places inside search overlay */}
+              {destination.length < 3 && (
+                <div className="mt-4">
+                  <NearbyPlaces
+                    userPosition={position}
+                    onSelectPlace={handleSelectNearby}
+                  />
+                </div>
+              )}
             </div>
           </motion.div>
         )}
