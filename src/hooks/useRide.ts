@@ -99,9 +99,21 @@ export const useRide = () => {
         .single();
       if (error) throw error;
 
-      // Dispatch to nearest driver
+      // Dispatch to nearest driver and send push notification
       if (data?.id) {
-        await supabase.rpc("dispatch_ride", { p_ride_id: data.id });
+        const result = await supabase.rpc("dispatch_ride", { p_ride_id: data.id });
+        const driverId = result.data;
+        if (driverId) {
+          // Fire and forget push notification
+          supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: driverId,
+              title: "Nova corrida disponível!",
+              body: `De ${est.origem_endereco} → ${est.destino_endereco} | R$ ${est.valor.toFixed(2)}`,
+              data: { ride_id: data.id },
+            },
+          }).catch(() => {});
+        }
       }
 
       return data;
