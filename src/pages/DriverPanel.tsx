@@ -45,12 +45,26 @@ const DriverPanel = () => {
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <h1 className="text-lg font-bold">Painel do Motorista</h1>
-        <button
-          onClick={() => navigate("/driver/settings")}
-          className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Settings size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/driver/inbox")}
+            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Bell size={20} />
+          </button>
+          <button
+            onClick={() => navigate("/driver/referral")}
+            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Gift size={20} />
+          </button>
+          <button
+            onClick={() => navigate("/driver/settings")}
+            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Settings size={20} />
+          </button>
+        </div>
         <button
           onClick={() => setOnline(!online)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
