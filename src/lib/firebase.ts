@@ -26,6 +26,28 @@ export const getFirebaseMessaging = async () => {
   return messagingInstance;
 };
 
+let cachedVapidKey: string | null = null;
+
+const fetchVapidKey = async (): Promise<string> => {
+  if (cachedVapidKey) return cachedVapidKey;
+  try {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const res = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/get-vapid-key`,
+      {
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      }
+    );
+    const data = await res.json();
+    cachedVapidKey = data.vapidKey || "";
+    return cachedVapidKey!;
+  } catch {
+    return "";
+  }
+};
+
 export const requestNotificationPermission = async (): Promise<string | null> => {
   try {
     const permission = await Notification.requestPermission();
@@ -37,8 +59,10 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
     const messaging = await getFirebaseMessaging();
     if (!messaging) return null;
 
+    const vapidKey = await fetchVapidKey();
+
     const token = await getToken(messaging, {
-      vapidKey: "", // Will be set by user if needed; FCM works without for testing
+      vapidKey,
       serviceWorkerRegistration: await navigator.serviceWorker.register("/firebase-messaging-sw.js"),
     });
 
