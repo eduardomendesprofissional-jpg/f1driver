@@ -99,7 +99,7 @@ const EnvioNovo = () => {
     setCalculando(true);
     try {
       const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${coleta.lng},${coleta.lat};${entrega.lng},${entrega.lat}?access_token=${MAPBOX_TOKEN}&overview=false`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${coleta.lat},${coleta.lng}&destination=${entrega.lat},${entrega.lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
       );
       const data = await res.json();
       const route = data.routes?.[0];
