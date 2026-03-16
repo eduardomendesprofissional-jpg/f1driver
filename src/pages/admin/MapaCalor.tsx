@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { MapPin, Info, Flame, TrendingUp, Clock } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { MapPin, Info, Flame, TrendingUp, Clock, Store } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import MapboxMap from "@/components/MapboxMap";
+import MapboxPOISearch from "@/components/MapboxPOISearch";
 import { supabase } from "@/integrations/supabase/client";
 import mapboxgl from "mapbox-gl";
 
