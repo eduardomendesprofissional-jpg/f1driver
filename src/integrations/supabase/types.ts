@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      administradores: {
+        Row: {
+          created_at: string
+          foto_url: string | null
+          funcao: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          foto_url?: string | null
+          funcao?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          foto_url?: string | null
+          funcao?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cidades_brasil: {
         Row: {
           ativo: boolean
