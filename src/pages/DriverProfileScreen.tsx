@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, CreditCard, Settings, ChevronRight, ArrowLeft, LogOut,
   Camera, Shield, CheckCircle2, Plus, Trash2, Star, Edit2, Save, X,
-  Fingerprint, AlertCircle, Car
+  Fingerprint, AlertCircle, Car, FileText, Palette
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +22,10 @@ interface Profile {
   avatar_url: string | null;
   cpf: string | null;
   verificacao_facial: boolean;
+  cnh: string | null;
+  veiculo_placa: string | null;
+  veiculo_modelo: string | null;
+  veiculo_cor: string | null;
 }
 
 interface PaymentMethod {
@@ -52,8 +56,14 @@ const DriverProfileScreen = () => {
 
   const [editingName, setEditingName] = useState(false);
   const [editingCPF, setEditingCPF] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(false);
+  const [editingCNH, setEditingCNH] = useState(false);
   const [nameValue, setNameValue] = useState("");
   const [cpfValue, setCpfValue] = useState("");
+  const [cnhValue, setCnhValue] = useState("");
+  const [placaValue, setPlacaValue] = useState("");
+  const [modeloValue, setModeloValue] = useState("");
+  const [corValue, setCorValue] = useState("");
 
   const [addingPayment, setAddingPayment] = useState(false);
   const [newPaymentType, setNewPaymentType] = useState("pix");
@@ -69,17 +79,20 @@ const DriverProfileScreen = () => {
   const fetchProfile = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("nome, telefone, avatar_url, cpf, verificacao_facial")
+      .select("nome, telefone, avatar_url, cpf, verificacao_facial, cnh, veiculo_placa, veiculo_modelo, veiculo_cor")
       .eq("id", user!.id)
       .single();
     if (data) {
-      setProfile(data as Profile);
+      setProfile(data as unknown as Profile);
       setNameValue(data.nome || "");
       setCpfValue(data.cpf || "");
+      setCnhValue((data as any).cnh || "");
+      setPlacaValue((data as any).veiculo_placa || "");
+      setModeloValue((data as any).veiculo_modelo || "");
+      setCorValue((data as any).veiculo_cor || "");
     }
     setLoading(false);
   };
-
   const fetchPayments = async () => {
     const { data } = await supabase
       .from("metodos_pagamento")
@@ -136,7 +149,29 @@ const DriverProfileScreen = () => {
     toast.success("CPF salvo!");
   };
 
-  const startFacialVerification = async () => {
+  const saveCNH = async () => {
+    const digits = cnhValue.replace(/\D/g, "");
+    if (digits.length !== 11) return toast.error("CNH deve ter 11 dígitos");
+    await supabase.from("profiles").update({ cnh: digits } as any).eq("id", user!.id);
+    setProfile((p) => p ? { ...p, cnh: digits } : p);
+    setEditingCNH(false);
+    toast.success("CNH salva!");
+  };
+
+  const saveVehicle = async () => {
+    if (!placaValue.trim() || !modeloValue.trim() || !corValue.trim()) {
+      return toast.error("Preencha todos os campos do veículo");
+    }
+    await supabase.from("profiles").update({
+      veiculo_placa: placaValue.trim().toUpperCase(),
+      veiculo_modelo: modeloValue.trim(),
+      veiculo_cor: corValue.trim(),
+    } as any).eq("id", user!.id);
+    setProfile((p) => p ? { ...p, veiculo_placa: placaValue.trim().toUpperCase(), veiculo_modelo: modeloValue.trim(), veiculo_cor: corValue.trim() } : p);
+    setEditingVehicle(false);
+    toast.success("Dados do veículo salvos!");
+  };
+
     toast.info("Iniciando verificação facial...");
     setTimeout(async () => {
       await supabase.from("profiles").update({ verificacao_facial: true }).eq("id", user!.id);
@@ -313,6 +348,126 @@ const DriverProfileScreen = () => {
                 <Button variant="ghost" size="sm" onClick={() => setEditingCPF(true)}>
                   <Edit2 size={14} />
                   {profile?.cpf ? "Editar" : "Adicionar"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* CNH */}
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <FileText size={20} className="text-primary" />
+              <h2 className="font-semibold text-foreground">CNH</h2>
+            </div>
+            {editingCNH ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={cnhValue}
+                  onChange={(e) => setCnhValue(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                  placeholder="00000000000"
+                  maxLength={11}
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button size="icon" variant="ghost" onClick={saveCNH}>
+                  <Save size={16} className="text-primary" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => { setEditingCNH(false); setCnhValue(profile?.cnh || ""); }}>
+                  <X size={16} className="text-muted-foreground" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {profile?.cnh ? (
+                    <>
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      <span className="text-sm text-foreground">{profile.cnh}</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={16} className="text-amber-500" />
+                      <span className="text-sm text-muted-foreground">CNH não cadastrada</span>
+                    </>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setEditingCNH(true)}>
+                  <Edit2 size={14} />
+                  {profile?.cnh ? "Editar" : "Adicionar"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Veículo */}
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Car size={20} className="text-primary" />
+              <h2 className="font-semibold text-foreground">Veículo</h2>
+            </div>
+            {editingVehicle ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Placa</label>
+                  <Input
+                    value={placaValue}
+                    onChange={(e) => setPlacaValue(e.target.value.toUpperCase().slice(0, 7))}
+                    placeholder="ABC1D23"
+                    maxLength={7}
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Modelo</label>
+                  <Input
+                    value={modeloValue}
+                    onChange={(e) => setModeloValue(e.target.value)}
+                    placeholder="Ex: Honda Civic 2022"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Cor</label>
+                  <Input
+                    value={corValue}
+                    onChange={(e) => setCorValue(e.target.value)}
+                    placeholder="Ex: Preto"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={saveVehicle} size="sm" className="flex-1">Salvar</Button>
+                  <Button onClick={() => { setEditingVehicle(false); setPlacaValue(profile?.veiculo_placa || ""); setModeloValue(profile?.veiculo_modelo || ""); setCorValue(profile?.veiculo_cor || ""); }} size="sm" variant="outline">Cancelar</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  {profile?.veiculo_placa ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={16} className="text-green-500" />
+                        <span className="text-sm font-medium text-foreground">{profile.veiculo_modelo}</span>
+                      </div>
+                      <div className="flex items-center gap-3 ml-6">
+                        <Badge variant="outline" className="text-xs">{profile.veiculo_placa}</Badge>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Palette size={12} /> {profile.veiculo_cor}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <AlertCircle size={16} className="text-amber-500" />
+                      <span className="text-sm text-muted-foreground">Veículo não cadastrado</span>
+                    </div>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setEditingVehicle(true)}>
+                  <Edit2 size={14} />
+                  {profile?.veiculo_placa ? "Editar" : "Adicionar"}
                 </Button>
               </div>
             )}

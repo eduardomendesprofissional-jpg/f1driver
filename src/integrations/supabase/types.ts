@@ -166,6 +166,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          cnh: string | null
           cpf: string | null
           created_at: string
           id: string
@@ -173,10 +174,14 @@ export type Database = {
           telefone: string | null
           tipo: string
           updated_at: string
+          veiculo_cor: string | null
+          veiculo_modelo: string | null
+          veiculo_placa: string | null
           verificacao_facial: boolean
         }
         Insert: {
           avatar_url?: string | null
+          cnh?: string | null
           cpf?: string | null
           created_at?: string
           id: string
@@ -184,10 +189,14 @@ export type Database = {
           telefone?: string | null
           tipo?: string
           updated_at?: string
+          veiculo_cor?: string | null
+          veiculo_modelo?: string | null
+          veiculo_placa?: string | null
           verificacao_facial?: boolean
         }
         Update: {
           avatar_url?: string | null
+          cnh?: string | null
           cpf?: string | null
           created_at?: string
           id?: string
@@ -195,6 +204,9 @@ export type Database = {
           telefone?: string | null
           tipo?: string
           updated_at?: string
+          veiculo_cor?: string | null
+          veiculo_modelo?: string | null
+          veiculo_placa?: string | null
           verificacao_facial?: boolean
         }
         Relationships: []
