@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
-  Package, CheckCircle, Truck, ArrowRight
+  Package, CheckCircle, Truck, ArrowRight, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
