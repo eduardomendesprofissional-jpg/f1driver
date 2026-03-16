@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
 
 export interface GeoPosition {
   lat: number;
@@ -31,11 +30,11 @@ export const useGeolocation = () => {
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
-      );
-      const data = await res.json();
-      return data.results?.[0]?.formatted_address || "Sua localização";
+      const { loadMapsLibrary } = await import("@/lib/google-maps");
+      await loadMapsLibrary();
+      const geocoder = new google.maps.Geocoder();
+      const response = await geocoder.geocode({ location: { lat, lng } });
+      return response.results?.[0]?.formatted_address || "Sua localização";
     } catch {
       return "Sua localização";
     }
