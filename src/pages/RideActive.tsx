@@ -53,8 +53,8 @@ const RideActive = () => {
         fetchETA(data);
 
         // Resume wait timer if already arrived
-        if (data.status === "aguardando" && data.chegou_em) {
-          const elapsed = Math.floor((Date.now() - new Date(data.chegou_em).getTime()) / 1000);
+        if (data.status === "aguardando" && (data as any).chegou_em) {
+          const elapsed = Math.floor((Date.now() - new Date((data as any).chegou_em).getTime()) / 1000);
           const remaining = Math.max(0, WAIT_TIMER_SECONDS - elapsed);
           if (remaining > 0) {
             setWaitCountdown(remaining);
