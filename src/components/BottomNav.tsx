@@ -19,7 +19,7 @@ const BottomNav = ({ active, role }: BottomNavProps) => {
   const driverItems = [
     { id: "home" as const, icon: Home, label: "Início", path: "/driver" },
     { id: "history" as const, icon: Clock, label: "Histórico", path: "/history" },
-    { id: "profile" as const, icon: User, label: "Perfil", path: "/profile" },
+    { id: "profile" as const, icon: User, label: "Perfil", path: "/driver/profile" },
   ];
 
   const items = role === "passenger" ? passengerItems : driverItems;
