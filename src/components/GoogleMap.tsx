@@ -16,7 +16,7 @@ interface MapboxMapProps {
 const GoogleMap = ({
   className = "w-full h-[400px]",
   center,
-  zoom = 12,
+  zoom = 15,
   showUserMarker = true,
   onMapReady,
 }: MapboxMapProps) => {
@@ -32,7 +32,7 @@ const GoogleMap = ({
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
+      style: "mapbox://styles/mapbox/navigation-night-v1",
       center: initCenter,
       zoom: center ? zoom : 4,
       attributionControl: false,
@@ -62,6 +62,7 @@ const GoogleMap = ({
       if (markerRef.current) {
         markerRef.current.setLngLat(center);
       } else {
+        // Blue pulsing marker for driver position
         const el = document.createElement("div");
         el.style.width = "18px";
         el.style.height = "18px";
@@ -69,6 +70,7 @@ const GoogleMap = ({
         el.style.backgroundColor = "#276EF1";
         el.style.border = "3px solid white";
         el.style.boxShadow = "0 0 8px rgba(39,110,241,0.6)";
+        el.style.animation = "pulse-blue 2s infinite";
 
         markerRef.current = new mapboxgl.Marker({ element: el })
           .setLngLat(center)
@@ -77,7 +79,18 @@ const GoogleMap = ({
     }
   }, [center?.[0], center?.[1], showUserMarker, loaded]);
 
-  return <div ref={mapContainer} className={className} />;
+  return (
+    <>
+      <style>{`
+        @keyframes pulse-blue {
+          0% { box-shadow: 0 0 0 0 rgba(39,110,241,0.5); }
+          70% { box-shadow: 0 0 0 12px rgba(39,110,241,0); }
+          100% { box-shadow: 0 0 0 0 rgba(39,110,241,0); }
+        }
+      `}</style>
+      <div ref={mapContainer} className={className} />
+    </>
+  );
 };
 
 export default GoogleMap;

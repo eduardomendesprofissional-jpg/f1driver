@@ -72,21 +72,27 @@ export const useGeolocation = () => {
     );
   }, [reverseGeocode]);
 
+  // Poll position every 10 seconds for real-time updates
   useEffect(() => {
     if (permission !== "granted" || !navigator.geolocation) return;
 
-    const watchId = navigator.geolocation.watchPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        setPosition({ lat, lng });
-        const addr = await reverseGeocode(lat, lng);
-        setEndereco(addr);
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 30000 }
-    );
+    const updatePosition = () => {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          setPosition({ lat, lng });
+          const addr = await reverseGeocode(lat, lng);
+          setEndereco(addr);
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    };
 
-    return () => navigator.geolocation.clearWatch(watchId);
+    updatePosition();
+    const intervalId = setInterval(updatePosition, 10000);
+
+    return () => clearInterval(intervalId);
   }, [permission, reverseGeocode]);
 
   return { position, endereco, permission, loading, error, requestLocation };

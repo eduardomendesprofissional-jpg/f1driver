@@ -44,7 +44,7 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => query && setOpen(true)}
-          placeholder="Buscar endereço..."
+          placeholder="Buscar endereço ou estabelecimento..."
           className="w-full pl-9 pr-9 py-2.5 rounded-xl text-sm text-white placeholder:text-white/40 bg-[#0a0f1e]/90 backdrop-blur-md border border-[#1e3a6e] focus:border-[#4fc3f7] focus:outline-none transition-colors"
         />
         {query && (
@@ -63,7 +63,12 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
               className="w-full flex items-start gap-2.5 px-3 py-2.5 hover:bg-[#1e3a6e]/40 transition-colors text-left"
             >
               <MapPin size={14} className="text-[#4fc3f7] mt-0.5 shrink-0" />
-              <p className="text-xs text-white font-medium truncate">{place.place_name}</p>
+              <div className="min-w-0">
+                {place.text && place.text !== place.place_name && (
+                  <p className="text-xs text-white font-semibold truncate">{place.text}</p>
+                )}
+                <p className="text-[11px] text-white/60 truncate">{place.place_name}</p>
+              </div>
             </button>
           ))}
         </div>

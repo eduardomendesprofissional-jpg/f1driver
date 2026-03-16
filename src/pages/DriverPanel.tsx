@@ -16,6 +16,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useDriverEnvios } from "@/hooks/useDriverEnvios";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { motion, AnimatePresence } from "framer-motion";
+import mapboxgl from "mapbox-gl";
 
 const DriverPanel = () => {
   const navigate = useNavigate();
@@ -23,8 +24,8 @@ const DriverPanel = () => {
   const [accepting, setAccepting] = useState(false);
   const [tab, setTab] = useState<"corridas" | "envios">("corridas");
   const [searchCenter, setSearchCenter] = useState<[number, number] | undefined>();
-  const mapRef = useRef<any>(null);
-  const searchMarkerRef = useRef<any>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const searchMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const { position, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
 
   useDriverLocation(online);
@@ -48,36 +49,36 @@ const DriverPanel = () => {
     setSearchCenter([lng, lat]);
     if (mapRef.current) {
       mapRef.current.flyTo({ center: [lng, lat], zoom: 16 });
+
+      // Remove previous search marker
+      if (searchMarkerRef.current) {
+        searchMarkerRef.current.remove();
+      }
+
+      // Add red destination marker
+      searchMarkerRef.current = new mapboxgl.Marker({ color: "#ef4444" })
+        .setLngLat([lng, lat])
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(address))
+        .addTo(mapRef.current);
     }
   };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <h1 className="text-lg font-bold">Painel do Motorista</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate("/driver/wallet")}
-            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => navigate("/driver/wallet")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Wallet size={20} />
           </button>
-          <button
-            onClick={() => navigate("/driver/inbox")}
-            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => navigate("/driver/inbox")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Bell size={20} />
           </button>
-          <button
-            onClick={() => navigate("/driver/referral")}
-            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => navigate("/driver/referral")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Gift size={20} />
           </button>
-          <button
-            onClick={() => navigate("/driver/settings")}
-            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => navigate("/driver/settings")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Settings size={20} />
           </button>
         </div>
@@ -141,9 +142,7 @@ const DriverPanel = () => {
           <button
             onClick={() => setTab("corridas")}
             className={`flex-1 py-3 text-sm font-semibold text-center transition-colors ${
-              tab === "corridas"
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground"
+              tab === "corridas" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
             }`}
           >
             🚗 Corridas
@@ -151,9 +150,7 @@ const DriverPanel = () => {
           <button
             onClick={() => setTab("envios")}
             className={`flex-1 py-3 text-sm font-semibold text-center transition-colors relative ${
-              tab === "envios"
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground"
+              tab === "envios" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
             }`}
           >
             📦 Envios
@@ -185,24 +182,13 @@ const DriverPanel = () => {
                         <div className="relative w-8 h-8">
                           <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
                             <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--secondary))" strokeWidth="3" />
-                            <circle
-                              cx="16" cy="16" r="14" fill="none"
-                              stroke="hsl(var(--primary))" strokeWidth="3"
-                              strokeDasharray={`${(countdown / 15) * 88} 88`}
-                              strokeLinecap="round"
-                              className="transition-all duration-1000"
-                            />
+                            <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeDasharray={`${(countdown / 15) * 88} 88`} strokeLinecap="round" className="transition-all duration-1000" />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">
-                            {countdown}
-                          </span>
+                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">{countdown}</span>
                         </div>
-                        <span className="text-lg font-bold text-primary">
-                          R$ {Number(currentRequest.valor || 0).toFixed(2)}
-                        </span>
+                        <span className="text-lg font-bold text-primary">R$ {Number(currentRequest.valor || 0).toFixed(2)}</span>
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <div className="flex items-start gap-2">
                         <div className="w-3 h-3 rounded-full bg-primary mt-1 shrink-0" />
@@ -213,26 +199,13 @@ const DriverPanel = () => {
                         <p className="text-sm truncate">{currentRequest.destino_endereco}</p>
                       </div>
                     </div>
-
                     <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Navigation size={12} />
-                        {currentRequest.distancia_km} km
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {currentRequest.duracao_min} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Banknote size={12} />
-                        {currentRequest.forma_pagamento}
-                      </span>
+                      <span className="flex items-center gap-1"><Navigation size={12} />{currentRequest.distancia_km} km</span>
+                      <span className="flex items-center gap-1"><Clock size={12} />{currentRequest.duracao_min} min</span>
+                      <span className="flex items-center gap-1"><Banknote size={12} />{currentRequest.forma_pagamento}</span>
                     </div>
-
                     <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1 h-12 font-bold" onClick={rejectRide}>
-                        Recusar
-                      </Button>
+                      <Button variant="outline" className="flex-1 h-12 font-bold" onClick={rejectRide}>Recusar</Button>
                       <Button className="flex-1 h-12 font-bold glow-blue" onClick={handleAccept} disabled={accepting}>
                         {accepting ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
                         Aceitar
@@ -242,7 +215,6 @@ const DriverPanel = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-
             {!currentRequest && (
               <div className="p-4 space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solicitações</p>
@@ -256,9 +228,7 @@ const DriverPanel = () => {
           <motion.div key="envios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 space-y-4 overflow-y-auto max-h-[50vh]">
             {myEnvios.length > 0 && (
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                  <Truck size={14} /> Meus envios ativos
-                </p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5"><Truck size={14} /> Meus envios ativos</p>
                 {myEnvios.map((envio) => (
                   <div key={envio.id} className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -278,50 +248,33 @@ const DriverPanel = () => {
                         <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
                         <p className="text-xs truncate text-muted-foreground">{envio.coleta_endereco}</p>
                       </div>
-                      <div className="flex items-center justify-center">
-                        <ArrowRight size={12} className="text-muted-foreground" />
-                      </div>
+                      <div className="flex items-center justify-center"><ArrowRight size={12} className="text-muted-foreground" /></div>
                       <div className="flex items-start gap-2">
                         <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
                         <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
                       </div>
                     </div>
                     <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span>{envio.tamanho}</span>
-                      <span>•</span>
-                      <span>{envio.peso_kg} kg</span>
-                      {envio.distancia_km && (
-                        <>
-                          <span>•</span>
-                          <span>{envio.distancia_km} km</span>
-                        </>
-                      )}
+                      <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
+                      {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
                     </div>
                     {envio.status === "pendente" && (
                       <Button className="w-full h-11 font-bold" onClick={() => markColetado(envio.id)}>
-                        <CheckCircle size={16} className="mr-2" />
-                        Marcar como Coletado
+                        <CheckCircle size={16} className="mr-2" />Marcar como Coletado
                       </Button>
                     )}
                     {envio.status === "coletado" && (
-                      <Button
-                        className="w-full h-11 font-bold bg-success hover:bg-success/90 text-success-foreground"
-                        onClick={() => markEntregue(envio.id)}
-                      >
-                        <CheckCircle size={16} className="mr-2" />
-                        Marcar como Entregue
+                      <Button className="w-full h-11 font-bold bg-success hover:bg-success/90 text-success-foreground" onClick={() => markEntregue(envio.id)}>
+                        <CheckCircle size={16} className="mr-2" />Marcar como Entregue
                       </Button>
                     )}
                   </div>
                 ))}
               </div>
             )}
-
             {pendingEnvios.length > 0 && (
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Package size={14} /> Envios disponíveis
-                </p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><Package size={14} /> Envios disponíveis</p>
                 {pendingEnvios.map((envio) => (
                   <div key={envio.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -342,31 +295,17 @@ const DriverPanel = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span>{envio.tamanho}</span>
-                      <span>•</span>
-                      <span>{envio.peso_kg} kg</span>
-                      {envio.distancia_km && (
-                        <>
-                          <span>•</span>
-                          <span>{envio.distancia_km} km</span>
-                        </>
-                      )}
-                      <span>•</span>
-                      <span>{envio.forma_pagamento}</span>
+                      <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
+                      {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
+                      <span>•</span><span>{envio.forma_pagamento}</span>
                     </div>
-                    <Button
-                      variant="outline"
-                      className="w-full h-11 font-bold border-primary text-primary hover:bg-primary/10"
-                      onClick={() => acceptEnvio(envio.id)}
-                    >
-                      <Truck size={16} className="mr-2" />
-                      Aceitar Envio
+                    <Button variant="outline" className="w-full h-11 font-bold border-primary text-primary hover:bg-primary/10" onClick={() => acceptEnvio(envio.id)}>
+                      <Truck size={16} className="mr-2" />Aceitar Envio
                     </Button>
                   </div>
                 ))}
               </div>
             )}
-
             {pendingEnvios.length === 0 && myEnvios.length === 0 && (
               <div className="text-center py-8">
                 <Package size={32} className="mx-auto text-muted-foreground/40 mb-3" />

@@ -4,6 +4,7 @@ import { MAPBOX_TOKEN } from "@/lib/mapbox";
 export interface GooglePlace {
   id: string;
   place_name: string;
+  text: string; // establishment/POI name
   center: [number, number]; // [lng, lat]
 }
 
@@ -20,10 +21,10 @@ export const useGoogleSearch = () => {
     try {
       const params = new URLSearchParams({
         access_token: MAPBOX_TOKEN,
-        language: "pt-BR",
+        language: "pt",
         country: "BR",
         limit: "5",
-        types: "address,poi,place,locality",
+        types: "poi,address,place",
       });
       if (proximity) {
         params.set("proximity", `${proximity[0]},${proximity[1]}`);
@@ -36,6 +37,7 @@ export const useGoogleSearch = () => {
 
       const places: GooglePlace[] = (data.features || []).map((f: any) => ({
         id: f.id,
+        text: f.text || "",
         place_name: f.place_name,
         center: f.center as [number, number],
       }));
