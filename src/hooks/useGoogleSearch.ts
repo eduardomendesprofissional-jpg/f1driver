@@ -4,8 +4,21 @@ import { MAPBOX_TOKEN } from "@/lib/mapbox";
 export interface GooglePlace {
   id: string;
   place_name: string;
-  text: string; // establishment/POI name
+  text: string;
   center: [number, number]; // [lng, lat]
+  distance?: string;
+}
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistance(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
 export const useGoogleSearch = () => {
@@ -35,12 +48,27 @@ export const useGoogleSearch = () => {
       );
       const data = await res.json();
 
-      const places: GooglePlace[] = (data.features || []).map((f: any) => ({
-        id: f.id,
-        text: f.text || "",
-        place_name: f.place_name,
-        center: f.center as [number, number],
-      }));
+      const places: GooglePlace[] = (data.features || []).map((f: any) => {
+        const center = f.center as [number, number];
+        const dist = proximity
+          ? haversineDistance(proximity[1], proximity[0], center[1], center[0])
+          : undefined;
+        return {
+          id: f.id,
+          text: f.text || "",
+          place_name: f.place_name,
+          center,
+          distance: dist !== undefined ? formatDistance(dist) : undefined,
+        };
+      });
+      // Sort by distance if proximity available
+      if (proximity) {
+        places.sort((a, b) => {
+          const dA = haversineDistance(proximity[1], proximity[0], a.center[1], a.center[0]);
+          const dB = haversineDistance(proximity[1], proximity[0], b.center[1], b.center[0]);
+          return dA - dB;
+        });
+      }
       setResults(places);
     } catch {
       setResults([]);
