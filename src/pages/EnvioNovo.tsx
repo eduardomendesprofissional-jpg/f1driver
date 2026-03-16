@@ -81,7 +81,7 @@ const EnvioNovo = () => {
     }, 350);
   };
 
-  const handleSelectPlace = (place: MapboxPlace) => {
+  const handleSelectPlace = (place: GooglePlace) => {
     const addr = { endereco: place.place_name, lat: place.center[1], lng: place.center[0] };
     if (searchingField === "coleta") {
       setColeta(addr);
