@@ -52,6 +52,7 @@ import ConfigurarApp from "./pages/admin/ConfigurarApp";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
 import EnviosScreen from "./pages/EnviosScreen";
+import DriverProfileScreen from "./pages/DriverProfileScreen";
 
 const queryClient = new QueryClient();
 
