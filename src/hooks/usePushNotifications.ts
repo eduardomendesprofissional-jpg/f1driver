@@ -13,11 +13,11 @@ export const usePushNotifications = (enabled: boolean) => {
     const token = await requestNotificationPermission();
     if (!token) return;
 
-    // Upsert token in device_tokens table
+    // Upsert token in device_tokens table using raw rpc to avoid type issues
     const { error } = await supabase
-      .from("device_tokens")
+      .from("device_tokens" as any)
       .upsert(
-        { user_id: user.id, token, platform: "web", updated_at: new Date().toISOString() },
+        { user_id: user.id, token, platform: "web", updated_at: new Date().toISOString() } as any,
         { onConflict: "user_id,token" }
       );
 
