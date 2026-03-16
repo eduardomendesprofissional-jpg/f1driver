@@ -89,6 +89,8 @@ const App = () => (
             <Route path="/envios/:id" element={<ProtectedRoute><EnvioTracking /></ProtectedRoute>} />
             <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
+            <Route path="/inbox" element={<ProtectedRoute><PassengerInbox /></ProtectedRoute>} />
+            <Route path="/referral" element={<ProtectedRoute><PassengerReferral /></ProtectedRoute>} />
             <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
             <Route path="/driver/profile" element={<ProtectedRoute><DriverProfileScreen /></ProtectedRoute>} />
             <Route path="/driver/settings" element={<ProtectedRoute><DriverSettings /></ProtectedRoute>} />
