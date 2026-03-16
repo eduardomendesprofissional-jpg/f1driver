@@ -2,13 +2,18 @@ import { useState, useCallback } from "react";
 import { searchFoursquarePlaces, FoursquarePlace } from "@/lib/foursquare";
 import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
+const MAX_DISTANCE_KM = 25;
+const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
+
 export interface GooglePlace {
   id: string;
   place_name: string;
   text: string;
   center: [number, number]; // [lng, lat]
   distance?: string;
+  distanceMeters?: number;
   category?: string;
+  blocked?: boolean;
 }
 
 function formatDistance(meters: number): string {
@@ -31,14 +36,19 @@ async function searchMapbox(query: string, lng: number, lat: number): Promise<Go
     );
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.features || []).map((f: any) => ({
-      id: f.id,
-      text: f.text || f.place_name,
-      place_name: f.place_name || "",
-      center: f.center as [number, number],
-      distance: formatDistance(haversineDistance(lat, lng, f.center[1], f.center[0])),
-      category: "Endereço",
-    }));
+    return (data.features || []).map((f: any) => {
+      const dist = haversineDistance(lat, lng, f.center[1], f.center[0]);
+      return {
+        id: f.id,
+        text: f.text || f.place_name,
+        place_name: f.place_name || "",
+        center: f.center as [number, number],
+        distance: formatDistance(dist),
+        distanceMeters: dist,
+        category: "Endereço",
+        blocked: dist > MAX_DISTANCE_M,
+      };
+    });
   } catch {
     return [];
   }
@@ -58,9 +68,8 @@ export const useGoogleSearch = () => {
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
 
-      // Busca híbrida: Foursquare (POIs) + Mapbox (endereços) em paralelo
       const [fsqResults, mapboxResults] = await Promise.all([
-        searchFoursquarePlaces(query, lat, lng, 5).catch(() => [] as FoursquarePlace[]),
+        searchFoursquarePlaces(query, lat, lng, 5, MAX_DISTANCE_M).catch(() => [] as FoursquarePlace[]),
         searchMapbox(query, lng, lat),
       ]);
 
@@ -71,23 +80,30 @@ export const useGoogleSearch = () => {
           const address = p.location.formatted_address || p.location.address || "";
           const category = p.categories?.[0]?.name || "";
           const fullName = [p.name, address].filter(Boolean).join(" - ");
+          const dist = p.distance ?? haversineDistance(lat, lng, coords.latitude, coords.longitude);
           return {
             id: p.fsq_id,
             text: p.name,
             place_name: fullName,
             center: [coords.longitude, coords.latitude] as [number, number],
-            distance: p.distance !== undefined ? formatDistance(p.distance) : undefined,
+            distance: formatDistance(dist),
+            distanceMeters: dist,
             category,
+            blocked: dist > MAX_DISTANCE_M,
           };
         });
 
-      // Mesclar: Foursquare primeiro, depois Mapbox (sem duplicatas)
       const seen = new Set(foursquarePlaces.map((p) => `${p.center[0].toFixed(4)},${p.center[1].toFixed(4)}`));
       const uniqueMapbox = mapboxResults.filter(
         (p) => !seen.has(`${p.center[0].toFixed(4)},${p.center[1].toFixed(4)}`)
       );
 
-      setResults([...foursquarePlaces, ...uniqueMapbox].slice(0, 10));
+      // Mostrar todos mas marcar bloqueados; ordenar por distância
+      const all = [...foursquarePlaces, ...uniqueMapbox]
+        .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
+        .slice(0, 10);
+
+      setResults(all);
     } catch {
       setResults([]);
     } finally {
