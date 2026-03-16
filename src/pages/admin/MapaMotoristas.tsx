@@ -21,7 +21,7 @@ const MapaMotoristas = () => {
             <Info size={16} className="text-primary" />
             <p className="text-sm text-muted-foreground">O mapa exibe a localização dos motoristas online.</p>
           </div>
-          <MapboxMap className="w-full h-[500px] rounded-lg overflow-hidden" />
+          <GoogleMap className="w-full h-[500px] rounded-lg overflow-hidden" />
         </CardContent>
       </Card>
     </div>

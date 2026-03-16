@@ -192,7 +192,7 @@ const RideActive = () => {
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Map */}
       <div className="flex-1 relative">
-        <MapboxMap
+        <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={14}
           center={ride ? [ride.origem_lng, ride.origem_lat] : undefined}

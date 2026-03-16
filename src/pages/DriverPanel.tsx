@@ -84,7 +84,7 @@ const DriverPanel = () => {
 
       {/* Real Map */}
       <div className="flex-1 relative min-h-[250px]">
-        <MapboxMap
+        <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
           center={position ? [position.lng, position.lat] : undefined}

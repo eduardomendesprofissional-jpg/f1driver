@@ -87,7 +87,7 @@ const PassengerHome = () => {
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Map */}
       <div className="flex-1 relative overflow-hidden">
-        <MapboxMap
+        <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
           center={position ? [position.lng, position.lat] : undefined}
