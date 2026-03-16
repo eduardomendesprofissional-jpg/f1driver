@@ -53,6 +53,26 @@ const PassengerHome = () => {
     });
   };
 
+  const handleMapPickerConfirm = (lat: number, lng: number, addr: string) => {
+    if (!position || !endereco) return;
+    setMapPickerOpen(false);
+    setSearchOpen(false);
+    saveRoute({
+      origem_endereco: endereco,
+      origem_lat: position.lat,
+      origem_lng: position.lng,
+      destino_endereco: addr,
+      destino_lat: lat,
+      destino_lng: lng,
+    });
+    navigate("/ride-confirm", {
+      state: {
+        origem: { endereco, lat: position.lat, lng: position.lng },
+        destino: { endereco: addr, lat, lng },
+      },
+    });
+  };
+
   const handleSelectNearby = (place: { name: string; address: string; center: [number, number] }) => {
     if (!position || !endereco) return;
     saveRoute({
