@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import MapboxMap from "@/components/MapboxMap";
+import GoogleMap from "@/components/GoogleMap";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
