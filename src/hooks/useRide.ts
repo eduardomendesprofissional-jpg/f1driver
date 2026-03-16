@@ -38,9 +38,10 @@ export const useRide = () => {
       const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
       const duracao_min = Math.round(route.duration / 60);
 
-      // Fetch pricing from DB — match category and current time
+      // Fetch pricing from DB — match category, current time and day of week
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+      const currentDay = now.getDay(); // 0=Sun ... 6=Sat
 
       const { data: pricingRows } = await supabase
         .from("precificacao")
@@ -49,6 +50,7 @@ export const useRide = () => {
         .eq("ativo", true)
         .lte("hora_inicio", currentTime)
         .gte("hora_fim", currentTime)
+        .contains("dias_semana", [currentDay])
         .limit(1);
 
       const pricing = pricingRows?.[0];
