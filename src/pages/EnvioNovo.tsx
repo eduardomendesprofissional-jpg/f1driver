@@ -102,12 +102,12 @@ const EnvioNovo = () => {
         `https://maps.googleapis.com/maps/api/directions/json?origin=${coleta.lat},${coleta.lng}&destination=${entrega.lat},${entrega.lng}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
       );
       const data = await res.json();
-      const route = data.routes?.[0];
+      const route = data.routes?.[0]?.legs?.[0];
       if (!route) {
         toast.error("Não foi possível calcular a rota.");
         return;
       }
-      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
+      const distancia_km = Math.round((route.distance.value / 1000) * 10) / 10;
 
       // Delivery pricing: base + per km + size multiplier + weight surcharge
       const pesoNum = parseFloat(peso) || 1;
