@@ -81,6 +81,24 @@ export const useDriverEnvios = (online: boolean) => {
     return true;
   };
 
+  const notifyPassenger = async (envioId: string, title: string, body: string) => {
+    try {
+      const { data: envioData } = await supabase
+        .from("envios" as any)
+        .select("user_id")
+        .eq("id", envioId)
+        .maybeSingle();
+      if (envioData) {
+        const userId = (envioData as any).user_id;
+        await supabase.functions.invoke("send-push-notification", {
+          body: { user_id: userId, title, body },
+        });
+      }
+    } catch (e) {
+      console.error("Erro ao notificar passageiro:", e);
+    }
+  };
+
   const markColetado = async (envioId: string) => {
     const { error } = await supabase
       .from("envios" as any)
@@ -93,6 +111,7 @@ export const useDriverEnvios = (online: boolean) => {
     }
     toast.success("Pacote marcado como coletado!");
     fetchEnvios();
+    notifyPassenger(envioId, "📦 Pacote coletado!", "O motorista coletou seu pacote e está a caminho do destino.");
     return true;
   };
 
@@ -108,6 +127,7 @@ export const useDriverEnvios = (online: boolean) => {
     }
     toast.success("Entrega concluída!");
     fetchEnvios();
+    notifyPassenger(envioId, "✅ Pacote entregue!", "Seu pacote foi entregue com sucesso no destino.");
     return true;
   };
 
