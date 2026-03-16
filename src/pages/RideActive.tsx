@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, MessageCircle, X, Star, Loader2 } from "lucide-react";
+import { Phone, MessageCircle, X, Star, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MapboxMap from "@/components/MapboxMap";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const DISPATCH_TIMEOUT = 15;
 
 const RideActive = () => {
   const navigate = useNavigate();
@@ -14,7 +16,11 @@ const RideActive = () => {
   const { rideId, isDriver } = (location.state as any) || {};
   const [ride, setRide] = useState<any>(null);
   const [driverName, setDriverName] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [redispatchAttempt, setRedispatchAttempt] = useState(0);
   const { updateRideStatus } = useRide();
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const redispatchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load ride and subscribe to changes
   useEffect(() => {
@@ -79,6 +85,43 @@ const RideActive = () => {
     return () => { supabase.removeChannel(channel); };
   }, [rideId]);
 
+  // Auto-redispatch timer (passenger side)
+  useEffect(() => {
+    if (isDriver || !ride || ride.status !== "solicitada") {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (redispatchRef.current) clearTimeout(redispatchRef.current);
+      setCountdown(null);
+      return;
+    }
+
+    // Start countdown
+    setCountdown(DISPATCH_TIMEOUT);
+    
+    timerRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    // After 15 seconds, try to redispatch
+    redispatchRef.current = setTimeout(async () => {
+      const { data } = await supabase.rpc("check_and_redispatch", { p_ride_id: rideId });
+      if (data === "redispatched") {
+        toast.info("Motorista não respondeu. Buscando outro motorista...");
+        setRedispatchAttempt((prev) => prev + 1);
+        setCountdown(DISPATCH_TIMEOUT);
+      } else if (data === "no_drivers") {
+        toast.error("Nenhum motorista disponível no momento.");
+      }
+    }, DISPATCH_TIMEOUT * 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (redispatchRef.current) clearTimeout(redispatchRef.current);
+    };
+  }, [ride?.status, ride?.motorista_id, isDriver, redispatchAttempt]);
+
   const status = ride?.status || "solicitada";
 
   const handleCancel = async () => {
@@ -120,12 +163,31 @@ const RideActive = () => {
             <span className="text-xs font-semibold">
               {statusLabel[status] || status}
             </span>
+            {status === "solicitada" && countdown !== null && countdown > 0 && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
+                <Clock size={12} />
+                {countdown}s
+              </span>
+            )}
           </div>
         </div>
 
         {status === "solicitada" && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
             <Loader2 className="animate-spin text-primary" size={32} />
+            {countdown !== null && countdown > 0 && (
+              <div className="bg-card/90 border border-border rounded-lg px-3 py-1.5">
+                <p className="text-xs text-muted-foreground text-center">
+                  Aguardando resposta do motorista
+                </p>
+                <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
+                  <div
+                    className="bg-primary h-1.5 rounded-full transition-all duration-1000"
+                    style={{ width: `${((countdown) / DISPATCH_TIMEOUT) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

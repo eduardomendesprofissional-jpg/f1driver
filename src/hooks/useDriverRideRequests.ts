@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+const DISPATCH_TIMEOUT = 15;
 
 interface RideRequest {
   id: string;
@@ -17,6 +19,41 @@ interface RideRequest {
 export const useDriverRideRequests = (online: boolean) => {
   const { user } = useAuth();
   const [currentRequest, setCurrentRequest] = useState<RideRequest | null>(null);
+  const [countdown, setCountdown] = useState<number>(DISPATCH_TIMEOUT);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Countdown timer when a request is active
+  useEffect(() => {
+    if (!currentRequest) {
+      setCountdown(DISPATCH_TIMEOUT);
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    setCountdown(DISPATCH_TIMEOUT);
+    timerRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          // Auto-reject when time is up
+          handleAutoReject();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [currentRequest?.id]);
+
+  const handleAutoReject = async () => {
+    if (!currentRequest) return;
+    if (timerRef.current) clearInterval(timerRef.current);
+    await supabase.rpc("dispatch_ride", { p_ride_id: currentRequest.id });
+    setCurrentRequest(null);
+    toast.info("Tempo esgotado. Corrida passada para o próximo motorista.");
+  };
 
   // Poll for rides assigned to this driver
   const checkForRides = useCallback(async () => {
@@ -77,6 +114,8 @@ export const useDriverRideRequests = (online: boolean) => {
 
   const acceptRide = async () => {
     if (!currentRequest || !user) return null;
+    if (timerRef.current) clearInterval(timerRef.current);
+    
     const { error } = await supabase
       .from("rides")
       .update({
@@ -101,11 +140,12 @@ export const useDriverRideRequests = (online: boolean) => {
 
   const rejectRide = async () => {
     if (!currentRequest) return;
+    if (timerRef.current) clearInterval(timerRef.current);
     // Remove this driver, trigger re-dispatch
     await supabase.rpc("dispatch_ride", { p_ride_id: currentRequest.id });
     setCurrentRequest(null);
     toast.info("Corrida recusada. Passando para o próximo motorista.");
   };
 
-  return { currentRequest, acceptRide, rejectRide };
+  return { currentRequest, acceptRide, rejectRide, countdown };
 };
