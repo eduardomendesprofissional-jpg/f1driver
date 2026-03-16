@@ -297,6 +297,18 @@ const PassengerHome = () => {
         )}
       </AnimatePresence>
 
+      {/* Map Picker Overlay */}
+      <AnimatePresence>
+        {mapPickerOpen && (
+          <MapPicker
+            initialCenter={position ? [position.lng, position.lat] : undefined}
+            userPosition={position}
+            onConfirm={handleMapPickerConfirm}
+            onClose={() => setMapPickerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <BottomNav active="home" role="passenger" />
     </div>
   );
