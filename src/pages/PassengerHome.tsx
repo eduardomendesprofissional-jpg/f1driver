@@ -15,7 +15,7 @@ const PassengerHome = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [destination, setDestination] = useState("");
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { results, loading, search, clear } = useMapboxSearch();
+  const { results, loading, search, clear } = useGoogleSearch();
   const { routes: savedRoutes, saveRoute } = useSavedRoutes();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
