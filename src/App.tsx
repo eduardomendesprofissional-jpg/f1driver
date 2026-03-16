@@ -56,6 +56,7 @@ import EnviosScreen from "./pages/EnviosScreen";
 import EnvioNovo from "./pages/EnvioNovo";
 import EnvioTracking from "./pages/EnvioTracking";
 import DriverProfileScreen from "./pages/DriverProfileScreen";
+import DriverSettings from "./pages/DriverSettings";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
             <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
             <Route path="/driver/profile" element={<ProtectedRoute><DriverProfileScreen /></ProtectedRoute>} />
+            <Route path="/driver/settings" element={<ProtectedRoute><DriverSettings /></ProtectedRoute>} />
 
             {/* Admin routes - email restricted */}
             <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
