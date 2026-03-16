@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/GoogleMap";
+import EmergencyFAB from "@/components/EmergencyFAB";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
