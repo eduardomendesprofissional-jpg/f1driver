@@ -86,6 +86,75 @@ export type Database = {
         }
         Relationships: []
       }
+      envios: {
+        Row: {
+          cancelado_em: string | null
+          coleta_endereco: string
+          coleta_lat: number
+          coleta_lng: number
+          coletado_em: string | null
+          created_at: string
+          descricao: string
+          distancia_km: number | null
+          entrega_endereco: string
+          entrega_lat: number
+          entrega_lng: number
+          entregue_em: string | null
+          forma_pagamento: string
+          id: string
+          motorista_id: string | null
+          peso_kg: number
+          status: string
+          tamanho: string
+          user_id: string
+          valor: number | null
+        }
+        Insert: {
+          cancelado_em?: string | null
+          coleta_endereco: string
+          coleta_lat: number
+          coleta_lng: number
+          coletado_em?: string | null
+          created_at?: string
+          descricao: string
+          distancia_km?: number | null
+          entrega_endereco: string
+          entrega_lat: number
+          entrega_lng: number
+          entregue_em?: string | null
+          forma_pagamento?: string
+          id?: string
+          motorista_id?: string | null
+          peso_kg?: number
+          status?: string
+          tamanho?: string
+          user_id: string
+          valor?: number | null
+        }
+        Update: {
+          cancelado_em?: string | null
+          coleta_endereco?: string
+          coleta_lat?: number
+          coleta_lng?: number
+          coletado_em?: string | null
+          created_at?: string
+          descricao?: string
+          distancia_km?: number | null
+          entrega_endereco?: string
+          entrega_lat?: number
+          entrega_lng?: number
+          entregue_em?: string | null
+          forma_pagamento?: string
+          id?: string
+          motorista_id?: string | null
+          peso_kg?: number
+          status?: string
+          tamanho?: string
+          user_id?: string
+          valor?: number | null
+        }
+        Relationships: []
+      }
       metodos_pagamento: {
         Row: {
           created_at: string
