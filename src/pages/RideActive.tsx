@@ -8,6 +8,7 @@ import EmergencyFAB from "@/components/EmergencyFAB";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 const DISPATCH_TIMEOUT = 15;
 const WAIT_TIMER_SECONDS = 180; // 3 minutes
