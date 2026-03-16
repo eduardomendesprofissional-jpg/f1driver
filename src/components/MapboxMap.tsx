@@ -10,6 +10,7 @@ interface MapboxMapProps {
   zoom?: number;
   style?: string;
   showUserMarker?: boolean;
+  showPOIs?: boolean;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
@@ -19,6 +20,7 @@ const MapboxMap = ({
   zoom = 12,
   style = "mapbox://styles/mapbox/dark-v11",
   showUserMarker = true,
+  showPOIs = false,
   onMapReady,
 }: MapboxMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -43,6 +45,15 @@ const MapboxMap = ({
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
+      // Show POI labels if enabled
+      if (showPOIs) {
+        const poiLayers = map.getStyle().layers?.filter(
+          (l) => l.id.includes("poi") || l.id.includes("label")
+        );
+        poiLayers?.forEach((l) => {
+          try { map.setLayoutProperty(l.id, "visibility", "visible"); } catch {}
+        });
+      }
       onMapReady?.(map);
     });
 

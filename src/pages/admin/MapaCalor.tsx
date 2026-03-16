@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { MapPin, Info, Flame, TrendingUp, Clock } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { MapPin, Info, Flame, TrendingUp, Clock, Store } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import MapboxMap from "@/components/MapboxMap";
+import MapboxPOISearch from "@/components/MapboxPOISearch";
 import { supabase } from "@/integrations/supabase/client";
 import mapboxgl from "mapbox-gl";
 
@@ -193,9 +194,24 @@ const MapaCalor = () => {
             <MapboxMap
               className="w-full h-[500px] rounded-lg overflow-hidden"
               showUserMarker={false}
+              showPOIs={true}
               onMapReady={handleMapReady}
             />
           )}
+        </CardContent>
+      </Card>
+
+      {/* POI Search */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Store size={16} className="text-primary" />
+            <h3 className="text-sm font-semibold">Estabelecimentos Próximos</h3>
+          </div>
+          <MapboxPOISearch
+            map={mapInstance}
+            center={points.length > 0 ? [points[0].lng, points[0].lat] : undefined}
+          />
         </CardContent>
       </Card>
 
