@@ -13,7 +13,7 @@ const DriverPanel = () => {
   const [accepting, setAccepting] = useState(false);
 
   useDriverLocation(online);
-  const { currentRequest, acceptRide, rejectRide } = useDriverRideRequests(online);
+  const { currentRequest, acceptRide, rejectRide, countdown } = useDriverRideRequests(online);
 
   const handleAccept = async () => {
     setAccepting(true);
