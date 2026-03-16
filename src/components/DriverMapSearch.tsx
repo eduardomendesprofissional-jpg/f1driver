@@ -63,12 +63,7 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
               className="w-full flex items-start gap-2.5 px-3 py-2.5 hover:bg-[#1e3a6e]/40 transition-colors text-left"
             >
               <MapPin size={14} className="text-[#4fc3f7] mt-0.5 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-white font-medium truncate">{place.name}</p>
-                {place.address && (
-                  <p className="text-[10px] text-white/50 truncate">{place.address}</p>
-                )}
-              </div>
+              <p className="text-xs text-white font-medium truncate">{place.place_name}</p>
             </button>
           ))}
         </div>
