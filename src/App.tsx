@@ -49,6 +49,7 @@ import Mensalidades from "./pages/admin/Mensalidades";
 import MapaMotoristas from "./pages/admin/MapaMotoristas";
 import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
 import ConfigurarApp from "./pages/admin/ConfigurarApp";
+import Administradores from "./pages/admin/Administradores";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
 import EnviosScreen from "./pages/EnviosScreen";
