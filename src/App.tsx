@@ -57,6 +57,8 @@ import EnvioNovo from "./pages/EnvioNovo";
 import EnvioTracking from "./pages/EnvioTracking";
 import DriverProfileScreen from "./pages/DriverProfileScreen";
 import DriverSettings from "./pages/DriverSettings";
+import DriverInbox from "./pages/DriverInbox";
+import DriverReferral from "./pages/DriverReferral";
 
 const queryClient = new QueryClient();
 
