@@ -14,6 +14,7 @@ const DriverPanel = () => {
   const [accepting, setAccepting] = useState(false);
 
   useDriverLocation(online);
+  usePushNotifications(online);
   const { currentRequest, acceptRide, rejectRide, countdown } = useDriverRideRequests(online);
 
   const handleAccept = async () => {
