@@ -1,4 +1,4 @@
-export const MAPBOX_TOKEN = "sk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tdHAxYm1tMXgwbTJzcGxyMHh5dGM4diJ9.8AZ9Ve3HN66Za49JMby4-A";
+export const MAPBOX_TOKEN = "pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw";
 
 export const MAPBOX_DARK_STYLE: mapboxgl.Style = {
   version: 8,
