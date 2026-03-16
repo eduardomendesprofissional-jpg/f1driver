@@ -3,7 +3,7 @@ import { getGoogleMapsLoader } from "@/lib/google-maps";
 
 interface GoogleMapProps {
   className?: string;
-  center?: [number, number]; // [lng, lat] to maintain same interface
+  center?: [number, number]; // [lng, lat]
   zoom?: number;
   showUserMarker?: boolean;
   onMapReady?: (map: google.maps.Map) => void;
@@ -18,58 +18,51 @@ const GoogleMap = ({
 }: GoogleMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
-  const pulseOverlayRef = useRef<google.maps.OverlayView | null>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
     const loader = getGoogleMapsLoader();
-    
-    loader.importLibrary("maps").then(() => {
-      loader.importLibrary("marker").then(() => {
-        if (!mapContainer.current || mapRef.current) return;
 
-        const initCenter = center 
-          ? { lat: center[1], lng: center[0] } 
-          : { lat: -15.7801, lng: -47.9292 }; // Brasilia default
+    loader.load().then(() => {
+      if (!mapContainer.current || mapRef.current) return;
 
-        const map = new google.maps.Map(mapContainer.current, {
-          center: initCenter,
-          zoom: center ? zoom : 4,
-          disableDefaultUI: true,
-          zoomControl: true,
-          mapId: "f1driver_dark_map",
-          styles: [
-            { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
-            { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
-            { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#4b6878" }] },
-            { featureType: "land", elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
-            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#304a7d" }] },
-            { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#255763" }] },
-            { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#2c6675" }] },
-            { featureType: "poi", elementType: "geometry", stylers: [{ color: "#283d6a" }] },
-            { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
-          ],
-        });
+      const initCenter = center
+        ? { lat: center[1], lng: center[0] }
+        : { lat: -15.7801, lng: -47.9292 };
 
-        mapRef.current = map;
-        setLoaded(true);
-        onMapReady?.(map);
+      const map = new google.maps.Map(mapContainer.current, {
+        center: initCenter,
+        zoom: center ? zoom : 4,
+        disableDefaultUI: true,
+        zoomControl: true,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
+          { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#4b6878" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#304a7d" }] },
+          { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#255763" }] },
+          { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#2c6675" }] },
+          { featureType: "poi", elementType: "geometry", stylers: [{ color: "#283d6a" }] },
+          { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
+        ],
       });
+
+      mapRef.current = map;
+      setLoaded(true);
+      onMapReady?.(map);
     });
 
     return () => {
       mapRef.current = null;
       markerRef.current = null;
-      pulseOverlayRef.current = null;
     };
   }, []);
 
-  // Update center and marker
   useEffect(() => {
     if (!mapRef.current || !center || !loaded) return;
 
@@ -79,9 +72,8 @@ const GoogleMap = ({
 
     if (showUserMarker) {
       if (markerRef.current) {
-        markerRef.current.position = pos;
+        markerRef.current.setPosition(pos);
       } else {
-        // Create pulsing blue dot marker
         const el = document.createElement("div");
         el.innerHTML = `
           <div style="position:relative;width:20px;height:20px;">
@@ -101,10 +93,18 @@ const GoogleMap = ({
           </div>
         `;
 
-        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+        markerRef.current = new google.maps.Marker({
           map: mapRef.current,
           position: pos,
-          content: el,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                <circle cx="12" cy="12" r="8" fill="#276EF1" stroke="white" stroke-width="3"/>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(24, 24),
+            anchor: new google.maps.Point(12, 12),
+          },
         });
       }
     }
