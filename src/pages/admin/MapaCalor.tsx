@@ -201,6 +201,20 @@ const MapaCalor = () => {
         </CardContent>
       </Card>
 
+      {/* POI Search */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Store size={16} className="text-primary" />
+            <h3 className="text-sm font-semibold">Estabelecimentos Próximos</h3>
+          </div>
+          <MapboxPOISearch
+            map={mapInstance}
+            center={points.length > 0 ? [points[0].lng, points[0].lat] : undefined}
+          />
+        </CardContent>
+      </Card>
+
       {/* Region Stats */}
       {regions.length > 0 && (
         <Card className="bg-card border-border">
