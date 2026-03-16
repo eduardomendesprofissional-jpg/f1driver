@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Phone, MessageCircle, X, Star, Loader2, Clock } from "lucide-react";
+import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MapboxMap from "@/components/MapboxMap";
 import { useRide } from "@/hooks/useRide";
@@ -18,6 +18,7 @@ const RideActive = () => {
   const [driverName, setDriverName] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [redispatchAttempt, setRedispatchAttempt] = useState(0);
+  const [eta, setEta] = useState<number | null>(null);
   const { updateRideStatus } = useRide();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const redispatchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,6 +46,8 @@ const RideActive = () => {
             .single();
           setDriverName(profile?.nome || "Motorista");
         }
+        // Calculate ETA using Mapbox Directions
+        fetchETA(data);
       }
     };
 
@@ -70,6 +73,7 @@ const RideActive = () => {
 
           if (updated.status === "aceita" && !isDriver) {
             toast.success("Motorista aceitou sua corrida!");
+            fetchETA(updated);
           }
           if (updated.status === "finalizada") {
             navigate("/rating", { state: { rideId } });
@@ -85,6 +89,20 @@ const RideActive = () => {
     return () => { supabase.removeChannel(channel); };
   }, [rideId]);
 
+  // Fetch ETA from Mapbox Directions API
+  const fetchETA = async (rideData: any) => {
+    if (!rideData) return;
+    try {
+      const res = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${rideData.origem_lng},${rideData.origem_lat};${rideData.destino_lng},${rideData.destino_lat}?access_token=pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw&overview=false`
+      );
+      const data = await res.json();
+      if (data.routes?.[0]?.duration) {
+        setEta(Math.round(data.routes[0].duration / 60));
+      }
+    } catch {}
+  };
+
   // Auto-redispatch timer (passenger side)
   useEffect(() => {
     if (isDriver || !ride || ride.status !== "solicitada") {
@@ -94,7 +112,6 @@ const RideActive = () => {
       return;
     }
 
-    // Start countdown
     setCountdown(DISPATCH_TIMEOUT);
     
     timerRef.current = setInterval(() => {
@@ -104,7 +121,6 @@ const RideActive = () => {
       });
     }, 1000);
 
-    // After 15 seconds, try to redispatch
     redispatchRef.current = setTimeout(async () => {
       const { data } = await supabase.rpc("check_and_redispatch", { p_ride_id: rideId });
       if (data === "redispatched") {
@@ -139,6 +155,26 @@ const RideActive = () => {
     navigate("/rating", { state: { rideId } });
   };
 
+  const openWaze = () => {
+    if (!ride) return;
+    const destLat = status === "aceita" ? ride.origem_lat : ride.destino_lat;
+    const destLng = status === "aceita" ? ride.origem_lng : ride.destino_lng;
+    window.open(
+      `https://waze.com/ul?ll=${destLat},${destLng}&navigate=yes`,
+      "_blank"
+    );
+  };
+
+  const openGoogleMaps = () => {
+    if (!ride) return;
+    const destLat = status === "aceita" ? ride.origem_lat : ride.destino_lat;
+    const destLng = status === "aceita" ? ride.origem_lng : ride.destino_lng;
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`,
+      "_blank"
+    );
+  };
+
   const statusLabel: Record<string, string> = {
     solicitada: "Buscando motorista...",
     aceita: isDriver ? "Indo buscar passageiro" : "Motorista a caminho",
@@ -155,14 +191,25 @@ const RideActive = () => {
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Map */}
       <div className="flex-1 relative">
-        <MapboxMap className="absolute inset-0 w-full h-full" zoom={14} />
+        <MapboxMap
+          className="absolute inset-0 w-full h-full"
+          zoom={14}
+          center={ride ? [ride.origem_lng, ride.origem_lat] : undefined}
+        />
 
+        {/* Status pill */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-          <div className="bg-card border border-border rounded-full px-4 py-2 flex items-center gap-2">
+          <div className="bg-card/95 backdrop-blur border border-border rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
             <div className={`w-2 h-2 rounded-full ${statusColor[status] || "bg-muted-foreground"}`} />
             <span className="text-xs font-semibold">
               {statusLabel[status] || status}
             </span>
+            {eta && status !== "solicitada" && (
+              <span className="flex items-center gap-1 text-xs text-primary font-bold ml-1">
+                <Clock size={12} />
+                ~{eta} min
+              </span>
+            )}
             {status === "solicitada" && countdown !== null && countdown > 0 && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
                 <Clock size={12} />
@@ -196,7 +243,7 @@ const RideActive = () => {
       <motion.div
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="bg-card border-t border-border rounded-t-2xl p-5"
+        className="bg-card border-t border-border rounded-t-3xl p-5 shadow-[0_-4px_30px_rgba(0,0,0,0.15)]"
       >
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-xl font-bold text-primary">
@@ -223,10 +270,50 @@ const RideActive = () => {
 
         {/* Ride info */}
         {ride && (
-          <div className="mb-4 text-sm space-y-1">
-            <p className="text-muted-foreground truncate">📍 {ride.origem_endereco}</p>
-            <p className="text-muted-foreground truncate">🏁 {ride.destino_endereco}</p>
-            <p className="font-bold text-primary">R$ {Number(ride.valor || 0).toFixed(2)}</p>
+          <div className="mb-4 text-sm space-y-1.5">
+            <div className="flex items-start gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
+              <p className="text-muted-foreground truncate">{ride.origem_endereco}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
+              <p className="text-muted-foreground truncate">{ride.destino_endereco}</p>
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <span className="font-bold text-primary">R$ {Number(ride.valor || 0).toFixed(2)}</span>
+              {ride.distancia_km && (
+                <span className="text-xs text-muted-foreground">{ride.distancia_km} km</span>
+              )}
+              {eta && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock size={10} /> ~{eta} min
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Waze / Google Maps - Driver only */}
+        {isDriver && status !== "solicitada" && ride && (
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant="outline"
+              className="flex-1 h-10 text-xs font-semibold"
+              onClick={openWaze}
+            >
+              <Navigation size={14} className="mr-1.5" />
+              Abrir no Waze
+              <ExternalLink size={10} className="ml-1 opacity-50" />
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 h-10 text-xs font-semibold"
+              onClick={openGoogleMaps}
+            >
+              <MapPin size={14} className="mr-1.5" />
+              Google Maps
+              <ExternalLink size={10} className="ml-1 opacity-50" />
+            </Button>
           </div>
         )}
 
