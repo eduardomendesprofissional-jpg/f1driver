@@ -86,6 +86,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_bancarias: {
+        Row: {
+          agencia: string
+          banco: string
+          chave_pix: string | null
+          conta: string
+          cpf_titular: string
+          created_at: string
+          id: string
+          tipo_conta: string
+          titular: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agencia: string
+          banco: string
+          chave_pix?: string | null
+          conta: string
+          cpf_titular: string
+          created_at?: string
+          id?: string
+          tipo_conta?: string
+          titular: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agencia?: string
+          banco?: string
+          chave_pix?: string | null
+          conta?: string
+          cpf_titular?: string
+          created_at?: string
+          id?: string
+          tipo_conta?: string
+          titular?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       device_tokens: {
         Row: {
           created_at: string
@@ -551,6 +593,44 @@ export type Database = {
           vezes_usado?: number
         }
         Relationships: []
+      }
+      saques: {
+        Row: {
+          conta_bancaria_id: string | null
+          created_at: string
+          id: string
+          processado_em: string | null
+          status: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          conta_bancaria_id?: string | null
+          created_at?: string
+          id?: string
+          processado_em?: string | null
+          status?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          conta_bancaria_id?: string | null
+          created_at?: string
+          id?: string
+          processado_em?: string | null
+          status?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saques_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
