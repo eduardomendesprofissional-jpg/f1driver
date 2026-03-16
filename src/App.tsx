@@ -53,6 +53,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
 import EnviosScreen from "./pages/EnviosScreen";
 import EnvioNovo from "./pages/EnvioNovo";
+import EnvioTracking from "./pages/EnvioTracking";
 import DriverProfileScreen from "./pages/DriverProfileScreen";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,8 @@ const App = () => (
             <Route path="/rating" element={<ProtectedRoute><RatingScreen /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryScreen /></ProtectedRoute>} />
             <Route path="/envios" element={<ProtectedRoute><EnviosScreen /></ProtectedRoute>} />
+            <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
+            <Route path="/envios/:id" element={<ProtectedRoute><EnvioTracking /></ProtectedRoute>} />
             <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
             <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
