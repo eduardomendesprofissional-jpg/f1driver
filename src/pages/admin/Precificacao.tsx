@@ -1,4 +1,4 @@
-import { DollarSign, Info, Plus, Trash2, Save, Loader2, Edit2, Clock } from "lucide-react";
+import { DollarSign, Info, Plus, Trash2, Save, Loader2, Edit2, Clock, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ interface PrecoRow {
   taxa_minima: number;
   hora_inicio: string;
   hora_fim: string;
+  dias_semana: number[];
   multiplicador: number;
   ativo: boolean;
   isNew?: boolean;
@@ -33,6 +34,30 @@ interface PrecoRow {
 }
 
 const CATEGORIAS = ["Carro", "Carro Black", "Moto", "Van"];
+
+const DIAS = [
+  { value: 0, label: "Dom", short: "D" },
+  { value: 1, label: "Seg", short: "S" },
+  { value: 2, label: "Ter", short: "T" },
+  { value: 3, label: "Qua", short: "Q" },
+  { value: 4, label: "Qui", short: "Q" },
+  { value: 5, label: "Sex", short: "S" },
+  { value: 6, label: "Sáb", short: "S" },
+];
+
+const formatDias = (dias: number[]) => {
+  if (dias.length === 7) return "Todos os dias";
+  if (dias.length === 0) return "Nenhum";
+  if (arraysEqual(dias.sort(), [1, 2, 3, 4, 5])) return "Seg–Sex";
+  if (arraysEqual(dias.sort(), [0, 6])) return "Fim de semana";
+  return dias.map((d) => DIAS[d]?.label).join(", ");
+};
+
+const arraysEqual = (a: number[], b: number[]) =>
+  a.length === b.length && a.every((v, i) => v === b[i]);
+
+const toggleDay = (dias: number[], day: number) =>
+  dias.includes(day) ? dias.filter((d) => d !== day) : [...dias, day].sort();
 
 const Precificacao = () => {
   const queryClient = useQueryClient();
@@ -68,7 +93,6 @@ const Precificacao = () => {
     enabled: !!cidadeSelecionada && !!categoriaSelecionada,
   });
 
-  // Get existing categories for this city to show badges
   const { data: categoriasExistentes = [] } = useQuery({
     queryKey: ["precificacao-categorias", cidadeSelecionada],
     queryFn: async () => {
@@ -96,6 +120,7 @@ const Precificacao = () => {
         taxa_minima: Number(p.taxa_minima),
         hora_inicio: p.hora_inicio || "00:00",
         hora_fim: p.hora_fim || "23:59",
+        dias_semana: p.dias_semana ?? [0, 1, 2, 3, 4, 5, 6],
         multiplicador: Number(p.multiplicador ?? 1),
         ativo: p.ativo,
         isEditing: false,
@@ -103,7 +128,6 @@ const Precificacao = () => {
     );
   }, [precosDB]);
 
-  // Reset categoria when city changes
   useEffect(() => {
     setCategoriaSelecionada("");
   }, [cidadeSelecionada]);
@@ -119,6 +143,7 @@ const Precificacao = () => {
         taxa_minima: row.taxa_minima,
         hora_inicio: row.hora_inicio,
         hora_fim: row.hora_fim,
+        dias_semana: row.dias_semana,
         multiplicador: row.multiplicador,
         ativo: row.ativo,
         updated_at: new Date().toISOString(),
@@ -162,6 +187,7 @@ const Precificacao = () => {
         taxa_minima: 8,
         hora_inicio: "00:00",
         hora_fim: "23:59",
+        dias_semana: [0, 1, 2, 3, 4, 5, 6],
         multiplicador: 1.0,
         ativo: true,
         isNew: true,
@@ -198,7 +224,7 @@ const Precificacao = () => {
           <DollarSign size={22} />
           <div>
             <h1 className="text-lg font-bold">Tabela de Preços</h1>
-            <p className="text-xs text-white/80">Gerencie a precificação por cidade, categoria e faixa de horário.</p>
+            <p className="text-xs text-white/80">Gerencie a precificação por cidade, categoria, horário e dia da semana.</p>
           </div>
         </div>
       </div>
@@ -282,7 +308,9 @@ const Precificacao = () => {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   <Clock size={10} className="inline mr-1" />
-                  Defina preços diferentes por faixa de horário (ex: noturno, pico)
+                  Horário e dias da semana
+                  <Calendar size={10} className="inline ml-2 mr-1" />
+                  Multiplicador para pico/noturno
                 </p>
               </div>
               <Button size="sm" onClick={handleAddFaixa} className="gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs">
@@ -306,12 +334,13 @@ const Precificacao = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold">Dias</TableHead>
                       <TableHead className="text-xs font-semibold">Horário</TableHead>
                       <TableHead className="text-xs font-semibold">Base (R$)</TableHead>
                       <TableHead className="text-xs font-semibold">Por Km (R$)</TableHead>
                       <TableHead className="text-xs font-semibold">Por Min (R$)</TableHead>
                       <TableHead className="text-xs font-semibold">Taxa Mín (R$)</TableHead>
-                      <TableHead className="text-xs font-semibold">Multiplicador</TableHead>
+                      <TableHead className="text-xs font-semibold">Multi</TableHead>
                       <TableHead className="text-xs font-semibold">Status</TableHead>
                       <TableHead className="text-xs font-semibold text-center">Ações</TableHead>
                     </TableRow>
@@ -319,6 +348,33 @@ const Precificacao = () => {
                   <TableBody>
                     {precos.map((row, i) => (
                       <TableRow key={row.id || `new-${i}`}>
+                        {/* Days */}
+                        <TableCell>
+                          {row.isEditing ? (
+                            <div className="flex gap-0.5">
+                              {DIAS.map((dia) => {
+                                const active = row.dias_semana.includes(dia.value);
+                                return (
+                                  <button
+                                    key={dia.value}
+                                    onClick={() => updateRow(i, "dias_semana", toggleDay(row.dias_semana, dia.value))}
+                                    className={`w-7 h-7 rounded-md text-[10px] font-bold transition-all ${
+                                      active
+                                        ? "bg-emerald-500 text-white"
+                                        : "bg-secondary text-muted-foreground border border-border"
+                                    }`}
+                                    title={dia.label}
+                                  >
+                                    {dia.short}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span className="text-xs">{formatDias(row.dias_semana)}</span>
+                          )}
+                        </TableCell>
+                        {/* Time */}
                         <TableCell>
                           {row.isEditing ? (
                             <div className="flex items-center gap-1">
@@ -328,7 +384,7 @@ const Precificacao = () => {
                                 onChange={(e) => updateRow(i, "hora_inicio", e.target.value)}
                                 className="w-24 h-8 text-xs bg-background border-border"
                               />
-                              <span className="text-xs text-muted-foreground">às</span>
+                              <span className="text-xs text-muted-foreground">–</span>
                               <Input
                                 type="time"
                                 value={row.hora_fim}
