@@ -229,10 +229,23 @@ const PassengerHome = () => {
                     <button
                       key={place.id}
                       onClick={() => handleSelectPlace(place)}
-                      className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary transition-colors text-left"
+                      disabled={place.blocked}
+                      className={`w-full flex items-start gap-3 p-3 rounded-xl transition-colors text-left ${
+                        place.blocked
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-secondary"
+                      }`}
                     >
-                      <MapPin size={18} className="text-primary mt-0.5 shrink-0" />
-                      <span className="text-sm text-foreground">{place.place_name}</span>
+                      <MapPin size={18} className={`mt-0.5 shrink-0 ${place.blocked ? "text-destructive" : "text-primary"}`} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-foreground">{place.place_name}</span>
+                        {place.blocked && (
+                          <p className="text-[10px] text-destructive font-medium">Acima de 25 km — indisponível</p>
+                        )}
+                      </div>
+                      {place.distance && (
+                        <span className={`text-[10px] font-medium shrink-0 ${place.blocked ? "text-destructive" : "text-muted-foreground"}`}>{place.distance}</span>
+                      )}
                     </button>
                   ))}
                 </div>
