@@ -258,6 +258,7 @@ export type Database = {
           destino_endereco: string
           destino_lat: number
           destino_lng: number
+          dispatched_at: string | null
           distancia_km: number | null
           duracao_min: number | null
           finalizada_em: string | null
@@ -281,6 +282,7 @@ export type Database = {
           destino_endereco: string
           destino_lat: number
           destino_lng: number
+          dispatched_at?: string | null
           distancia_km?: number | null
           duracao_min?: number | null
           finalizada_em?: string | null
@@ -304,6 +306,7 @@ export type Database = {
           destino_endereco?: string
           destino_lat?: number
           destino_lng?: number
+          dispatched_at?: string | null
           distancia_km?: number | null
           duracao_min?: number | null
           finalizada_em?: string | null
@@ -365,6 +368,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_redispatch: { Args: { p_ride_id: string }; Returns: string }
       dispatch_ride: { Args: { p_ride_id: string }; Returns: string }
       find_nearest_driver: {
         Args: { p_exclude?: string[]; p_lat: number; p_lng: number }
