@@ -59,10 +59,15 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
           {results.map((place) => (
             <button
               key={place.id}
-              onClick={() => handleSelect(place)}
-              className="w-full flex items-start gap-2.5 px-3 py-2.5 hover:bg-[#1e3a6e]/40 transition-colors text-left"
+              onClick={() => !place.blocked && handleSelect(place)}
+              disabled={place.blocked}
+              className={`w-full flex items-start gap-2.5 px-3 py-2.5 transition-colors text-left ${
+                place.blocked
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-[#1e3a6e]/40"
+              }`}
             >
-              <MapPin size={14} className="text-[#4fc3f7] mt-0.5 shrink-0" />
+              <MapPin size={14} className={`mt-0.5 shrink-0 ${place.blocked ? "text-red-400" : "text-[#4fc3f7]"}`} />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-white font-semibold truncate">{place.text}</p>
                 {place.category && (
@@ -71,9 +76,12 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
                 <p className="text-[11px] text-white/60 truncate">
                   {place.place_name !== place.text ? place.place_name : ""}
                 </p>
+                {place.blocked && (
+                  <p className="text-[10px] text-red-400 font-medium">Acima de 25 km</p>
+                )}
               </div>
               {place.distance && (
-                <span className="text-[10px] text-[#4fc3f7] font-medium shrink-0 whitespace-nowrap">{place.distance}</span>
+                <span className={`text-[10px] font-medium shrink-0 whitespace-nowrap ${place.blocked ? "text-red-400" : "text-[#4fc3f7]"}`}>{place.distance}</span>
               )}
             </button>
           ))}
