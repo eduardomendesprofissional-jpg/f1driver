@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, CreditCard, Settings, ChevronRight, ArrowLeft, LogOut,
   Camera, Shield, CheckCircle2, Plus, Trash2, Star, Edit2, Save, X,
-  Fingerprint, AlertCircle
+  Fingerprint, AlertCircle, Bell, Gift
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -451,8 +451,24 @@ const ProfileScreen = () => {
           </CardContent>
         </Card>
 
-        {/* Settings & Logout */}
+        {/* Quick Links */}
         <Card className="bg-card border-border overflow-hidden">
+          <button
+            onClick={() => navigate("/inbox")}
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
+          >
+            <Bell size={20} className="text-primary" />
+            <span className="flex-1 text-left text-sm font-medium text-foreground">Notificações</span>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => navigate("/referral")}
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
+          >
+            <Gift size={20} className="text-primary" />
+            <span className="flex-1 text-left text-sm font-medium text-foreground">Indique e Ganhe</span>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </button>
           <button
             onClick={() => {}}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
