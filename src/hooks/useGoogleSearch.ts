@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { searchFoursquarePlaces, FoursquarePlace } from "@/lib/foursquare";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
 
 const MAX_DISTANCE_KM = 25;
 const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
@@ -29,23 +28,36 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function searchMapbox(query: string, lng: number, lat: number): Promise<GooglePlace[]> {
+async function searchNominatim(query: string, lat: number, lng: number): Promise<GooglePlace[]> {
   try {
+    const params = new URLSearchParams({
+      q: query,
+      format: "json",
+      addressdetails: "1",
+      countrycodes: "br",
+      limit: "10",
+      lat: String(lat),
+      lon: String(lng),
+    });
     const res = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&proximity=${lng},${lat}&language=pt-BR&limit=5&country=BR`
+      `https://nominatim.openstreetmap.org/search?${params}`,
+      { headers: { "Accept-Language": "pt-BR", "User-Agent": "F1DriverApp/1.0" } }
     );
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.features || []).map((f: any) => {
-      const dist = haversineDistance(lat, lng, f.center[1], f.center[0]);
+    return (data || []).map((item: any) => {
+      const itemLat = parseFloat(item.lat);
+      const itemLng = parseFloat(item.lon);
+      const dist = haversineDistance(lat, lng, itemLat, itemLng);
+      const name = item.name || item.display_name?.split(",")[0] || "";
       return {
-        id: f.id,
-        text: f.text || f.place_name,
-        place_name: f.place_name || "",
-        center: f.center as [number, number],
+        id: `nom-${item.place_id}`,
+        text: name,
+        place_name: item.display_name || "",
+        center: [itemLng, itemLat] as [number, number],
         distance: formatDistance(dist),
         distanceMeters: dist,
-        category: "Endereço",
+        category: item.type ? item.type.replace(/_/g, " ") : "Endereço",
         blocked: dist > MAX_DISTANCE_M,
       };
     });
@@ -68,9 +80,10 @@ export const useGoogleSearch = () => {
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
 
-      const [fsqResults, mapboxResults] = await Promise.all([
+      // Busca híbrida: Foursquare (POIs) + Nominatim (endereços) em paralelo
+      const [fsqResults, nominatimResults] = await Promise.all([
         searchFoursquarePlaces(query, lat, lng, 5, MAX_DISTANCE_M).catch(() => [] as FoursquarePlace[]),
-        searchMapbox(query, lng, lat),
+        searchNominatim(query, lat, lng),
       ]);
 
       const foursquarePlaces: GooglePlace[] = fsqResults
@@ -93,13 +106,13 @@ export const useGoogleSearch = () => {
           };
         });
 
+      // Mesclar sem duplicatas por coordenada
       const seen = new Set(foursquarePlaces.map((p) => `${p.center[0].toFixed(4)},${p.center[1].toFixed(4)}`));
-      const uniqueMapbox = mapboxResults.filter(
+      const uniqueNominatim = nominatimResults.filter(
         (p) => !seen.has(`${p.center[0].toFixed(4)},${p.center[1].toFixed(4)}`)
       );
 
-      // Mostrar todos mas marcar bloqueados; ordenar por distância
-      const all = [...foursquarePlaces, ...uniqueMapbox]
+      const all = [...foursquarePlaces, ...uniqueNominatim]
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
 
