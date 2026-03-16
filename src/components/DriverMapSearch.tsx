@@ -23,10 +23,10 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
   }, [userPosition, search]);
 
   const handleSelect = (place: GooglePlace) => {
-    setQuery(place.name);
+    setQuery(place.place_name);
     setOpen(false);
     clear();
-    onSelectPlace(place.lat, place.lng, place.name);
+    onSelectPlace(place.center[1], place.center[0], place.place_name);
   };
 
   const handleClear = () => {
