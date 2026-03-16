@@ -113,10 +113,15 @@ const DriverPanel = () => {
 
       {/* Real Map */}
       <div className="flex-1 relative min-h-[250px]">
+        <DriverMapSearch
+          userPosition={position}
+          onSelectPlace={handleSearchSelect}
+        />
         <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
-          center={position ? [position.lng, position.lat] : undefined}
+          center={searchCenter || (position ? [position.lng, position.lat] : undefined)}
+          onMapReady={(map) => { mapRef.current = map; }}
         />
         {showPermissionBanner && (
           <LocationPermissionBanner
