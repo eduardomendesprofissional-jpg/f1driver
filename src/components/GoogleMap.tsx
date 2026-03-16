@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getGoogleMapsLoader } from "@/lib/google-maps";
+import { loadMapsLibrary } from "@/lib/google-maps";
 
 interface GoogleMapProps {
   className?: string;
@@ -24,9 +24,7 @@ const GoogleMap = ({
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const loader = getGoogleMapsLoader();
-
-    loader.load().then(() => {
+    loadMapsLibrary().then(() => {
       if (!mapContainer.current || mapRef.current) return;
 
       const initCenter = center
@@ -74,25 +72,6 @@ const GoogleMap = ({
       if (markerRef.current) {
         markerRef.current.setPosition(pos);
       } else {
-        const el = document.createElement("div");
-        el.innerHTML = `
-          <div style="position:relative;width:20px;height:20px;">
-            <div style="
-              width:20px;height:20px;border-radius:50%;
-              background:#276EF1;
-              border:3px solid white;
-              box-shadow:0 0 0 6px rgba(39,110,241,0.25), 0 2px 12px rgba(0,0,0,0.4);
-              position:relative;z-index:2;
-            "></div>
-            <div style="
-              position:absolute;inset:-6px;border-radius:50%;
-              background:rgba(39,110,241,0.15);
-              animation:gmap-pulse 2s ease-out infinite;
-              z-index:1;
-            "></div>
-          </div>
-        `;
-
         markerRef.current = new google.maps.Marker({
           map: mapRef.current,
           position: pos,
@@ -110,17 +89,7 @@ const GoogleMap = ({
     }
   }, [center?.[0], center?.[1], showUserMarker, loaded]);
 
-  return (
-    <>
-      <style>{`
-        @keyframes gmap-pulse {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(3); opacity: 0; }
-        }
-      `}</style>
-      <div ref={mapContainer} className={className} />
-    </>
-  );
+  return <div ref={mapContainer} className={className} />;
 };
 
 export default GoogleMap;
