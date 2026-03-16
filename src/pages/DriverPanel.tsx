@@ -72,9 +72,28 @@ const DriverPanel = () => {
             <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">Nova corrida</span>
-                <span className="text-lg font-bold text-primary">
-                  R$ {Number(currentRequest.valor || 0).toFixed(2)}
-                </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative w-8 h-8">
+                      <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+                        <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--secondary))" strokeWidth="3" />
+                        <circle
+                          cx="16" cy="16" r="14" fill="none"
+                          stroke="hsl(var(--primary))" strokeWidth="3"
+                          strokeDasharray={`${(countdown / 15) * 88} 88`}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000"
+                        />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">
+                        {countdown}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-primary">
+                    R$ {Number(currentRequest.valor || 0).toFixed(2)}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2">
