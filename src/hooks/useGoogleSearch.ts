@@ -1,11 +1,28 @@
 import { useState, useCallback } from "react";
-import { GOOGLE_MAPS_KEY_RAW } from "@/lib/google-maps";
+import { loadMapsLibrary } from "@/lib/google-maps";
 
 export interface GooglePlace {
   id: string;
   place_name: string;
   center: [number, number]; // [lng, lat]
 }
+
+let autocompleteService: google.maps.places.AutocompleteService | null = null;
+let placesService: google.maps.places.PlacesService | null = null;
+let dummyDiv: HTMLDivElement | null = null;
+
+const ensureServices = async () => {
+  await loadMapsLibrary();
+  if (!autocompleteService) {
+    autocompleteService = new google.maps.places.AutocompleteService();
+  }
+  if (!placesService) {
+    if (!dummyDiv) {
+      dummyDiv = document.createElement("div");
+    }
+    placesService = new google.maps.places.PlacesService(dummyDiv);
+  }
+};
 
 export const useGoogleSearch = () => {
   const [results, setResults] = useState<GooglePlace[]>([]);
@@ -18,46 +35,50 @@ export const useGoogleSearch = () => {
     }
     setLoading(true);
     try {
-      const params = new URLSearchParams({
+      await ensureServices();
+
+      const request: google.maps.places.AutocompletionRequest = {
         input: query,
-        key: GOOGLE_MAPS_KEY_RAW,
-        language: "pt-BR",
-        components: "country:br",
-      });
+        componentRestrictions: { country: "br" },
+      };
       if (proximity) {
-        params.set("location", `${proximity[1]},${proximity[0]}`);
-        params.set("radius", "50000");
+        request.location = new google.maps.LatLng(proximity[1], proximity[0]);
+        request.radius = 50000;
       }
 
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`
-      );
-      const data = await res.json();
-
-      if (data.predictions?.length) {
-        // Get details for each prediction
-        const places: GooglePlace[] = [];
-        for (const pred of data.predictions.slice(0, 5)) {
-          const detailRes = await fetch(
-            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${pred.place_id}&fields=geometry,formatted_address&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
-          );
-          const detailData = await detailRes.json();
-          const loc = detailData.result?.geometry?.location;
-          if (loc) {
-            places.push({
-              id: pred.place_id,
-              place_name: pred.description,
-              center: [loc.lng, loc.lat],
-            });
-          }
+      autocompleteService!.getPlacePredictions(request, (predictions, status) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          setResults([]);
+          setLoading(false);
+          return;
         }
-        setResults(places);
-      } else {
-        setResults([]);
-      }
+
+        const places: GooglePlace[] = [];
+        let completed = 0;
+        const total = Math.min(predictions.length, 5);
+
+        predictions.slice(0, 5).forEach((pred) => {
+          placesService!.getDetails(
+            { placeId: pred.place_id, fields: ["geometry", "formatted_address"] },
+            (place, detailStatus) => {
+              completed++;
+              if (detailStatus === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
+                places.push({
+                  id: pred.place_id,
+                  place_name: pred.description,
+                  center: [place.geometry.location.lng(), place.geometry.location.lat()],
+                });
+              }
+              if (completed === total) {
+                setResults(places);
+                setLoading(false);
+              }
+            }
+          );
+        });
+      });
     } catch {
       setResults([]);
-    } finally {
       setLoading(false);
     }
   }, []);
