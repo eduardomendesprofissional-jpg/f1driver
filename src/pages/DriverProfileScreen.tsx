@@ -149,7 +149,29 @@ const DriverProfileScreen = () => {
     toast.success("CPF salvo!");
   };
 
-  const startFacialVerification = async () => {
+  const saveCNH = async () => {
+    const digits = cnhValue.replace(/\D/g, "");
+    if (digits.length !== 11) return toast.error("CNH deve ter 11 dígitos");
+    await supabase.from("profiles").update({ cnh: digits } as any).eq("id", user!.id);
+    setProfile((p) => p ? { ...p, cnh: digits } : p);
+    setEditingCNH(false);
+    toast.success("CNH salva!");
+  };
+
+  const saveVehicle = async () => {
+    if (!placaValue.trim() || !modeloValue.trim() || !corValue.trim()) {
+      return toast.error("Preencha todos os campos do veículo");
+    }
+    await supabase.from("profiles").update({
+      veiculo_placa: placaValue.trim().toUpperCase(),
+      veiculo_modelo: modeloValue.trim(),
+      veiculo_cor: corValue.trim(),
+    } as any).eq("id", user!.id);
+    setProfile((p) => p ? { ...p, veiculo_placa: placaValue.trim().toUpperCase(), veiculo_modelo: modeloValue.trim(), veiculo_cor: corValue.trim() } : p);
+    setEditingVehicle(false);
+    toast.success("Dados do veículo salvos!");
+  };
+
     toast.info("Iniciando verificação facial...");
     setTimeout(async () => {
       await supabase.from("profiles").update({ verificacao_facial: true }).eq("id", user!.id);
