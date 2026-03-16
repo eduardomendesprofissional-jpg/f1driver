@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { Crosshair } from "lucide-react";
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -24,6 +25,7 @@ const GoogleMap = ({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const initialCenterDone = useRef(false);
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
@@ -53,16 +55,19 @@ const GoogleMap = ({
     };
   }, []);
 
+  // Only fly on first valid center, then just update marker
   useEffect(() => {
     if (!mapRef.current || !center || !loaded) return;
 
-    mapRef.current.flyTo({ center, zoom, duration: 800 });
+    if (!initialCenterDone.current) {
+      mapRef.current.flyTo({ center, zoom, duration: 800 });
+      initialCenterDone.current = true;
+    }
 
     if (showUserMarker) {
       if (markerRef.current) {
         markerRef.current.setLngLat(center);
       } else {
-        // Blue pulsing marker for driver position
         const el = document.createElement("div");
         el.style.width = "18px";
         el.style.height = "18px";
@@ -79,6 +84,11 @@ const GoogleMap = ({
     }
   }, [center?.[0], center?.[1], showUserMarker, loaded]);
 
+  const handleRecenter = useCallback(() => {
+    if (!mapRef.current || !center) return;
+    mapRef.current.flyTo({ center, zoom, duration: 800 });
+  }, [center, zoom]);
+
   return (
     <>
       <style>{`
@@ -88,7 +98,18 @@ const GoogleMap = ({
           100% { box-shadow: 0 0 0 0 rgba(39,110,241,0); }
         }
       `}</style>
-      <div ref={mapContainer} className={className} />
+      <div className="relative w-full h-full">
+        <div ref={mapContainer} className={className} />
+        {center && loaded && (
+          <button
+            onClick={handleRecenter}
+            className="absolute bottom-20 right-3 z-10 p-2.5 rounded-full bg-card/90 backdrop-blur-md border border-border shadow-lg hover:bg-card transition-colors"
+            title="Centralizar no mapa"
+          >
+            <Crosshair size={20} className="text-primary" />
+          </button>
+        )}
+      </div>
     </>
   );
 };
