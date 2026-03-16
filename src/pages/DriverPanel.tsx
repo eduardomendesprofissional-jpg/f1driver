@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SafetyTips from "@/components/SafetyTips";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
@@ -112,6 +113,13 @@ const DriverPanel = () => {
           <span className="text-lg font-bold text-primary">R$ 0,00</span>
         </div>
       </div>
+
+      {/* Safety Tips when offline */}
+      {!online && (
+        <div className="px-4 py-4 bg-card">
+          <SafetyTips role="driver" />
+        </div>
+      )}
 
       {/* Tabs */}
       {online && (

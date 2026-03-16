@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import NearbyPlaces from "@/components/NearbyPlaces";
+import SafetyTips from "@/components/SafetyTips";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -155,6 +156,11 @@ const PassengerHome = () => {
             userPosition={position}
             onSelectPlace={handleSelectNearby}
           />
+        </div>
+
+        {/* Safety Tips */}
+        <div className="mt-5">
+          <SafetyTips role="passenger" />
         </div>
       </motion.div>
 
