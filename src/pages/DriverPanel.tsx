@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
-  Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift
+  Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift, Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +46,12 @@ const DriverPanel = () => {
       <div className="p-4 flex items-center justify-between">
         <h1 className="text-lg font-bold">Painel do Motorista</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/driver/wallet")}
+            className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Wallet size={20} />
+          </button>
           <button
             onClick={() => navigate("/driver/inbox")}
             className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"

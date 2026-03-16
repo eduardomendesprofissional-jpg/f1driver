@@ -59,6 +59,7 @@ import DriverProfileScreen from "./pages/DriverProfileScreen";
 import DriverSettings from "./pages/DriverSettings";
 import DriverInbox from "./pages/DriverInbox";
 import DriverReferral from "./pages/DriverReferral";
+import DriverWallet from "./pages/DriverWallet";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
 
@@ -96,6 +97,7 @@ const App = () => (
             <Route path="/driver/settings" element={<ProtectedRoute><DriverSettings /></ProtectedRoute>} />
             <Route path="/driver/inbox" element={<ProtectedRoute><DriverInbox /></ProtectedRoute>} />
             <Route path="/driver/referral" element={<ProtectedRoute><DriverReferral /></ProtectedRoute>} />
+            <Route path="/driver/wallet" element={<ProtectedRoute><DriverWallet /></ProtectedRoute>} />
 
             {/* Admin routes - email restricted */}
             <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
