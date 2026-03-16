@@ -5,6 +5,7 @@ import { MapPin, Search, Loader2, Clock, RotateCcw } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import MapboxMap from "@/components/MapboxMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
+import NearbyPlaces from "@/components/NearbyPlaces";
 import { useMapboxSearch, MapboxPlace } from "@/hooks/useMapboxSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -44,6 +45,24 @@ const PassengerHome = () => {
     });
   };
 
+  const handleSelectNearby = (place: { name: string; address: string; center: [number, number] }) => {
+    if (!position || !endereco) return;
+    saveRoute({
+      origem_endereco: endereco,
+      origem_lat: position.lat,
+      origem_lng: position.lng,
+      destino_endereco: place.address,
+      destino_lat: place.center[1],
+      destino_lng: place.center[0],
+    });
+    navigate("/ride-confirm", {
+      state: {
+        origem: { endereco, lat: position.lat, lng: position.lng },
+        destino: { endereco: place.address, lat: place.center[1], lng: place.center[0] },
+      },
+    });
+  };
+
   const handleSelectSavedRoute = (route: SavedRoute) => {
     if (!position || !endereco) return;
     saveRoute({
@@ -66,7 +85,7 @@ const PassengerHome = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {/* Real Map */}
+      {/* Map */}
       <div className="flex-1 relative overflow-hidden">
         <MapboxMap
           className="absolute inset-0 w-full h-full"
@@ -83,12 +102,13 @@ const PassengerHome = () => {
         )}
       </div>
 
-      {/* Bottom Search Panel */}
+      {/* Bottom Panel - Uber style */}
       <motion.div
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="bg-card border-t border-border rounded-t-2xl p-5 pb-24"
+        className="bg-card border-t border-border rounded-t-3xl p-5 pb-24 shadow-[0_-4px_30px_rgba(0,0,0,0.15)]"
       >
+        {/* Search bar */}
         <button
           onClick={() => setSearchOpen(true)}
           className="w-full flex items-center gap-3 bg-secondary rounded-xl px-4 py-4 text-left"
@@ -99,9 +119,8 @@ const PassengerHome = () => {
 
         {/* Current location */}
         <div className="mt-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sua localização</p>
-          <div className="flex items-center gap-2 mt-2">
-            <MapPin size={14} className="text-primary shrink-0" />
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary" />
             <p className="text-sm text-foreground truncate">
               {geoLoading ? "Obtendo localização..." : endereco || "Localização não disponível"}
             </p>
@@ -129,6 +148,14 @@ const PassengerHome = () => {
             </div>
           </div>
         )}
+
+        {/* Nearby Establishments */}
+        <div className="mt-5">
+          <NearbyPlaces
+            userPosition={position}
+            onSelectPlace={handleSelectNearby}
+          />
+        </div>
       </motion.div>
 
       {/* Search Overlay */}

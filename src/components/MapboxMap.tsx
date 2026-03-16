@@ -18,7 +18,7 @@ const MapboxMap = ({
   className = "w-full h-[400px]",
   center,
   zoom = 12,
-  style = "mapbox://styles/mapbox/dark-v11",
+  style = "mapbox://styles/mapbox/navigation-night-v1",
   showUserMarker = true,
   showPOIs = false,
   onMapReady,
@@ -28,7 +28,6 @@ const MapboxMap = ({
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const initializedRef = useRef(false);
 
-  // Initialize map once (use center if available, otherwise a generic world view)
   useEffect(() => {
     if (!mapContainer.current || initializedRef.current) return;
 
@@ -40,12 +39,13 @@ const MapboxMap = ({
       style,
       center: initCenter,
       zoom: initZoom,
+      attributionControl: false,
+      logoPosition: "bottom-left",
     });
 
-    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
 
     map.on("load", () => {
-      // Show POI labels if enabled
       if (showPOIs) {
         const poiLayers = map.getStyle().layers?.filter(
           (l) => l.id.includes("poi") || l.id.includes("label")
@@ -68,7 +68,6 @@ const MapboxMap = ({
     };
   }, []);
 
-  // Fly to new center when it changes
   useEffect(() => {
     if (!mapRef.current || !center) return;
 
@@ -78,13 +77,23 @@ const MapboxMap = ({
       if (markerRef.current) {
         markerRef.current.setLngLat(center);
       } else {
+        // Uber-style pulsing blue dot
         const el = document.createElement("div");
-        el.className = "user-location-marker";
-        el.style.cssText = `
-          width: 18px; height: 18px; border-radius: 50%;
-          background: hsl(217 91% 60%);
-          border: 3px solid white;
-          box-shadow: 0 0 0 4px hsl(217 91% 60% / 0.3), 0 2px 8px rgba(0,0,0,0.3);
+        el.className = "uber-user-marker";
+        el.innerHTML = `
+          <div style="
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #276EF1;
+            border: 3px solid white;
+            box-shadow: 0 0 0 6px rgba(39,110,241,0.25), 0 2px 12px rgba(0,0,0,0.4);
+            position: relative;
+          ">
+            <div style="
+              position: absolute; inset: -6px; border-radius: 50%;
+              background: rgba(39,110,241,0.15);
+              animation: uber-pulse 2s ease-out infinite;
+            "></div>
+          </div>
         `;
         markerRef.current = new mapboxgl.Marker({ element: el })
           .setLngLat(center)
@@ -93,7 +102,17 @@ const MapboxMap = ({
     }
   }, [center?.[0], center?.[1], showUserMarker]);
 
-  return <div ref={mapContainer} className={className} />;
+  return (
+    <>
+      <style>{`
+        @keyframes uber-pulse {
+          0% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(3); opacity: 0; }
+        }
+      `}</style>
+      <div ref={mapContainer} className={className} />
+    </>
+  );
 };
 
 export default MapboxMap;
