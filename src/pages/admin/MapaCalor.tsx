@@ -139,7 +139,7 @@ const MapaCalor = () => {
     };
   }, [mapInstance, points]);
 
-  const handleMapReady = useCallback((map: google.maps.Map) => {
+  const handleMapReady = useCallback((map: any) => {
     setMapInstance(map);
   }, []);
 

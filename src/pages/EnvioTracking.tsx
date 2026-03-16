@@ -5,7 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { loadMapsLibrary } from "@/lib/google-maps";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { MAPBOX_TOKEN } from "@/lib/mapbox";
+
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
 interface EnvioData {
   id: string;
@@ -52,12 +56,9 @@ const EnvioTracking = () => {
   const [loading, setLoading] = useState(true);
 
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const driverMarkerRef = useRef<google.maps.Marker | null>(null);
-  const coletaMarkerRef = useRef<google.maps.Marker | null>(null);
-  const entregaMarkerRef = useRef<google.maps.Marker | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const driverMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
-  // Fetch envio data
   const fetchEnvio = useCallback(async () => {
     if (!id) return;
     const { data } = await supabase
@@ -69,8 +70,6 @@ const EnvioTracking = () => {
     if (data) {
       const envioData = data as unknown as EnvioData;
       setEnvio(envioData);
-
-      // Fetch driver profile if assigned
       if (envioData.motorista_id) {
         const { data: profile } = await supabase
           .from("profiles")
@@ -83,159 +82,94 @@ const EnvioTracking = () => {
     setLoading(false);
   }, [id]);
 
-  useEffect(() => {
-    fetchEnvio();
-  }, [fetchEnvio]);
+  useEffect(() => { fetchEnvio(); }, [fetchEnvio]);
 
-  // Subscribe to envio status changes
   useEffect(() => {
     if (!id) return;
-
     const channel = supabase
       .channel(`envio-${id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "envios", filter: `id=eq.${id}` },
-        (payload) => {
-          const updated = payload.new as unknown as EnvioData;
-          setEnvio(updated);
-        }
-      )
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "envios", filter: `id=eq.${id}` }, (payload) => {
+        setEnvio(payload.new as unknown as EnvioData);
+      })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [id]);
 
-  // Subscribe to driver location
   useEffect(() => {
     if (!envio?.motorista_id) return;
-
-    // Initial fetch
     const fetchLoc = async () => {
-      const { data } = await supabase
-        .from("driver_locations")
-        .select("lat, lng")
-        .eq("driver_id", envio.motorista_id!)
-        .eq("online", true)
-        .maybeSingle();
-      if (data) {
-        setDriverLat(data.lat);
-        setDriverLng(data.lng);
-      }
+      const { data } = await supabase.from("driver_locations").select("lat, lng").eq("driver_id", envio.motorista_id!).eq("online", true).maybeSingle();
+      if (data) { setDriverLat(data.lat); setDriverLng(data.lng); }
     };
     fetchLoc();
-
-    const channel = supabase
-      .channel(`driver-loc-${envio.motorista_id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "driver_locations",
-          filter: `driver_id=eq.${envio.motorista_id}`,
-        },
-        (payload) => {
-          const loc = payload.new as any;
-          if (loc?.lat && loc?.lng) {
-            setDriverLat(loc.lat);
-            setDriverLng(loc.lng);
-          }
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel(`driver-loc-${envio.motorista_id}`).on("postgres_changes", { event: "*", schema: "public", table: "driver_locations", filter: `driver_id=eq.${envio.motorista_id}` }, (payload) => {
+      const loc = payload.new as any;
+      if (loc?.lat && loc?.lng) { setDriverLat(loc.lat); setDriverLng(loc.lng); }
+    }).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [envio?.motorista_id]);
 
-  // Initialize map
+  // Initialize Mapbox map
   useEffect(() => {
     if (!mapContainer.current || mapRef.current || !envio) return;
 
-    loadMapsLibrary().then(() => {
-      if (!mapContainer.current || mapRef.current) return;
+    const map = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [envio.coleta_lng, envio.coleta_lat],
+      zoom: 13,
+      attributionControl: false,
+    });
 
-      const map = new google.maps.Map(mapContainer.current, {
-        center: { lat: envio.coleta_lat, lng: envio.coleta_lng },
-        zoom: 13,
-        disableDefaultUI: true,
-        zoomControl: true,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-          { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-          { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
-          { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
-        ],
-      });
-
+    map.on("load", () => {
       // Coleta marker
-      coletaMarkerRef.current = new google.maps.Marker({
-        map,
-        position: { lat: envio.coleta_lat, lng: envio.coleta_lng },
-        title: "Coleta: " + envio.coleta_endereco,
-        label: { text: "📦", fontSize: "16px" },
-      });
+      new mapboxgl.Marker({ color: "#276EF1" })
+        .setLngLat([envio.coleta_lng, envio.coleta_lat])
+        .setPopup(new mapboxgl.Popup().setText("Coleta: " + envio.coleta_endereco))
+        .addTo(map);
 
       // Entrega marker
-      entregaMarkerRef.current = new google.maps.Marker({
-        map,
-        position: { lat: envio.entrega_lat, lng: envio.entrega_lng },
-        title: "Entrega: " + envio.entrega_endereco,
-        label: { text: "📍", fontSize: "16px" },
-      });
+      new mapboxgl.Marker({ color: "#ef4444" })
+        .setLngLat([envio.entrega_lng, envio.entrega_lat])
+        .setPopup(new mapboxgl.Popup().setText("Entrega: " + envio.entrega_endereco))
+        .addTo(map);
 
       // Fit bounds
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend({ lat: envio.coleta_lat, lng: envio.coleta_lng });
-      bounds.extend({ lat: envio.entrega_lat, lng: envio.entrega_lng });
-      map.fitBounds(bounds, 60);
+      const bounds = new mapboxgl.LngLatBounds();
+      bounds.extend([envio.coleta_lng, envio.coleta_lat]);
+      bounds.extend([envio.entrega_lng, envio.entrega_lat]);
+      map.fitBounds(bounds, { padding: 60 });
 
       mapRef.current = map;
     });
 
-    return () => {
-      mapRef.current = null;
-    };
+    return () => { map.remove(); mapRef.current = null; };
   }, [envio]);
 
-  // Update driver marker in real-time
+  // Update driver marker
   useEffect(() => {
     if (!mapRef.current || driverLat === null || driverLng === null) return;
-
     if (driverMarkerRef.current) {
-      driverMarkerRef.current.setPosition({ lat: driverLat, lng: driverLng });
+      driverMarkerRef.current.setLngLat([driverLng, driverLat]);
     } else {
-      driverMarkerRef.current = new google.maps.Marker({
-        map: mapRef.current,
-        position: { lat: driverLat, lng: driverLng },
-        label: { text: "🚗", fontSize: "18px" },
-      });
+      driverMarkerRef.current = new mapboxgl.Marker({ color: "#22c55e" })
+        .setLngLat([driverLng, driverLat])
+        .addTo(mapRef.current);
     }
   }, [driverLat, driverLng]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={32} />
-      </div>
-    );
+    return (<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>);
   }
 
   if (!envio) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Envio não encontrado</p>
-        <Button variant="outline" onClick={() => navigate("/envios")}>Voltar</Button>
-      </div>
-    );
+    return (<div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4"><p className="text-muted-foreground">Envio não encontrado</p><Button variant="outline" onClick={() => navigate("/envios")}>Voltar</Button></div>);
   }
 
   const currentStepIdx = statusSteps.findIndex((s) => s.key === envio.status);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <div className="p-4 flex items-center gap-3 z-10 relative">
         <button onClick={() => navigate("/envios")} className="p-2 rounded-lg bg-secondary">
           <ArrowLeft size={20} className="text-foreground" />
@@ -243,10 +177,8 @@ const EnvioTracking = () => {
         <h1 className="text-lg font-bold">Rastrear Envio</h1>
       </div>
 
-      {/* Map */}
       <div className="relative h-[45vh] min-h-[280px]">
         <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
-
         {!envio.motorista_id && (
           <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
             <div className="bg-card border border-border rounded-2xl p-4 text-center space-y-2 mx-4">
@@ -258,41 +190,23 @@ const EnvioTracking = () => {
         )}
       </div>
 
-      {/* Info Panel */}
       <div className="flex-1 bg-card border-t border-border rounded-t-3xl -mt-4 z-10 relative p-4 space-y-4 overflow-y-auto">
-
-        {/* Status Progress */}
         <div className="flex items-center justify-between px-2">
           {statusSteps.map((step, i) => {
             const StepIcon = step.icon;
             const isActive = i <= currentStepIdx && envio.status !== "cancelado";
             return (
               <div key={step.key} className="flex flex-col items-center gap-1 flex-1 relative">
-                {i > 0 && (
-                  <div
-                    className={`absolute top-4 -left-1/2 w-full h-0.5 ${
-                      i <= currentStepIdx && envio.status !== "cancelado" ? "bg-primary" : "bg-border"
-                    }`}
-                  />
-                )}
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground"
-                  }`}
-                >
+                {i > 0 && (<div className={`absolute top-4 -left-1/2 w-full h-0.5 ${i <= currentStepIdx && envio.status !== "cancelado" ? "bg-primary" : "bg-border"}`} />)}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${isActive ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
                   <StepIcon size={14} />
                 </div>
-                <span className={`text-[10px] font-medium ${isActive ? "text-primary" : "text-muted-foreground"}`}>
-                  {step.label}
-                </span>
+                <span className={`text-[10px] font-medium ${isActive ? "text-primary" : "text-muted-foreground"}`}>{step.label}</span>
               </div>
             );
           })}
         </div>
 
-        {/* Package info */}
         <div className="bg-secondary/50 rounded-xl p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -302,59 +216,32 @@ const EnvioTracking = () => {
             <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
           </div>
           <div className="flex gap-3 text-xs text-muted-foreground">
-            <span>{envio.tamanho}</span>
-            <span>•</span>
-            <span>{envio.peso_kg} kg</span>
-            {envio.distancia_km && (
-              <>
-                <span>•</span>
-                <span>{envio.distancia_km} km</span>
-              </>
-            )}
+            <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
+            {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
           </div>
         </div>
 
-        {/* Addresses */}
         <div className="space-y-2">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Coleta</p>
-              <p className="text-xs text-foreground">{envio.coleta_endereco}</p>
-            </div>
+            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /></div>
+            <div><p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Coleta</p><p className="text-xs text-foreground">{envio.coleta_endereco}</p></div>
           </div>
           <div className="ml-3 w-px h-4 bg-border" />
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center shrink-0 mt-0.5">
-              <MapPin size={12} className="text-destructive" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Entrega</p>
-              <p className="text-xs text-foreground">{envio.entrega_endereco}</p>
-            </div>
+            <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center shrink-0 mt-0.5"><MapPin size={12} className="text-destructive" /></div>
+            <div><p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Entrega</p><p className="text-xs text-foreground">{envio.entrega_endereco}</p></div>
           </div>
         </div>
 
-        {/* Driver info */}
         {driver && (
           <div className="bg-secondary/50 rounded-xl p-3 space-y-2">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Motorista</p>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">{driver.nome || "Motorista"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {[driver.veiculo_modelo, driver.veiculo_cor, driver.veiculo_placa].filter(Boolean).join(" • ")}
-                </p>
+                <p className="text-xs text-muted-foreground">{[driver.veiculo_modelo, driver.veiculo_cor, driver.veiculo_placa].filter(Boolean).join(" • ")}</p>
               </div>
-              {driver.telefone && (
-                <a href={`tel:${driver.telefone}`}>
-                  <Button size="icon" variant="outline" className="rounded-full w-10 h-10">
-                    <Phone size={16} />
-                  </Button>
-                </a>
-              )}
+              {driver.telefone && (<a href={`tel:${driver.telefone}`}><Button size="icon" variant="outline" className="rounded-full w-10 h-10"><Phone size={16} /></Button></a>)}
             </div>
           </div>
         )}
