@@ -89,16 +89,17 @@ const RideActive = () => {
     return () => { supabase.removeChannel(channel); };
   }, [rideId]);
 
-  // Fetch ETA from Mapbox Directions API
+  // Fetch ETA from Google Directions API
   const fetchETA = async (rideData: any) => {
     if (!rideData) return;
     try {
       const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${rideData.origem_lng},${rideData.origem_lat};${rideData.destino_lng},${rideData.destino_lat}?access_token=pk.eyJ1IjoiZmlkcml2ZXIiLCJhIjoiY21tcGJjbmtzMG9wZjJ3cHNsZ3oxaTYzZiJ9.TmAp9KCag5_-gQ0FsgOyJw&overview=false`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${rideData.origem_lat},${rideData.origem_lng}&destination=${rideData.destino_lat},${rideData.destino_lng}&key=AIzaSyATM-_dHRXjCsdXyQYdN5KTg3Ile2DWzn0&language=pt-BR`
       );
       const data = await res.json();
-      if (data.routes?.[0]?.duration) {
-        setEta(Math.round(data.routes[0].duration / 60));
+      const leg = data.routes?.[0]?.legs?.[0];
+      if (leg?.duration?.value) {
+        setEta(Math.round(leg.duration.value / 60));
       }
     } catch {}
   };
