@@ -60,7 +60,7 @@ const EnvioNovo = () => {
         const { latitude, longitude } = pos.coords;
         try {
           const res = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_KEY_RAW}&language=pt-BR`
           );
           const data = await res.json();
           const name = data.features?.[0]?.place_name || "Sua localização";
