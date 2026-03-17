@@ -454,6 +454,14 @@ const ProfileScreen = () => {
         {/* Quick Links */}
         <Card className="bg-card border-border overflow-hidden">
           <button
+            onClick={() => navigate("/payment-methods")}
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
+          >
+            <CreditCard size={20} className="text-primary" />
+            <span className="flex-1 text-left text-sm font-medium text-foreground">Formas de Pagamento</span>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </button>
+          <button
             onClick={() => navigate("/inbox")}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
           >
