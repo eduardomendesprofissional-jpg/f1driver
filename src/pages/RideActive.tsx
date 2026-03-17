@@ -554,11 +554,25 @@ const RideActive = () => {
               <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                 <Phone size={18} className="text-primary" />
               </button>
-              <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                <MessageCircle size={18} className="text-primary" />
-              </button>
             </div>
           )}
+        </div>
+
+        {/* Share & SOS row */}
+        {status !== "solicitada" && !isDriver && (
+          <div className="flex items-center gap-2 mb-3">
+            <ShareTrip
+              rideId={rideId}
+              origem={ride?.origem_endereco || ""}
+              destino={ride?.destino_endereco || ""}
+            />
+            <SOSButton
+              rideId={rideId}
+              origem={ride?.origem_endereco}
+              destino={ride?.destino_endereco}
+            />
+          </div>
+        )}
         </div>
 
         {/* Ride info */}
