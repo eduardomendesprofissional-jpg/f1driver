@@ -20,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import mapboxgl from "mapbox-gl";
+import DestinationMode from "@/components/DestinationMode";
+import SelfieVerification from "@/components/SelfieVerification";
 
 const DriverPanel = () => {
   const navigate = useNavigate();
