@@ -167,6 +167,19 @@ const RideConfirm = () => {
             </button>
           )}
         </div>
+
+        {/* Voucher corporativo */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Voucher</p>
+          <VoucherInput onApply={(id, val, nome) => toast.success(`Voucher ${nome} aplicado!`)} />
+        </div>
+
+        {/* Split payment */}
+        {est && (
+          <div className="mt-2">
+            <SplitPayment rideId="" totalValue={est.valor} />
+          </div>
+        )}
       </div>
 
       {/* Confirm Button */}
