@@ -7,6 +7,8 @@ import { useRide, RideEstimate } from "@/hooks/useRide";
 import { toast } from "sonner";
 import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
 import ScheduleRidePicker from "@/components/ScheduleRidePicker";
+import SplitPayment from "@/components/SplitPayment";
+import VoucherInput from "@/components/VoucherInput";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -165,6 +167,19 @@ const RideConfirm = () => {
             </button>
           )}
         </div>
+
+        {/* Voucher corporativo */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Voucher</p>
+          <VoucherInput onApply={(id, val, nome) => toast.success(`Voucher ${nome} aplicado!`)} />
+        </div>
+
+        {/* Split payment */}
+        {est && (
+          <div className="mt-2">
+            <SplitPayment rideId="" totalValue={est.valor} />
+          </div>
+        )}
       </div>
 
       {/* Confirm Button */}

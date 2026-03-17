@@ -12,6 +12,7 @@ import EmergencyFAB from "@/components/EmergencyFAB";
 import RideChat from "@/components/RideChat";
 import ShareTrip from "@/components/ShareTrip";
 import SOSButton from "@/components/SOSButton";
+import TurnByTurn from "@/components/TurnByTurn";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -622,6 +623,18 @@ const RideActive = () => {
                 style={{ width: `${Math.max(0, (waitCountdown / WAIT_TIMER_SECONDS) * 100)}%` }}
               />
             </div>
+          </div>
+        )}
+
+        {/* Turn-by-turn navigation (driver) */}
+        {isDriver && (status === "aceita" || status === "em_andamento") && ride && (
+          <div className="mb-4">
+            <TurnByTurn
+              originLat={status === "aceita" ? ride.origem_lat : ride.origem_lat}
+              originLng={status === "aceita" ? ride.origem_lng : ride.origem_lng}
+              destLat={status === "aceita" ? ride.origem_lat : ride.destino_lat}
+              destLng={status === "aceita" ? ride.origem_lng : ride.destino_lng}
+            />
           </div>
         )}
 

@@ -20,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import mapboxgl from "mapbox-gl";
+import DestinationMode from "@/components/DestinationMode";
+import SelfieVerification from "@/components/SelfieVerification";
 
 const DriverPanel = () => {
   const navigate = useNavigate();
@@ -36,6 +38,10 @@ const DriverPanel = () => {
   const [dailyEarnings, setDailyEarnings] = useState(0);
   const [dailyRides, setDailyRides] = useState(0);
   const [completionRate, setCompletionRate] = useState(100);
+  const [destModeActive, setDestModeActive] = useState(false);
+  const [destModeAddress, setDestModeAddress] = useState<string | undefined>();
+  const [showSelfie, setShowSelfie] = useState(false);
+  const [selfieVerified, setSelfieVerified] = useState(true);
 
   useDriverLocation(online);
   usePushNotifications(online);
@@ -79,6 +85,29 @@ const DriverPanel = () => {
     // Refresh every 30s
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
+  }, [user]);
+
+  // Check for periodic selfie verification
+  useEffect(() => {
+    if (!user) return;
+    const checkSelfie = async () => {
+      const { count } = await supabase
+        .from("rides")
+        .select("id", { count: "exact", head: true })
+        .eq("motorista_id", user.id)
+        .eq("status", "finalizada");
+      const { data: lastVerif } = await (supabase
+        .from("verificacao_selfie")
+        .select("*")
+        .eq("driver_id", user.id)
+        .order("solicitado_em", { ascending: false })
+        .limit(1) as any);
+      const totalRides = count || 0;
+      if (totalRides > 0 && (totalRides % 50 === 0 || !lastVerif?.length)) {
+        setSelfieVerified(false);
+      }
+    };
+    checkSelfie();
   }, [user]);
 
   const handleAccept = async () => {
@@ -171,7 +200,13 @@ const DriverPanel = () => {
       {/* Botão Iniciar/Parar */}
       <div className="flex justify-center py-3 shrink-0 z-20 bg-background">
         <button
-          onClick={() => setOnline(!online)}
+          onClick={() => {
+            if (!online && !selfieVerified) {
+              setShowSelfie(true);
+              return;
+            }
+            setOnline(!online);
+          }}
           className={`relative flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg ${
             online ? "bg-blue-400 text-white shadow-blue-400/40" : "bg-blue-900 text-blue-200 shadow-blue-900/40"
           }`}
@@ -237,8 +272,16 @@ const DriverPanel = () => {
         </div>
 
         {/* Safety Tips when offline */}
-        {!online && (
-          <div className="px-4 py-4">
+        {!online && !showSelfie && (
+          <div className="px-4 py-4 space-y-3">
+            <DestinationMode
+              active={destModeActive}
+              destinationAddress={destModeAddress}
+              onToggle={(active, lat, lng, addr) => {
+                setDestModeActive(active);
+                setDestModeAddress(addr);
+              }}
+            />
             <SafetyTips role="driver" />
           </div>
         )}
@@ -426,6 +469,46 @@ const DriverPanel = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Selfie Verification Modal */}
+      <AnimatePresence>
+        {showSelfie && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-background p-6 overflow-y-auto"
+          >
+            <div className="max-w-md mx-auto pt-8">
+              <SelfieVerification
+                onVerified={() => {
+                  setSelfieVerified(true);
+                  setShowSelfie(false);
+                  setOnline(true);
+                }}
+                onSkip={() => {
+                  setSelfieVerified(true);
+                  setShowSelfie(false);
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Destination Mode when online */}
+      {online && (
+        <div className="absolute top-[140px] left-4 right-4 z-20">
+          <DestinationMode
+            active={destModeActive}
+            destinationAddress={destModeAddress}
+            onToggle={(active, lat, lng, addr) => {
+              setDestModeActive(active);
+              setDestModeAddress(addr);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
