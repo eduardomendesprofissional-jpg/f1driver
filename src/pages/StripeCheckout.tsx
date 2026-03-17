@@ -44,7 +44,7 @@ const StripeCheckout = () => {
         const { data, error } = await supabase.functions.invoke("create-payment-intent", {
           body: {
             amount: amountCents,
-            payment_method_types: ["card", "pix"],
+            payment_method_types: ["card"],
             ride_id: rideId,
           },
         });
