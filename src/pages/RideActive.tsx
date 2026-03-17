@@ -191,8 +191,21 @@ const RideActive = () => {
 
   const status = ride?.status || "solicitada";
 
-  const handleCancel = async () => {
-    if (rideId) await updateRideStatus(rideId, "cancelada");
+  const handleCancel = async (motivo: string) => {
+    if (!rideId) return;
+    setCancelLoading(true);
+    const canceladoPor = isDriver ? "motorista" : "passageiro";
+    await supabase
+      .from("rides")
+      .update({
+        status: "cancelada",
+        cancelada_em: new Date().toISOString(),
+        motivo_cancelamento: motivo,
+        cancelado_por: canceladoPor,
+      } as any)
+      .eq("id", rideId);
+    setCancelLoading(false);
+    setShowCancelDialog(false);
     toast.info("Corrida cancelada.");
     navigate(isDriver ? "/driver" : "/passenger");
   };
