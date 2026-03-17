@@ -558,18 +558,18 @@ const RideActive = () => {
 
         <div className="flex gap-3">
           {status === "solicitada" && !isDriver && (
-            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
               <X size={16} className="mr-2" /> Cancelar
             </Button>
           )}
           {status === "aceita" && !isDriver && (
-            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
               <X size={16} className="mr-2" /> Cancelar
             </Button>
           )}
           {status === "aceita" && isDriver && (
             <>
-              <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleCancel}>
+              <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
                 <X size={16} className="mr-2" /> Cancelar
               </Button>
               <Button className="flex-1 h-12 font-bold bg-amber-500 hover:bg-amber-600 text-white" onClick={handleArrived}>
@@ -590,7 +590,7 @@ const RideActive = () => {
                 </>
               ) : (
                 <>
-                  <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleCancel}>
+                  <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
                     <X size={16} className="mr-2" /> Cancelar
                   </Button>
                   <Button className="flex-1 h-12 font-bold" onClick={handleStart}>
@@ -601,21 +601,41 @@ const RideActive = () => {
             </>
           )}
           {status === "aguardando" && !isDriver && (
-            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
               <X size={16} className="mr-2" /> Cancelar corrida
             </Button>
           )}
           {status === "em_andamento" && isDriver && (
-            <Button className="w-full h-12 font-bold" onClick={handleFinish}>
-              Finalizar viagem
-            </Button>
+            <div className="flex gap-3 w-full">
+              <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
+                <StopCircle size={16} className="mr-2" /> Encerrar
+              </Button>
+              <Button className="flex-1 h-12 font-bold" onClick={handleFinish}>
+                Finalizar viagem
+              </Button>
+            </div>
           )}
           {status === "em_andamento" && !isDriver && (
-            <div className="w-full text-center py-3 text-sm text-muted-foreground">
-              Viagem em andamento...
+            <div className="w-full flex flex-col gap-2">
+              <div className="text-center py-2 text-sm text-muted-foreground">
+                Viagem em andamento...
+              </div>
+              <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
+                <StopCircle size={16} className="mr-2" /> Encerrar viagem
+              </Button>
             </div>
           )}
         </div>
+
+        {/* Cancel Dialog */}
+        <CancelRideDialog
+          open={showCancelDialog}
+          onClose={() => setShowCancelDialog(false)}
+          onConfirm={handleCancel}
+          role={isDriver ? "driver" : "passenger"}
+          isDuringTrip={status === "em_andamento"}
+          loading={cancelLoading}
+        />
       </motion.div>
 
       {/* Emergency FAB - visible during active ride states */}
