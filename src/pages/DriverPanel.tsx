@@ -87,6 +87,29 @@ const DriverPanel = () => {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Check for periodic selfie verification
+  useEffect(() => {
+    if (!user) return;
+    const checkSelfie = async () => {
+      const { count } = await supabase
+        .from("rides")
+        .select("id", { count: "exact", head: true })
+        .eq("motorista_id", user.id)
+        .eq("status", "finalizada");
+      const { data: lastVerif } = await (supabase
+        .from("verificacao_selfie")
+        .select("*")
+        .eq("driver_id", user.id)
+        .order("solicitado_em", { ascending: false })
+        .limit(1) as any);
+      const totalRides = count || 0;
+      if (totalRides > 0 && (totalRides % 50 === 0 || !lastVerif?.length)) {
+        setSelfieVerified(false);
+      }
+    };
+    checkSelfie();
+  }, [user]);
+
   const handleAccept = async () => {
     setAccepting(true);
     const rideId = await acceptRide();
