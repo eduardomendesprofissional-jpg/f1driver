@@ -104,7 +104,7 @@ const DriverPanel = () => {
       </div>
 
       {/* Real Map */}
-      <div className="flex-1 relative min-h-[250px]">
+      <div className="relative" style={{ height: "45vh", minHeight: "250px" }}>
         <DriverMapSearch
           userPosition={position}
           onSelectPlace={handleSearchSelect}
