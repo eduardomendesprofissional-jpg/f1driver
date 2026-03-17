@@ -73,23 +73,8 @@ const PassengerHome = () => {
     });
   };
 
-  const handleSelectNearby = (place: { name: string; address: string; center: [number, number] }) => {
-    if (!position || !endereco) return;
-    saveRoute({
-      origem_endereco: endereco,
-      origem_lat: position.lat,
-      origem_lng: position.lng,
-      destino_endereco: place.address,
-      destino_lat: place.center[1],
-      destino_lng: place.center[0],
-    });
-    navigate("/ride-confirm", {
-      state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
-        destino: { endereco: place.address, lat: place.center[1], lng: place.center[0] },
-      },
-    });
-  };
+
+
 
   const handleSelectSavedRoute = (route: SavedRoute) => {
     if (!position || !endereco) return;
