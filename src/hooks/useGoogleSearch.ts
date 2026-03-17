@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { searchFoursquarePlaces, FoursquarePlace } from "@/lib/foursquare";
+import { searchTomTom, TomTomResult } from "@/lib/tomtom";
 
 const MAX_DISTANCE_KM = 25;
 const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
@@ -28,42 +28,22 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function searchNominatim(query: string, lat: number, lng: number): Promise<GooglePlace[]> {
-  try {
-    const params = new URLSearchParams({
-      q: query,
-      format: "json",
-      addressdetails: "1",
-      countrycodes: "br",
-      limit: "10",
-      lat: String(lat),
-      lon: String(lng),
-    });
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?${params}`,
-      { headers: { "Accept-Language": "pt-BR", "User-Agent": "F1DriverApp/1.0" } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data || []).map((item: any) => {
-      const itemLat = parseFloat(item.lat);
-      const itemLng = parseFloat(item.lon);
-      const dist = haversineDistance(lat, lng, itemLat, itemLng);
-      const name = item.name || item.display_name?.split(",")[0] || "";
-      return {
-        id: `nom-${item.place_id}`,
-        text: name,
-        place_name: item.display_name || "",
-        center: [itemLng, itemLat] as [number, number],
-        distance: formatDistance(dist),
-        distanceMeters: dist,
-        category: item.type ? item.type.replace(/_/g, " ") : "Endereço",
-        blocked: dist > MAX_DISTANCE_M,
-      };
-    });
-  } catch {
-    return [];
-  }
+function tomtomToPlace(item: TomTomResult, userLat: number, userLng: number): GooglePlace {
+  const name = item.poi?.name || item.address.freeformAddress || "";
+  const address = item.address.freeformAddress || "";
+  const category = item.poi?.categories?.[0] || (item.type === "POI" ? "Estabelecimento" : "Endereço");
+  const dist = item.dist ?? haversineDistance(userLat, userLng, item.position.lat, item.position.lon);
+
+  return {
+    id: item.id || `tt-${item.position.lat}-${item.position.lon}`,
+    text: name,
+    place_name: name !== address ? `${name} - ${address}` : address,
+    center: [item.position.lon, item.position.lat],
+    distance: formatDistance(dist),
+    distanceMeters: dist,
+    category,
+    blocked: dist > MAX_DISTANCE_M,
+  };
 }
 
 export const useGoogleSearch = () => {
@@ -80,43 +60,13 @@ export const useGoogleSearch = () => {
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
 
-      // Busca híbrida: Foursquare (POIs) + Nominatim (endereços) em paralelo
-      const [fsqResults, nominatimResults] = await Promise.all([
-        searchFoursquarePlaces(query, lat, lng, 5, MAX_DISTANCE_M).catch(() => [] as FoursquarePlace[]),
-        searchNominatim(query, lat, lng),
-      ]);
-
-      const foursquarePlaces: GooglePlace[] = fsqResults
-        .filter((p) => p.geocodes?.main)
-        .map((p) => {
-          const coords = p.geocodes!.main!;
-          const address = p.location.formatted_address || p.location.address || "";
-          const category = p.categories?.[0]?.name || "";
-          const fullName = [p.name, address].filter(Boolean).join(" - ");
-          const dist = p.distance ?? haversineDistance(lat, lng, coords.latitude, coords.longitude);
-          return {
-            id: p.fsq_id,
-            text: p.name,
-            place_name: fullName,
-            center: [coords.longitude, coords.latitude] as [number, number],
-            distance: formatDistance(dist),
-            distanceMeters: dist,
-            category,
-            blocked: dist > MAX_DISTANCE_M,
-          };
-        });
-
-      // Mesclar sem duplicatas por coordenada
-      const seen = new Set(foursquarePlaces.map((p) => `${p.center[0].toFixed(4)},${p.center[1].toFixed(4)}`));
-      const uniqueNominatim = nominatimResults.filter(
-        (p) => !seen.has(`${p.center[0].toFixed(4)},${p.center[1].toFixed(4)}`)
-      );
-
-      const all = [...foursquarePlaces, ...uniqueNominatim]
+      const ttResults = await searchTomTom(query, lat, lng);
+      const places = ttResults
+        .map((r) => tomtomToPlace(r, lat, lng))
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
 
-      setResults(all);
+      setResults(places);
     } catch {
       setResults([]);
     } finally {
