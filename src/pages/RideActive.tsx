@@ -12,6 +12,7 @@ import EmergencyFAB from "@/components/EmergencyFAB";
 import RideChat from "@/components/RideChat";
 import ShareTrip from "@/components/ShareTrip";
 import SOSButton from "@/components/SOSButton";
+import TurnByTurn from "@/components/TurnByTurn";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
