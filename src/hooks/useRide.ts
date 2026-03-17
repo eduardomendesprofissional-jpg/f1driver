@@ -55,7 +55,11 @@ export const useRide = () => {
       let valor: number;
       if (pricing) {
         const mult = Number((pricing as any).multiplicador ?? 1);
-        valor = (Number(pricing.preco_base) + Number(pricing.preco_km) * distancia_km + Number(pricing.preco_minuto) * duracao_min) * mult;
+        valor =
+          (Number(pricing.preco_base) +
+            Number(pricing.preco_km) * distancia_km +
+            Number(pricing.preco_minuto) * duracao_min) *
+          mult;
         valor = Math.max(valor, Number(pricing.taxa_minima));
       } else {
         valor = Math.max(5 + 2 * distancia_km + 0.5 * duracao_min, 8);
@@ -80,6 +84,7 @@ export const useRide = () => {
     }
   };
 
+  // Creates ride WITHOUT dispatching - dispatch happens after payment
   const createRide = async (est: RideEstimate, forma_pagamento: string) => {
     if (!user) return null;
     setCreating(true);
@@ -103,28 +108,35 @@ export const useRide = () => {
         .select()
         .single();
       if (error) throw error;
-
-      if (data?.id) {
-        const result = await supabase.rpc("dispatch_ride", { p_ride_id: data.id });
-        const driverId = result.data;
-        if (driverId) {
-          supabase.functions.invoke("send-push-notification", {
-            body: {
-              user_id: driverId,
-              title: "Nova corrida disponível!",
-              body: `De ${est.origem_endereco} → ${est.destino_endereco} | R$ ${est.valor.toFixed(2)}`,
-              data: { ride_id: data.id },
-            },
-          }).catch(() => {});
-        }
-      }
-
       return data;
     } catch (err) {
       console.error("Erro ao criar corrida:", err);
       return null;
     } finally {
       setCreating(false);
+    }
+  };
+
+  // Dispatch ride to find a driver - called AFTER payment succeeds
+  const dispatchRide = async (rideId: string, est: RideEstimate) => {
+    try {
+      const result = await supabase.rpc("dispatch_ride", { p_ride_id: rideId });
+      const driverId = result.data;
+      if (driverId) {
+        supabase.functions
+          .invoke("send-push-notification", {
+            body: {
+              user_id: driverId,
+              title: "Nova corrida disponível!",
+              body: `De ${est.origem_endereco} → ${est.destino_endereco} | R$ ${est.valor.toFixed(2)}`,
+              data: { ride_id: rideId },
+            },
+          })
+          .catch(() => {});
+      }
+      return driverId;
+    } catch {
+      return null;
     }
   };
 
@@ -139,5 +151,5 @@ export const useRide = () => {
     return !error;
   };
 
-  return { estimate, estimating, createRide, creating, updateRideStatus };
+  return { estimate, estimating, createRide, creating, dispatchRide, updateRideStatus };
 };

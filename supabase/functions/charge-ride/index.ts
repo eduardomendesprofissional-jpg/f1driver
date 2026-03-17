@@ -63,7 +63,9 @@ serve(async (req) => {
           Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ metadata: JSON.stringify({ user_id: ride.passageiro_id }) }).toString(),
+        body: new URLSearchParams({
+          "metadata[user_id]": ride.passageiro_id,
+        }).toString(),
       });
       const customer = await customerRes.json();
       if (customer.error) throw new Error(customer.error.message);
@@ -83,7 +85,6 @@ serve(async (req) => {
       });
     }
 
-    // Determine payment method types
     const isCard = ride.forma_pagamento === "card" && pmId;
     const isPix = ride.forma_pagamento === "pix";
 
@@ -100,6 +101,7 @@ serve(async (req) => {
       params.append("off_session", "true");
     } else if (isPix) {
       params.append("payment_method_types[]", "pix");
+      params.append("confirm", "false");
     } else {
       params.append("payment_method_types[]", "card");
     }
@@ -115,14 +117,18 @@ serve(async (req) => {
 
     const paymentIntent = await piRes.json();
     if (paymentIntent.error) {
-      return new Response(JSON.stringify({ error: paymentIntent.error.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: paymentIntent.error.message }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Update ride with payment info
-    const paymentStatus = paymentIntent.status === "succeeded" ? "paid" : "pending";
+    const paymentStatus =
+      paymentIntent.status === "succeeded" ? "paid" : "pending";
     await supabase
       .from("rides")
       .update({
@@ -132,19 +138,36 @@ serve(async (req) => {
       })
       .eq("id", ride_id);
 
-    return new Response(
-      JSON.stringify({
-        payment_intent_id: paymentIntent.id,
-        client_secret: paymentIntent.client_secret,
-        status: paymentIntent.status,
-        payment_status: paymentStatus,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
+    // Build response
+    const response: Record<string, any> = {
+      success: paymentIntent.status === "succeeded" || isPix,
+      payment_intent_id: paymentIntent.id,
+      client_secret: paymentIntent.client_secret,
+      status: paymentIntent.status,
+      payment_status: paymentStatus,
+    };
+
+    // For PIX, include QR code data
+    if (isPix && paymentIntent.next_action?.pix_display_qr_code) {
+      response.pix = {
+        qr_code_url:
+          paymentIntent.next_action.pix_display_qr_code.image_url_png,
+        qr_code_data: paymentIntent.next_action.pix_display_qr_code.data,
+        expires_at:
+          paymentIntent.next_action.pix_display_qr_code.expires_at || null,
+      };
+    }
+
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ success: false, error: err.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });
