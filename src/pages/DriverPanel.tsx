@@ -266,8 +266,16 @@ const DriverPanel = () => {
         </div>
 
         {/* Safety Tips when offline */}
-        {!online && (
-          <div className="px-4 py-4">
+        {!online && !showSelfie && (
+          <div className="px-4 py-4 space-y-3">
+            <DestinationMode
+              active={destModeActive}
+              destinationAddress={destModeAddress}
+              onToggle={(active, lat, lng, addr) => {
+                setDestModeActive(active);
+                setDestModeAddress(addr);
+              }}
+            />
             <SafetyTips role="driver" />
           </div>
         )}
