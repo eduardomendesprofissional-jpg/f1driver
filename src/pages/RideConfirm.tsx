@@ -131,6 +131,40 @@ const RideConfirm = () => {
             ))}
           </div>
         </div>
+
+        {/* Multi-stop */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Paradas intermediárias</p>
+          <MultiStopInput
+            stops={stops}
+            onStopsChange={setStops}
+            userPosition={origem ? { lat: origem.lat, lng: origem.lng } : undefined}
+          />
+        </div>
+
+        {/* Schedule */}
+        <div className="mt-4">
+          {scheduledDate ? (
+            <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3">
+              <Calendar size={16} className="text-primary" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">Agendada para</p>
+                <p className="text-sm font-bold text-primary">
+                  {format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </p>
+              </div>
+              <button onClick={() => setScheduledDate(null)} className="text-xs text-muted-foreground">✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowScheduler(true)}
+              className="flex items-center gap-2 text-xs font-semibold text-primary py-2 transition-all active:scale-95"
+            >
+              <Clock size={14} />
+              Agendar para depois
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Confirm Button */}
