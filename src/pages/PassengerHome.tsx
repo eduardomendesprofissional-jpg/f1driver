@@ -5,7 +5,7 @@ import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigatio
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
-import NearbyPlaces from "@/components/NearbyPlaces";
+
 import SafetyTips from "@/components/SafetyTips";
 import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
@@ -73,23 +73,8 @@ const PassengerHome = () => {
     });
   };
 
-  const handleSelectNearby = (place: { name: string; address: string; center: [number, number] }) => {
-    if (!position || !endereco) return;
-    saveRoute({
-      origem_endereco: endereco,
-      origem_lat: position.lat,
-      origem_lng: position.lng,
-      destino_endereco: place.address,
-      destino_lat: place.center[1],
-      destino_lng: place.center[0],
-    });
-    navigate("/ride-confirm", {
-      state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
-        destino: { endereco: place.address, lat: place.center[1], lng: place.center[0] },
-      },
-    });
-  };
+
+
 
   const handleSelectSavedRoute = (route: SavedRoute) => {
     if (!position || !endereco) return;
@@ -352,12 +337,6 @@ const PassengerHome = () => {
                 </div>
               ) : null}
 
-              {/* Nearby places */}
-              {destination.length < 3 && (
-                <div className="mt-4">
-                  <NearbyPlaces userPosition={position} onSelectPlace={handleSelectNearby} />
-                </div>
-              )}
             </div>
           </motion.div>
         )}
