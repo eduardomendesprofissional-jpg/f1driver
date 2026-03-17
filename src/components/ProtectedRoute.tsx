@@ -17,11 +17,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
     supabase
       .from("profiles")
-      .select("onboarding_completo")
+      .select("onboarding_completo, nome, cpf, tipo")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
-        setOnboardingDone(data?.onboarding_completo ?? false);
+        // Consider onboarding done if flag is true OR user already has name+cpf filled
+        const done = data?.onboarding_completo === true || 
+          (!!data?.nome && data.nome.trim() !== "" && !!data?.cpf && data.cpf.trim() !== "");
+        
+        // If user has data but flag is false, update the flag silently
+        if (done && !data?.onboarding_completo) {
+          supabase.from("profiles").update({ onboarding_completo: true }).eq("id", user.id).then();
+        }
+        
+        setOnboardingDone(done);
         setCheckingOnboarding(false);
       });
   }, [user]);
