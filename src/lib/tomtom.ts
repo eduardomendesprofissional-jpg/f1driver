@@ -29,7 +29,7 @@ export async function searchTomTom(
   lat: number,
   lng: number,
   limit = 10,
-  radius = 50000
+  radius = 150000
 ): Promise<TomTomResult[]> {
   const params = new URLSearchParams({
     key: TOMTOM_KEY,
