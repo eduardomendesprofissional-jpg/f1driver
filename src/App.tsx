@@ -61,6 +61,7 @@ import DriverSettings from "./pages/DriverSettings";
 import DriverInbox from "./pages/DriverInbox";
 import DriverReferral from "./pages/DriverReferral";
 import DriverWallet from "./pages/DriverWallet";
+import DriverAchievements from "./pages/DriverAchievements";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
 
