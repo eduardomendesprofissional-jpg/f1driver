@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import SafetyTips from "@/components/SafetyTips";
 import { useNavigate } from "react-router-dom";
 import {
@@ -111,10 +111,40 @@ const DriverPanel = () => {
     }
   };
 
+  // Bottom sheet drag logic
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef(0);
+  const dragStartTranslate = useRef(0);
+  const [sheetTranslate, setSheetTranslate] = useState(0);
+  const SNAP_EXPANDED = -200;
+  const SNAP_DEFAULT = 0;
+  const SNAP_COLLAPSED = 300;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    dragStartTranslate.current = sheetTranslate;
+    if (sheetRef.current) sheetRef.current.style.transition = "none";
+  }, [sheetTranslate]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const diff = e.touches[0].clientY - dragStartY.current;
+    const newT = Math.max(SNAP_EXPANDED, Math.min(SNAP_COLLAPSED, dragStartTranslate.current + diff));
+    setSheetTranslate(newT);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (sheetRef.current) sheetRef.current.style.transition = "";
+    const points = [SNAP_EXPANDED, SNAP_DEFAULT, SNAP_COLLAPSED];
+    const nearest = points.reduce((prev, curr) =>
+      Math.abs(curr - sheetTranslate) < Math.abs(prev - sheetTranslate) ? curr : prev
+    );
+    setSheetTranslate(nearest);
+  }, [sheetTranslate]);
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Header */}
-      <div className="p-4 flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between shrink-0 z-20 bg-background">
         <h1 className="text-lg font-bold">Painel do Motorista</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => navigate("/driver/wallet")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
@@ -135,14 +165,12 @@ const DriverPanel = () => {
         </div>
       </div>
 
-      {/* Botão Iniciar/Parar centralizado e pulsante */}
-      <div className="flex justify-center py-3">
+      {/* Botão Iniciar/Parar */}
+      <div className="flex justify-center py-3 shrink-0 z-20 bg-background">
         <button
           onClick={() => setOnline(!online)}
           className={`relative flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg ${
-            online
-              ? "bg-blue-400 text-white shadow-blue-400/40"
-              : "bg-blue-900 text-blue-200 shadow-blue-900/40"
+            online ? "bg-blue-400 text-white shadow-blue-400/40" : "bg-blue-900 text-blue-200 shadow-blue-900/40"
           }`}
         >
           <span className={`absolute inset-0 rounded-full ${online ? "bg-blue-400" : "bg-blue-900"} animate-[pulse-btn_2s_ease-in-out_infinite] opacity-40`} />
@@ -151,12 +179,9 @@ const DriverPanel = () => {
         </button>
       </div>
 
-      {/* Real Map */}
-      <div className="relative" style={{ height: "45vh", minHeight: "250px" }}>
-        <DriverMapSearch
-          userPosition={position}
-          onSelectPlace={handleSearchSelect}
-        />
+      {/* Full Map */}
+      <div className="flex-1 relative">
+        <DriverMapSearch userPosition={position} onSelectPlace={handleSearchSelect} />
         <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
@@ -164,12 +189,7 @@ const DriverPanel = () => {
           onMapReady={(map) => { mapRef.current = map; }}
         />
         {showPermissionBanner && (
-          <LocationPermissionBanner
-            permission={permission as any}
-            loading={geoLoading}
-            error={geoError}
-            onRequest={requestLocation}
-          />
+          <LocationPermissionBanner permission={permission as any} loading={geoLoading} error={geoError} onRequest={requestLocation} />
         )}
         {!showPermissionBanner && !online && (
           <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10">
@@ -178,213 +198,231 @@ const DriverPanel = () => {
         )}
       </div>
 
-      {/* Earnings */}
-      <div className="px-4 py-3 bg-card border-t border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <DollarSign size={18} className="text-primary" />
-            <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
-            <span className="text-lg font-bold text-primary">R$ {dailyEarnings.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Car size={14} className="text-muted-foreground" />
-              <span className="text-xs font-semibold text-foreground">{dailyRides}</span>
+      {/* Draggable Bottom Sheet */}
+      <div
+        ref={sheetRef}
+        className="absolute left-0 right-0 bottom-0 z-30 bg-card rounded-t-3xl shadow-[0_-4px_30px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out"
+        style={{ transform: `translateY(${sheetTranslate}px)`, maxHeight: "80vh" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag Handle */}
+        <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+        </div>
+
+        {/* Earnings */}
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign size={18} className="text-primary" />
+              <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
+              <span className="text-lg font-bold text-primary">R$ {dailyEarnings.toFixed(2)}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <TrendingUp size={14} className={completionRate >= 90 ? "text-green-500" : "text-amber-500"} />
-              <span className="text-xs font-semibold text-foreground">{completionRate}%</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Car size={14} className="text-muted-foreground" />
+                <span className="text-xs font-semibold text-foreground">{dailyRides}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <TrendingUp size={14} className={completionRate >= 90 ? "text-green-500" : "text-amber-500"} />
+                <span className="text-xs font-semibold text-foreground">{completionRate}%</span>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Safety Tips when offline */}
+        {!online && (
+          <div className="px-4 py-4">
+            <SafetyTips role="driver" />
+          </div>
+        )}
+
+        {/* Tabs */}
+        {online && (
+          <div className="flex border-b border-border">
+            <button
+              onClick={() => setTab("corridas")}
+              className={`flex-1 py-3 text-sm font-semibold text-center transition-colors ${
+                tab === "corridas" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+              }`}
+            >
+              🚗 Corridas
+            </button>
+            <button
+              onClick={() => setTab("envios")}
+              className={`flex-1 py-3 text-sm font-semibold text-center transition-colors relative ${
+                tab === "envios" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+              }`}
+            >
+              📦 Envios
+              {envioCount > 0 && (
+                <span className="absolute top-2 right-1/4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {envioCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Tab Content - scrollable */}
+        <div className="overflow-y-auto flex-1" style={{ maxHeight: "50vh" }}>
+          <AnimatePresence mode="wait">
+            {online && tab === "corridas" && (
+              <motion.div key="corridas" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <AnimatePresence>
+                  {currentRequest && (
+                    <motion.div
+                      initial={{ y: 200, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 200, opacity: 0 }}
+                      className="p-4"
+                    >
+                      <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Nova corrida</span>
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-8 h-8">
+                              <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--secondary))" strokeWidth="3" />
+                                <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeDasharray={`${(countdown / 15) * 88} 88`} strokeLinecap="round" className="transition-all duration-1000" />
+                              </svg>
+                              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">{countdown}</span>
+                            </div>
+                            <span className="text-lg font-bold text-primary">R$ {Number(currentRequest.valor || 0).toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <div className="w-3 h-3 rounded-full bg-primary mt-1 shrink-0" />
+                            <p className="text-sm truncate">{currentRequest.origem_endereco}</p>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <MapPin size={14} className="text-destructive mt-0.5 shrink-0" />
+                            <p className="text-sm truncate">{currentRequest.destino_endereco}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><Navigation size={12} />{currentRequest.distancia_km} km</span>
+                          <span className="flex items-center gap-1"><Clock size={12} />{currentRequest.duracao_min} min</span>
+                          <span className="flex items-center gap-1"><Banknote size={12} />{currentRequest.forma_pagamento}</span>
+                        </div>
+                        <div className="flex gap-3">
+                          <Button variant="outline" className="flex-1 h-12 font-bold" onClick={rejectRide}>Recusar</Button>
+                          <Button className="flex-1 h-12 font-bold glow-blue" onClick={handleAccept} disabled={accepting}>
+                            {accepting ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+                            Aceitar
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {!currentRequest && (
+                  <div className="p-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solicitações</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">Aguardando novas corridas...</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {online && tab === "envios" && (
+              <motion.div key="envios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 space-y-4">
+                {myEnvios.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5"><Truck size={14} /> Meus envios ativos</p>
+                    {myEnvios.map((envio) => (
+                      <div key={envio.id} className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Package size={16} className="text-primary" />
+                            <span className="text-sm font-semibold truncate max-w-[150px]">{envio.descricao}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={envio.status === "coletado" ? "default" : "secondary"} className="text-[10px]">
+                              {envio.status === "pendente" ? "Aceito" : "Coletado"}
+                            </Badge>
+                            <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <div className="flex items-start gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                            <p className="text-xs truncate text-muted-foreground">{envio.coleta_endereco}</p>
+                          </div>
+                          <div className="flex items-center justify-center"><ArrowRight size={12} className="text-muted-foreground" /></div>
+                          <div className="flex items-start gap-2">
+                            <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
+                            <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
+                          {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
+                        </div>
+                        {envio.status === "pendente" && (
+                          <Button className="w-full h-11 font-bold" onClick={() => markColetado(envio.id)}>
+                            <CheckCircle size={16} className="mr-2" />Marcar como Coletado
+                          </Button>
+                        )}
+                        {envio.status === "coletado" && (
+                          <Button className="w-full h-11 font-bold bg-success hover:bg-success/90 text-success-foreground" onClick={() => markEntregue(envio.id)}>
+                            <CheckCircle size={16} className="mr-2" />Marcar como Entregue
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {pendingEnvios.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><Package size={14} /> Envios disponíveis</p>
+                    {pendingEnvios.map((envio) => (
+                      <div key={envio.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Package size={16} className="text-muted-foreground" />
+                            <span className="text-sm font-semibold truncate max-w-[150px]">{envio.descricao}</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          <div className="flex items-start gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                            <p className="text-xs truncate text-muted-foreground">{envio.coleta_endereco}</p>
+                          </div>
+                          <div className="flex items-center justify-center"><ArrowRight size={12} className="text-muted-foreground" /></div>
+                          <div className="flex items-start gap-2">
+                            <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
+                            <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
+                          {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
+                          <span>•</span><span>{envio.forma_pagamento}</span>
+                        </div>
+                        <Button variant="outline" className="w-full h-11 font-bold border-primary text-primary hover:bg-primary/10" onClick={() => acceptEnvio(envio.id)}>
+                          <Truck size={16} className="mr-2" />Aceitar Envio
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {pendingEnvios.length === 0 && myEnvios.length === 0 && (
+                  <div className="text-center py-8">
+                    <Package size={32} className="mx-auto text-muted-foreground/40 mb-3" />
+                    <p className="text-sm text-muted-foreground">Nenhum envio disponível no momento</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-
-      {/* Safety Tips when offline */}
-      {!online && (
-        <div className="px-4 py-4 bg-card">
-          <SafetyTips role="driver" />
-        </div>
-      )}
-
-      {/* Tabs */}
-      {online && (
-        <div className="flex border-b border-border bg-card">
-          <button
-            onClick={() => setTab("corridas")}
-            className={`flex-1 py-3 text-sm font-semibold text-center transition-colors ${
-              tab === "corridas" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
-            }`}
-          >
-            🚗 Corridas
-          </button>
-          <button
-            onClick={() => setTab("envios")}
-            className={`flex-1 py-3 text-sm font-semibold text-center transition-colors relative ${
-              tab === "envios" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
-            }`}
-          >
-            📦 Envios
-            {envioCount > 0 && (
-              <span className="absolute top-2 right-1/4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {envioCount}
-              </span>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        {online && tab === "corridas" && (
-          <motion.div key="corridas" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <AnimatePresence>
-              {currentRequest && (
-                <motion.div
-                  initial={{ y: 200, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 200, opacity: 0 }}
-                  className="p-4 bg-card"
-                >
-                  <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-primary uppercase tracking-wider">Nova corrida</span>
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-8 h-8">
-                          <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
-                            <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--secondary))" strokeWidth="3" />
-                            <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeDasharray={`${(countdown / 15) * 88} 88`} strokeLinecap="round" className="transition-all duration-1000" />
-                          </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">{countdown}</span>
-                        </div>
-                        <span className="text-lg font-bold text-primary">R$ {Number(currentRequest.valor || 0).toFixed(2)}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <div className="w-3 h-3 rounded-full bg-primary mt-1 shrink-0" />
-                        <p className="text-sm truncate">{currentRequest.origem_endereco}</p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin size={14} className="text-destructive mt-0.5 shrink-0" />
-                        <p className="text-sm truncate">{currentRequest.destino_endereco}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Navigation size={12} />{currentRequest.distancia_km} km</span>
-                      <span className="flex items-center gap-1"><Clock size={12} />{currentRequest.duracao_min} min</span>
-                      <span className="flex items-center gap-1"><Banknote size={12} />{currentRequest.forma_pagamento}</span>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1 h-12 font-bold" onClick={rejectRide}>Recusar</Button>
-                      <Button className="flex-1 h-12 font-bold glow-blue" onClick={handleAccept} disabled={accepting}>
-                        {accepting ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                        Aceitar
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {!currentRequest && (
-              <div className="p-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solicitações</p>
-                <p className="text-sm text-muted-foreground text-center py-8">Aguardando novas corridas...</p>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {online && tab === "envios" && (
-          <motion.div key="envios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 space-y-4 overflow-y-auto max-h-[50vh]">
-            {myEnvios.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5"><Truck size={14} /> Meus envios ativos</p>
-                {myEnvios.map((envio) => (
-                  <div key={envio.id} className="bg-primary/10 border border-primary/30 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package size={16} className="text-primary" />
-                        <span className="text-sm font-semibold truncate max-w-[150px]">{envio.descricao}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={envio.status === "coletado" ? "default" : "secondary"} className="text-[10px]">
-                          {envio.status === "pendente" ? "Aceito" : "Coletado"}
-                        </Badge>
-                        <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-start gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                        <p className="text-xs truncate text-muted-foreground">{envio.coleta_endereco}</p>
-                      </div>
-                      <div className="flex items-center justify-center"><ArrowRight size={12} className="text-muted-foreground" /></div>
-                      <div className="flex items-start gap-2">
-                        <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
-                        <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
-                      {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
-                    </div>
-                    {envio.status === "pendente" && (
-                      <Button className="w-full h-11 font-bold" onClick={() => markColetado(envio.id)}>
-                        <CheckCircle size={16} className="mr-2" />Marcar como Coletado
-                      </Button>
-                    )}
-                    {envio.status === "coletado" && (
-                      <Button className="w-full h-11 font-bold bg-success hover:bg-success/90 text-success-foreground" onClick={() => markEntregue(envio.id)}>
-                        <CheckCircle size={16} className="mr-2" />Marcar como Entregue
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {pendingEnvios.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><Package size={14} /> Envios disponíveis</p>
-                {pendingEnvios.map((envio) => (
-                  <div key={envio.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package size={16} className="text-muted-foreground" />
-                        <span className="text-sm font-semibold truncate max-w-[150px]">{envio.descricao}</span>
-                      </div>
-                      <span className="text-sm font-bold text-primary">R$ {Number(envio.valor || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-start gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                        <p className="text-xs truncate text-muted-foreground">{envio.coleta_endereco}</p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
-                        <p className="text-xs truncate text-muted-foreground">{envio.entrega_endereco}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span>{envio.tamanho}</span><span>•</span><span>{envio.peso_kg} kg</span>
-                      {envio.distancia_km && (<><span>•</span><span>{envio.distancia_km} km</span></>)}
-                      <span>•</span><span>{envio.forma_pagamento}</span>
-                    </div>
-                    <Button variant="outline" className="w-full h-11 font-bold border-primary text-primary hover:bg-primary/10" onClick={() => acceptEnvio(envio.id)}>
-                      <Truck size={16} className="mr-2" />Aceitar Envio
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {pendingEnvios.length === 0 && myEnvios.length === 0 && (
-              <div className="text-center py-8">
-                <Package size={32} className="mx-auto text-muted-foreground/40 mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum envio disponível no momento</p>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
