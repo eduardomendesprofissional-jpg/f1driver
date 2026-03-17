@@ -32,10 +32,14 @@ export const useGeolocation = () => {
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
+        `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_KEY}&language=pt-BR`
       );
       const data = await res.json();
-      return data.features?.[0]?.place_name || "Sua localização";
+      const addr = data.addresses?.[0]?.address;
+      if (addr) {
+        return addr.freeformAddress || addr.streetName || "Sua localização";
+      }
+      return "Sua localização";
     } catch {
       return "Sua localização";
     }
