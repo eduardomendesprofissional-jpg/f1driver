@@ -3,7 +3,7 @@ import { searchTomTom, TomTomResult } from "@/lib/tomtom";
 
 console.log("[useGoogleSearch] Module loaded - TomTom version");
 
-const MAX_DISTANCE_KM = 25;
+const MAX_DISTANCE_KM = 100;
 const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
 
 export interface GooglePlace {
