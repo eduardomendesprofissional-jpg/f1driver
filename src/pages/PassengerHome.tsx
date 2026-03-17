@@ -352,12 +352,6 @@ const PassengerHome = () => {
                 </div>
               ) : null}
 
-              {/* Nearby places */}
-              {destination.length < 3 && (
-                <div className="mt-4">
-                  <NearbyPlaces userPosition={position} onSelectPlace={handleSelectNearby} />
-                </div>
-              )}
             </div>
           </motion.div>
         )}
