@@ -364,7 +364,18 @@ const RideActive = () => {
     if (isDriver) {
       setShowSummary(true);
     } else {
-      navigate("/rating", { state: { rideId } });
+      // If card payment, go to checkout first
+      if (ride?.forma_pagamento === "card" && finalValor > 0) {
+        navigate("/checkout", {
+          state: {
+            amount: Math.round(finalValor * 100),
+            rideId: rideId,
+            returnTo: "/rating",
+          },
+        });
+      } else {
+        navigate("/rating", { state: { rideId } });
+      }
     }
   };
 
