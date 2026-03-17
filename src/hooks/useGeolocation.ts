@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { TOMTOM_KEY } from "@/lib/tomtom";
 
 export interface GeoPosition {
   lat: number;
@@ -32,10 +32,14 @@ export const useGeolocation = () => {
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
+        `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_KEY}&language=pt-BR`
       );
       const data = await res.json();
-      return data.features?.[0]?.place_name || "Sua localização";
+      const addr = data.addresses?.[0]?.address;
+      if (addr) {
+        return addr.freeformAddress || addr.streetName || "Sua localização";
+      }
+      return "Sua localização";
     } catch {
       return "Sua localização";
     }
@@ -55,6 +59,7 @@ export const useGeolocation = () => {
         const { latitude: lat, longitude: lng } = pos.coords;
         setPosition({ lat, lng });
         setPermission("granted");
+        setError(null);
         const addr = await reverseGeocode(lat, lng);
         setEndereco(addr);
         setLoading(false);
@@ -64,11 +69,13 @@ export const useGeolocation = () => {
         if (err.code === err.PERMISSION_DENIED) {
           setPermission("denied");
           setError("Permissão de localização negada. Habilite nas configurações do navegador.");
+        } else if (err.code === err.TIMEOUT) {
+          setError("Tempo esgotado ao obter localização. Tente novamente.");
         } else {
           setError("Não foi possível obter sua localização. Tente novamente.");
         }
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
     );
   }, [reverseGeocode]);
 

@@ -78,7 +78,7 @@ const PassengerHome = () => {
     });
   };
 
-  const showPermissionBanner = permission !== "granted";
+  const showPermissionBanner = permission !== "granted" || (permission === "granted" && !!geoError && !position);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
