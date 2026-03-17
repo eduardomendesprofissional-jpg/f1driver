@@ -52,6 +52,7 @@ import ConfigurarApp from "./pages/admin/ConfigurarApp";
 import Administradores from "./pages/admin/Administradores";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
+import OnboardingScreen from "./pages/OnboardingScreen";
 import EnviosScreen from "./pages/EnviosScreen";
 import EnvioNovo from "./pages/EnvioNovo";
 import EnvioTracking from "./pages/EnvioTracking";
