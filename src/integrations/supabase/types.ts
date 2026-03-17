@@ -178,6 +178,10 @@ export type Database = {
       }
       driver_locations: {
         Row: {
+          destino_endereco: string | null
+          destino_lat: number | null
+          destino_lng: number | null
+          destino_modo_ativo: boolean | null
           driver_id: string
           id: string
           lat: number
@@ -186,6 +190,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          destino_endereco?: string | null
+          destino_lat?: number | null
+          destino_lng?: number | null
+          destino_modo_ativo?: boolean | null
           driver_id: string
           id?: string
           lat: number
@@ -194,6 +202,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          destino_endereco?: string | null
+          destino_lat?: number | null
+          destino_lng?: number | null
+          destino_modo_ativo?: boolean | null
           driver_id?: string
           id?: string
           lat?: number
@@ -554,6 +566,44 @@ export type Database = {
           },
         ]
       }
+      ride_splits: {
+        Row: {
+          convidado_email: string
+          convidado_user_id: string | null
+          created_at: string
+          id: string
+          percentual: number
+          ride_id: string
+          status: string
+        }
+        Insert: {
+          convidado_email: string
+          convidado_user_id?: string | null
+          created_at?: string
+          id?: string
+          percentual?: number
+          ride_id: string
+          status?: string
+        }
+        Update: {
+          convidado_email?: string
+          convidado_user_id?: string | null
+          created_at?: string
+          id?: string
+          percentual?: number
+          ride_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_splits_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ride_stops: {
         Row: {
           chegou_em: string | null
@@ -776,6 +826,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      verificacao_selfie: {
+        Row: {
+          driver_id: string
+          foto_url: string | null
+          id: string
+          respondido_em: string | null
+          resultado: string | null
+          solicitado_em: string
+          status: string
+        }
+        Insert: {
+          driver_id: string
+          foto_url?: string | null
+          id?: string
+          respondido_em?: string | null
+          resultado?: string | null
+          solicitado_em?: string
+          status?: string
+        }
+        Update: {
+          driver_id?: string
+          foto_url?: string | null
+          id?: string
+          respondido_em?: string | null
+          resultado?: string | null
+          solicitado_em?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      voucher_usos: {
+        Row: {
+          created_at: string
+          id: string
+          ride_id: string
+          user_id: string
+          valor: number
+          voucher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ride_id: string
+          user_id: string
+          valor: number
+          voucher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ride_id?: string
+          user_id?: string
+          valor?: number
+          voucher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_usos_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_usos_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers_corporativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers_corporativos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          empresa_nome: string
+          id: string
+          validade: string | null
+          valor_limite: number
+          valor_usado: number
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          empresa_nome: string
+          id?: string
+          validade?: string | null
+          valor_limite?: number
+          valor_usado?: number
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          empresa_nome?: string
+          id?: string
+          validade?: string | null
+          valor_limite?: number
+          valor_usado?: number
+        }
+        Relationships: []
       }
     }
     Views: {
