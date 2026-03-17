@@ -407,8 +407,11 @@ export type Database = {
           codigo_indicacao: string | null
           cpf: string | null
           created_at: string
+          data_nascimento: string | null
+          endereco: string | null
           id: string
           nome: string | null
+          onboarding_completo: boolean
           status_aprovacao: string
           telefone: string | null
           tipo: string
@@ -424,8 +427,11 @@ export type Database = {
           codigo_indicacao?: string | null
           cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
+          endereco?: string | null
           id: string
           nome?: string | null
+          onboarding_completo?: boolean
           status_aprovacao?: string
           telefone?: string | null
           tipo?: string
@@ -441,8 +447,11 @@ export type Database = {
           codigo_indicacao?: string | null
           cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
+          endereco?: string | null
           id?: string
           nome?: string | null
+          onboarding_completo?: boolean
           status_aprovacao?: string
           telefone?: string | null
           tipo?: string
