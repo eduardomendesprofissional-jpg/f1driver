@@ -257,15 +257,38 @@ const OnboardingScreen = () => {
     if (!user) return;
     setLoading(true);
     try {
+      const rawCpf = cpf.replace(/\D/g, "");
+      
+      // Check if CPF is already in use by another user
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("cpf", rawCpf)
+        .neq("id", user.id)
+        .maybeSingle();
+      
+      if (existing) {
+        toast.error("Este CPF já está cadastrado em outra conta.");
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.from("profiles").update({
         nome,
         endereco,
-        cpf: cpf.replace(/\D/g, ""),
+        cpf: rawCpf,
         data_nascimento: nascimento,
         tipo,
         onboarding_completo: true,
       }).eq("id", user.id);
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes("profiles_cpf_unique")) {
+          toast.error("Este CPF já está cadastrado em outra conta.");
+        } else {
+          throw error;
+        }
+        return;
+      }
       toast.success("Cadastro concluído!");
       navigate(tipo === "motorista" ? "/driver" : "/passenger");
     } catch (err: any) {
