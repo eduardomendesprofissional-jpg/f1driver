@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle } from "lucide-react";
+import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/GoogleMap";
 import EmergencyFAB from "@/components/EmergencyFAB";
