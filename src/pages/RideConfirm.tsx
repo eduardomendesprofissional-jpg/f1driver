@@ -1,10 +1,14 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft, Loader2, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
 import { toast } from "sonner";
+import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
+import ScheduleRidePicker from "@/components/ScheduleRidePicker";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const paymentMethods = [
   { id: "pix", label: "Pix", icon: QrCode },
@@ -19,6 +23,9 @@ const RideConfirm = () => {
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const { estimate, estimating, createRide, creating } = useRide();
   const [est, setEst] = useState<RideEstimate | null>(null);
+  const [stops, setStops] = useState<StopPoint[]>([]);
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
     if (!origem || !destino) {
@@ -124,6 +131,40 @@ const RideConfirm = () => {
             ))}
           </div>
         </div>
+
+        {/* Multi-stop */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Paradas intermediárias</p>
+          <MultiStopInput
+            stops={stops}
+            onStopsChange={setStops}
+            userPosition={origem ? { lat: origem.lat, lng: origem.lng } : undefined}
+          />
+        </div>
+
+        {/* Schedule */}
+        <div className="mt-4">
+          {scheduledDate ? (
+            <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3">
+              <Calendar size={16} className="text-primary" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">Agendada para</p>
+                <p className="text-sm font-bold text-primary">
+                  {format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </p>
+              </div>
+              <button onClick={() => setScheduledDate(null)} className="text-xs text-muted-foreground">✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowScheduler(true)}
+              className="flex items-center gap-2 text-xs font-semibold text-primary py-2 transition-all active:scale-95"
+            >
+              <Clock size={14} />
+              Agendar para depois
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Confirm Button */}
@@ -134,9 +175,19 @@ const RideConfirm = () => {
           disabled={!est || creating}
         >
           {creating ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-          {creating ? "Solicitando..." : "Confirmar corrida"}
+          {creating ? "Solicitando..." : scheduledDate ? "Agendar corrida" : "Confirmar corrida"}
         </Button>
       </div>
+
+      {/* Schedule Picker */}
+      <AnimatePresence>
+        {showScheduler && (
+          <ScheduleRidePicker
+            onSchedule={(dt) => { setScheduledDate(dt); setShowScheduler(false); }}
+            onCancel={() => setShowScheduler(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

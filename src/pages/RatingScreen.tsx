@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import TipSelector from "@/components/TipSelector";
 
 const RatingScreen = () => {
   const navigate = useNavigate();
@@ -107,6 +108,9 @@ const RatingScreen = () => {
             </div>
           </div>
         )}
+
+        {/* Tip */}
+        {ride && <TipSelector rideId={rideId} />}
 
         <Button
           onClick={handleSubmit}

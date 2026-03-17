@@ -522,13 +522,88 @@ export type Database = {
           },
         ]
       }
+      ride_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          ride_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          ride_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          ride_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_messages_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ride_stops: {
+        Row: {
+          chegou_em: string | null
+          created_at: string
+          endereco: string
+          id: string
+          lat: number
+          lng: number
+          ordem: number
+          ride_id: string
+        }
+        Insert: {
+          chegou_em?: string | null
+          created_at?: string
+          endereco: string
+          id?: string
+          lat: number
+          lng: number
+          ordem?: number
+          ride_id: string
+        }
+        Update: {
+          chegou_em?: string | null
+          created_at?: string
+          endereco?: string
+          id?: string
+          lat?: number
+          lng?: number
+          ordem?: number
+          ride_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_stops_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rides: {
         Row: {
           aceita_em: string | null
+          agendada_para: string | null
           cancelada_em: string | null
           cancelado_por: string | null
           categoria: string
           chegou_em: string | null
+          compartilhar_token: string | null
           created_at: string
           destino_endereco: string
           destino_lat: number
@@ -539,6 +614,7 @@ export type Database = {
           duracao_real_min: number | null
           finalizada_em: string | null
           forma_pagamento: string
+          gorjeta: number | null
           id: string
           iniciada_em: string | null
           km_real: number | null
@@ -556,10 +632,12 @@ export type Database = {
         }
         Insert: {
           aceita_em?: string | null
+          agendada_para?: string | null
           cancelada_em?: string | null
           cancelado_por?: string | null
           categoria?: string
           chegou_em?: string | null
+          compartilhar_token?: string | null
           created_at?: string
           destino_endereco: string
           destino_lat: number
@@ -570,6 +648,7 @@ export type Database = {
           duracao_real_min?: number | null
           finalizada_em?: string | null
           forma_pagamento?: string
+          gorjeta?: number | null
           id?: string
           iniciada_em?: string | null
           km_real?: number | null
@@ -587,10 +666,12 @@ export type Database = {
         }
         Update: {
           aceita_em?: string | null
+          agendada_para?: string | null
           cancelada_em?: string | null
           cancelado_por?: string | null
           categoria?: string
           chegou_em?: string | null
+          compartilhar_token?: string | null
           created_at?: string
           destino_endereco?: string
           destino_lat?: number
@@ -601,6 +682,7 @@ export type Database = {
           duracao_real_min?: number | null
           finalizada_em?: string | null
           forma_pagamento?: string
+          gorjeta?: number | null
           id?: string
           iniciada_em?: string | null
           km_real?: number | null

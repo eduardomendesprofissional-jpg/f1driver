@@ -62,8 +62,10 @@ import DriverInbox from "./pages/DriverInbox";
 import DriverReferral from "./pages/DriverReferral";
 import DriverWallet from "./pages/DriverWallet";
 import DriverAchievements from "./pages/DriverAchievements";
+import DriverEarnings from "./pages/DriverEarnings";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
+import RideTrack from "./pages/RideTrack";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,7 @@ const App = () => (
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/ride-track/:token" element={<RideTrack />} />
 
             {/* Onboarding */}
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingScreen /></ProtectedRoute>} />
@@ -104,6 +107,7 @@ const App = () => (
             <Route path="/driver/referral" element={<ProtectedRoute><DriverReferral /></ProtectedRoute>} />
             <Route path="/driver/wallet" element={<ProtectedRoute><DriverWallet /></ProtectedRoute>} />
             <Route path="/driver/achievements" element={<ProtectedRoute><DriverAchievements /></ProtectedRoute>} />
+            <Route path="/driver/earnings" element={<ProtectedRoute><DriverEarnings /></ProtectedRoute>} />
 
             {/* Admin routes - email restricted */}
             <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>

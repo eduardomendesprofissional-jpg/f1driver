@@ -9,6 +9,9 @@ import {
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/GoogleMap";
 import EmergencyFAB from "@/components/EmergencyFAB";
+import RideChat from "@/components/RideChat";
+import ShareTrip from "@/components/ShareTrip";
+import SOSButton from "@/components/SOSButton";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -551,12 +554,25 @@ const RideActive = () => {
               <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                 <Phone size={18} className="text-primary" />
               </button>
-              <button className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                <MessageCircle size={18} className="text-primary" />
-              </button>
             </div>
           )}
         </div>
+
+        {/* Share & SOS row */}
+        {status !== "solicitada" && !isDriver && (
+          <div className="flex items-center gap-2 mb-3">
+            <ShareTrip
+              rideId={rideId}
+              origem={ride?.origem_endereco || ""}
+              destino={ride?.destino_endereco || ""}
+            />
+            <SOSButton
+              rideId={rideId}
+              origem={ride?.origem_endereco}
+              destino={ride?.destino_endereco}
+            />
+          </div>
+        )}
 
         {/* Ride info */}
         {ride && (
@@ -700,6 +716,11 @@ const RideActive = () => {
         duracaoMin={tripSummaryRef.current.min}
         valor={tripSummaryRef.current.valor}
       />
+
+      {/* Chat */}
+      {status !== "solicitada" && status !== "finalizada" && status !== "cancelada" && (
+        <RideChat rideId={rideId} isDriver={!!isDriver} />
+      )}
 
       {/* Emergency FAB */}
       {(status === "aceita" || status === "aguardando" || status === "em_andamento") && <EmergencyFAB />}
