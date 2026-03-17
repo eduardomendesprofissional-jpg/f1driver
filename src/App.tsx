@@ -62,8 +62,10 @@ import DriverInbox from "./pages/DriverInbox";
 import DriverReferral from "./pages/DriverReferral";
 import DriverWallet from "./pages/DriverWallet";
 import DriverAchievements from "./pages/DriverAchievements";
+import DriverEarnings from "./pages/DriverEarnings";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
+import RideTrack from "./pages/RideTrack";
 
 const queryClient = new QueryClient();
 
