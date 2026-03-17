@@ -25,6 +25,8 @@ const RideActive = () => {
   const [eta, setEta] = useState<number | null>(null);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [waitExpired, setWaitExpired] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const { updateRideStatus } = useRide();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const redispatchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
