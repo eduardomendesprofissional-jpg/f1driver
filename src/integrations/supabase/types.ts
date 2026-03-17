@@ -536,10 +536,12 @@ export type Database = {
           dispatched_at: string | null
           distancia_km: number | null
           duracao_min: number | null
+          duracao_real_min: number | null
           finalizada_em: string | null
           forma_pagamento: string
           id: string
           iniciada_em: string | null
+          km_real: number | null
           motivo_cancelamento: string | null
           motorista_id: string | null
           motorista_tentativas: string[] | null
@@ -548,7 +550,9 @@ export type Database = {
           origem_lng: number
           passageiro_id: string
           status: string
+          taxa_noshow: number | null
           valor: number | null
+          valor_final: number | null
         }
         Insert: {
           aceita_em?: string | null
@@ -563,10 +567,12 @@ export type Database = {
           dispatched_at?: string | null
           distancia_km?: number | null
           duracao_min?: number | null
+          duracao_real_min?: number | null
           finalizada_em?: string | null
           forma_pagamento?: string
           id?: string
           iniciada_em?: string | null
+          km_real?: number | null
           motivo_cancelamento?: string | null
           motorista_id?: string | null
           motorista_tentativas?: string[] | null
@@ -575,7 +581,9 @@ export type Database = {
           origem_lng: number
           passageiro_id: string
           status?: string
+          taxa_noshow?: number | null
           valor?: number | null
+          valor_final?: number | null
         }
         Update: {
           aceita_em?: string | null
@@ -590,10 +598,12 @@ export type Database = {
           dispatched_at?: string | null
           distancia_km?: number | null
           duracao_min?: number | null
+          duracao_real_min?: number | null
           finalizada_em?: string | null
           forma_pagamento?: string
           id?: string
           iniciada_em?: string | null
+          km_real?: number | null
           motivo_cancelamento?: string | null
           motorista_id?: string | null
           motorista_tentativas?: string[] | null
@@ -602,7 +612,9 @@ export type Database = {
           origem_lng?: number
           passageiro_id?: string
           status?: string
+          taxa_noshow?: number | null
           valor?: number | null
+          valor_final?: number | null
         }
         Relationships: []
       }

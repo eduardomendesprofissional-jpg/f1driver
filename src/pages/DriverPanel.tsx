@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import SafetyTips from "@/components/SafetyTips";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
-  Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift, Wallet, Trophy
+  Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift, Wallet, Trophy,
+  TrendingUp, Car
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +16,14 @@ import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useDriverEnvios } from "@/hooks/useDriverEnvios";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import mapboxgl from "mapbox-gl";
 
 const DriverPanel = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [online, setOnline] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [tab, setTab] = useState<"corridas" | "envios">("corridas");
@@ -28,10 +32,54 @@ const DriverPanel = () => {
   const searchMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const { position, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
 
+  // Daily stats
+  const [dailyEarnings, setDailyEarnings] = useState(0);
+  const [dailyRides, setDailyRides] = useState(0);
+  const [completionRate, setCompletionRate] = useState(100);
+
   useDriverLocation(online);
   usePushNotifications(online);
   const { currentRequest, acceptRide, rejectRide, countdown } = useDriverRideRequests(online);
   const { pendingEnvios, myEnvios, acceptEnvio, markColetado, markEntregue } = useDriverEnvios(online);
+
+  // Fetch daily stats
+  useEffect(() => {
+    if (!user) return;
+    const fetchStats = async () => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayISO = todayStart.toISOString();
+
+      const { data: finished } = await supabase
+        .from("rides")
+        .select("valor, valor_final")
+        .eq("motorista_id", user.id)
+        .eq("status", "finalizada")
+        .gte("finalizada_em", todayISO);
+
+      const earnings = (finished || []).reduce((sum, r) => sum + Number((r as any).valor_final || r.valor || 0), 0);
+      setDailyEarnings(earnings);
+      setDailyRides((finished || []).length);
+
+      // Completion rate (last 30 days)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+      const { data: allRides } = await supabase
+        .from("rides")
+        .select("status")
+        .eq("motorista_id", user.id)
+        .gte("created_at", thirtyDaysAgo);
+
+      if (allRides && allRides.length > 0) {
+        const completed = allRides.filter(r => r.status === "finalizada").length;
+        setCompletionRate(Math.round((completed / allRides.length) * 100));
+      }
+    };
+    fetchStats();
+
+    // Refresh every 30s
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleAccept = async () => {
     setAccepting(true);
@@ -132,10 +180,22 @@ const DriverPanel = () => {
 
       {/* Earnings */}
       <div className="px-4 py-3 bg-card border-t border-border">
-        <div className="flex items-center gap-2">
-          <DollarSign size={18} className="text-primary" />
-          <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
-          <span className="text-lg font-bold text-primary">R$ 0,00</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DollarSign size={18} className="text-primary" />
+            <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
+            <span className="text-lg font-bold text-primary">R$ {dailyEarnings.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Car size={14} className="text-muted-foreground" />
+              <span className="text-xs font-semibold text-foreground">{dailyRides}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <TrendingUp size={14} className={completionRate >= 90 ? "text-green-500" : "text-amber-500"} />
+              <span className="text-xs font-semibold text-foreground">{completionRate}%</span>
+            </div>
+          </div>
         </div>
       </div>
 
