@@ -372,11 +372,25 @@ const RideActive = () => {
       valor_final: finalValor,
     } as any).eq("id", rideId);
 
+    // Handle value adjustment if payment was already charged
+    if (ride?.payment_intent_id && ride?.payment_status === "paid") {
+      const estimatedValor = Number(ride.valor || 0);
+      const diff = finalValor - estimatedValor;
+
+      if (diff < -0.50) {
+        // Refund the difference
+        supabase.functions.invoke("refund-ride", {
+          body: { ride_id: rideId, amount_to_refund: Math.abs(diff) },
+        }).catch(() => {});
+      }
+      // For higher values, we would charge the difference - but this requires
+      // a separate payment intent which is handled by the charge-ride function
+    }
+
     if (isDriver) {
       setShowSummary(true);
     } else {
-      // If card payment, go to checkout first
-      if (ride?.forma_pagamento === "card" && finalValor > 0) {
+      if (ride?.forma_pagamento === "card" && finalValor > 0 && !ride?.payment_intent_id) {
         navigate("/checkout", {
           state: {
             amount: Math.round(finalValor * 100),
