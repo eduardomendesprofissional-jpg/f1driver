@@ -200,7 +200,13 @@ const DriverPanel = () => {
       {/* Botão Iniciar/Parar */}
       <div className="flex justify-center py-3 shrink-0 z-20 bg-background">
         <button
-          onClick={() => setOnline(!online)}
+          onClick={() => {
+            if (!online && !selfieVerified) {
+              setShowSelfie(true);
+              return;
+            }
+            setOnline(!online);
+          }}
           className={`relative flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg ${
             online ? "bg-blue-400 text-white shadow-blue-400/40" : "bg-blue-900 text-blue-200 shadow-blue-900/40"
           }`}
