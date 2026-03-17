@@ -10,6 +10,7 @@ import ScheduleRidePicker from "@/components/ScheduleRidePicker";
 import SplitPayment from "@/components/SplitPayment";
 import VoucherInput from "@/components/VoucherInput";
 import PaymentMethodSelector, { SelectedPayment } from "@/components/PaymentMethodSelector";
+import PixPaymentModal from "@/components/PixPaymentModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,20 +19,28 @@ const RideConfirm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { origem, destino } = (location.state as any) || {};
-  const { estimate, estimating, createRide, creating } = useRide();
+  const { estimate, estimating, createRide, creating, dispatchRide } = useRide();
   const [est, setEst] = useState<RideEstimate | null>(null);
   const [stops, setStops] = useState<StopPoint[]>([]);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [showScheduler, setShowScheduler] = useState(false);
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<SelectedPayment>({
-    type: "pix",
-    label: "PIX",
-  });
+  const [selectedPayment, setSelectedPayment] = useState<SelectedPayment | null>(null);
   const [charging, setCharging] = useState(false);
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [pixData, setPixData] = useState<{
+    qr_code_url: string;
+    qr_code_data: string;
+    payment_intent_id: string;
+    ride_id: string;
+  } | null>(null);
+  const [currentRideId, setCurrentRideId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!origem || !destino) { navigate("/passenger"); return; }
+    if (!origem || !destino) {
+      navigate("/passenger");
+      return;
+    }
     estimate(origem, destino).then((r) => {
       if (r) setEst(r);
       else toast.error("Não foi possível calcular a rota.");
@@ -39,51 +48,117 @@ const RideConfirm = () => {
   }, []);
 
   const handleConfirm = async () => {
-    if (!est) return;
+    if (!est || !selectedPayment) return;
     setCharging(true);
 
     try {
       const formaPagamento = selectedPayment.type === "card" ? "card" : "pix";
       const ride = await createRide(est, formaPagamento);
-      if (!ride) { toast.error("Erro ao solicitar corrida."); return; }
+      if (!ride) {
+        toast.error("Erro ao solicitar corrida.");
+        return;
+      }
 
-      // If card payment, charge immediately
+      setCurrentRideId(ride.id);
+
+      // Save payment method on ride if card
       if (selectedPayment.type === "card" && selectedPayment.stripe_payment_method_id) {
-        // Save payment method on ride
-        await supabase.from("rides").update({
-          stripe_payment_method_id: selectedPayment.stripe_payment_method_id,
-        } as any).eq("id", ride.id);
+        await supabase
+          .from("rides")
+          .update({
+            stripe_payment_method_id: selectedPayment.stripe_payment_method_id,
+          } as any)
+          .eq("id", ride.id);
+      }
 
-        const { data, error } = await supabase.functions.invoke("charge-ride", {
-          body: {
-            ride_id: ride.id,
-            payment_method_id: selectedPayment.stripe_payment_method_id,
-          },
-        });
+      // Charge ride - MUST succeed before dispatching
+      const { data, error } = await supabase.functions.invoke("charge-ride", {
+        body: {
+          ride_id: ride.id,
+          payment_method_id: selectedPayment.stripe_payment_method_id || null,
+        },
+      });
 
-        if (error || data?.error) {
-          toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
-          // Cancel the ride since payment failed
-          await supabase.from("rides").update({
+      if (error || (!data?.success && !data?.pix)) {
+        toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+        // Cancel the ride since payment failed
+        await supabase
+          .from("rides")
+          .update({
             status: "cancelada",
             cancelada_em: new Date().toISOString(),
             motivo_cancelamento: "Falha no pagamento",
             cancelado_por: "sistema",
-          } as any).eq("id", ride.id);
-          return;
-        }
-
-        if (data?.payment_status === "paid") {
-          toast.success("Pagamento confirmado!");
-        }
+          } as any)
+          .eq("id", ride.id);
+        return;
       }
 
-      navigate("/ride-active", { state: { rideId: ride.id } });
+      // PIX flow - show QR code and wait
+      if (selectedPayment.type === "pix" && data?.pix) {
+        setPixData({
+          qr_code_url: data.pix.qr_code_url,
+          qr_code_data: data.pix.qr_code_data,
+          payment_intent_id: data.payment_intent_id,
+          ride_id: ride.id,
+        });
+        setShowPixModal(true);
+        return; // Don't navigate yet, wait for PIX confirmation
+      }
+
+      // Card flow - payment succeeded, dispatch and navigate
+      if (data?.payment_status === "paid") {
+        toast.success("Pagamento confirmado!");
+        await dispatchRide(ride.id, est);
+        navigate("/ride-active", { state: { rideId: ride.id } });
+      } else {
+        toast.error("Pagamento não confirmado. Tente novamente.");
+        await supabase
+          .from("rides")
+          .update({
+            status: "cancelada",
+            cancelada_em: new Date().toISOString(),
+            motivo_cancelamento: "Pagamento não confirmado",
+            cancelado_por: "sistema",
+          } as any)
+          .eq("id", ride.id);
+      }
     } catch (err) {
       toast.error("Erro ao processar. Tente novamente.");
     } finally {
       setCharging(false);
     }
+  };
+
+  const handlePixSuccess = async () => {
+    if (!currentRideId || !est) return;
+    setShowPixModal(false);
+    // PIX confirmed - dispatch ride
+    await dispatchRide(currentRideId, est);
+    navigate("/ride-active", { state: { rideId: currentRideId } });
+  };
+
+  const handlePixClose = async () => {
+    setShowPixModal(false);
+    // Cancel ride if PIX was abandoned
+    if (currentRideId) {
+      await supabase
+        .from("rides")
+        .update({
+          status: "cancelada",
+          cancelada_em: new Date().toISOString(),
+          motivo_cancelamento: "Pagamento PIX cancelado",
+          cancelado_por: "passageiro",
+        } as any)
+        .eq("id", currentRideId);
+      // Refund if intent was created
+      if (pixData?.payment_intent_id) {
+        supabase.functions
+          .invoke("refund-ride", { body: { ride_id: currentRideId } })
+          .catch(() => {});
+      }
+    }
+    setCharging(false);
   };
 
   const isProcessing = creating || charging;
@@ -92,7 +167,10 @@ const RideConfirm = () => {
     <div className="min-h-screen bg-background flex flex-col safe-top">
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
-        <button onClick={() => navigate(-1)} className="p-2.5 rounded-xl bg-secondary/60 border border-border/20 press">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2.5 rounded-xl bg-secondary/60 border border-border/20 press"
+        >
           <ArrowLeft size={18} className="text-foreground" />
         </button>
         <h1 className="text-lg font-bold">Confirmar corrida</h1>
@@ -101,7 +179,9 @@ const RideConfirm = () => {
       {/* Content */}
       <div className="px-4 flex-1 overflow-y-auto pb-24">
         {/* Route card */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl p-5 border border-border/50 space-y-4"
         >
           <div className="flex items-start gap-3">
@@ -112,12 +192,20 @@ const RideConfirm = () => {
             </div>
             <div className="flex-1 space-y-4">
               <div>
-                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Origem</p>
-                <p className="text-sm font-semibold truncate">{origem?.endereco || "—"}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                  Origem
+                </p>
+                <p className="text-sm font-semibold truncate">
+                  {origem?.endereco || "—"}
+                </p>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Destino</p>
-                <p className="text-sm font-semibold truncate">{destino?.endereco || "—"}</p>
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                  Destino
+                </p>
+                <p className="text-sm font-semibold truncate">
+                  {destino?.endereco || "—"}
+                </p>
               </div>
             </div>
           </div>
@@ -131,13 +219,32 @@ const RideConfirm = () => {
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: "Distância", value: est ? `${est.distancia_km} km` : "—" },
-                { label: "Tempo est.", value: est ? `${est.duracao_min} min` : "—" },
-                { label: "Valor", value: est ? `R$ ${est.valor.toFixed(2)}` : "—", accent: true },
+                {
+                  label: "Distância",
+                  value: est ? `${est.distancia_km} km` : "—",
+                },
+                {
+                  label: "Tempo est.",
+                  value: est ? `${est.duracao_min} min` : "—",
+                },
+                {
+                  label: "Valor",
+                  value: est ? `R$ ${est.valor.toFixed(2)}` : "—",
+                  accent: true,
+                },
               ].map((item) => (
-                <div key={item.label} className="text-center p-2 bg-secondary/40 rounded-xl">
-                  <p className="text-[10px] text-muted-foreground font-medium">{item.label}</p>
-                  <p className={`text-base font-bold ${item.accent ? "text-primary" : ""}`}>{item.value}</p>
+                <div
+                  key={item.label}
+                  className="text-center p-2 bg-secondary/40 rounded-xl"
+                >
+                  <p className="text-[10px] text-muted-foreground font-medium">
+                    {item.label}
+                  </p>
+                  <p
+                    className={`text-base font-bold ${item.accent ? "text-primary" : ""}`}
+                  >
+                    {item.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -146,30 +253,51 @@ const RideConfirm = () => {
 
         {/* Payment selection */}
         <div className="mt-5">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Pagamento</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+            Pagamento
+          </p>
           <button
             onClick={() => setShowPaymentSelector(true)}
             className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card hover:bg-secondary/30 transition-all press"
           >
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              {selectedPayment.type === "pix" ? (
+              {selectedPayment?.type === "pix" ? (
                 <QrCode size={18} className="text-primary" />
-              ) : (
+              ) : selectedPayment?.type === "card" ? (
                 <CreditCard size={18} className="text-primary" />
+              ) : (
+                <CreditCard size={18} className="text-muted-foreground" />
               )}
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-foreground">{selectedPayment.label}</p>
-              <p className="text-xs text-muted-foreground">Toque para alterar</p>
+              <p className="text-sm font-semibold text-foreground">
+                {selectedPayment?.label || "Selecione a forma de pagamento"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {selectedPayment ? "Toque para alterar" : "Obrigatório"}
+              </p>
             </div>
             <ArrowLeft size={14} className="text-muted-foreground rotate-180" />
           </button>
+          {!selectedPayment && (
+            <p className="text-xs text-destructive mt-1.5 ml-1">
+              * Selecione uma forma de pagamento para continuar
+            </p>
+          )}
         </div>
 
         {/* Multi-stop */}
         <div className="mt-5">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Paradas intermediárias</p>
-          <MultiStopInput stops={stops} onStopsChange={setStops} userPosition={origem ? { lat: origem.lat, lng: origem.lng } : undefined} />
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+            Paradas intermediárias
+          </p>
+          <MultiStopInput
+            stops={stops}
+            onStopsChange={setStops}
+            userPosition={
+              origem ? { lat: origem.lat, lng: origem.lng } : undefined
+            }
+          />
         </div>
 
         {/* Schedule */}
@@ -178,15 +306,27 @@ const RideConfirm = () => {
             <div className="flex items-center gap-2 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3">
               <Calendar size={16} className="text-primary" />
               <div className="flex-1">
-                <p className="text-[10px] text-muted-foreground">Agendada para</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Agendada para
+                </p>
                 <p className="text-sm font-bold text-primary">
-                  {format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  {format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", {
+                    locale: ptBR,
+                  })}
                 </p>
               </div>
-              <button onClick={() => setScheduledDate(null)} className="text-muted-foreground hover:text-foreground p-1 press">✕</button>
+              <button
+                onClick={() => setScheduledDate(null)}
+                className="text-muted-foreground hover:text-foreground p-1 press"
+              >
+                ✕
+              </button>
             </div>
           ) : (
-            <button onClick={() => setShowScheduler(true)} className="flex items-center gap-2 text-xs font-semibold text-primary py-2 press">
+            <button
+              onClick={() => setShowScheduler(true)}
+              className="flex items-center gap-2 text-xs font-semibold text-primary py-2 press"
+            >
               <Clock size={14} />
               Agendar para depois
             </button>
@@ -195,8 +335,14 @@ const RideConfirm = () => {
 
         {/* Voucher */}
         <div className="mt-4">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Voucher</p>
-          <VoucherInput onApply={(id, val, nome) => toast.success(`Voucher ${nome} aplicado!`)} />
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+            Voucher
+          </p>
+          <VoucherInput
+            onApply={(id, val, nome) =>
+              toast.success(`Voucher ${nome} aplicado!`)
+            }
+          />
         </div>
 
         {/* Split */}
@@ -207,15 +353,21 @@ const RideConfirm = () => {
         )}
       </div>
 
-      {/* CTA */}
+      {/* CTA - only shows when payment method is selected */}
       <div className="p-4 safe-bottom glass-heavy border-t border-border/30">
-        <Button onClick={handleConfirm} className="w-full h-14 text-base font-bold glow-blue rounded-xl" disabled={!est || isProcessing}>
-          {isProcessing ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+        <Button
+          onClick={handleConfirm}
+          className="w-full h-14 text-base font-bold glow-blue rounded-xl"
+          disabled={!est || isProcessing || !selectedPayment}
+        >
+          {isProcessing ? (
+            <Loader2 className="animate-spin mr-2" size={20} />
+          ) : null}
           {isProcessing
-            ? "Processando..."
+            ? "Processando pagamento..."
             : scheduledDate
-            ? "Agendar corrida"
-            : `Confirmar • R$ ${est?.valor.toFixed(2) || "—"}`}
+              ? "Agendar corrida"
+              : `Confirmar • R$ ${est?.valor.toFixed(2) || "—"}`}
         </Button>
       </div>
 
@@ -223,7 +375,10 @@ const RideConfirm = () => {
       <AnimatePresence>
         {showScheduler && (
           <ScheduleRidePicker
-            onSchedule={(dt) => { setScheduledDate(dt); setShowScheduler(false); }}
+            onSchedule={(dt) => {
+              setScheduledDate(dt);
+              setShowScheduler(false);
+            }}
             onCancel={() => setShowScheduler(false)}
           />
         )}
@@ -238,6 +393,14 @@ const RideConfirm = () => {
           setShowPaymentSelector(false);
         }}
         currentSelection={selectedPayment}
+      />
+
+      {/* PIX Payment Modal */}
+      <PixPaymentModal
+        open={showPixModal}
+        onClose={handlePixClose}
+        onSuccess={handlePixSuccess}
+        pixData={pixData}
       />
     </div>
   );
