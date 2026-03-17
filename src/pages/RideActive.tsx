@@ -573,7 +573,6 @@ const RideActive = () => {
             />
           </div>
         )}
-        </div>
 
         {/* Ride info */}
         {ride && (
