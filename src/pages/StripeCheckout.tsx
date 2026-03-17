@@ -268,8 +268,8 @@ const StripeCheckout = () => {
             className="flex-1 flex items-center justify-center px-6"
           >
             <div className="text-center space-y-5">
-              <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-                <CheckCircle2 size={48} className="text-green-500" />
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <CheckCircle2 size={48} className="text-primary" />
               </div>
               <h2 className="text-xl font-bold text-foreground">Pagamento confirmado!</h2>
               <p className="text-muted-foreground text-sm">R$ {amountBRL} pago com sucesso.</p>
