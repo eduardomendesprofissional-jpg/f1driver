@@ -16,10 +16,10 @@ const RideTrack = () => {
     if (!token) return;
 
     const loadRide = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("rides")
-        .select("*")
-        .eq("compartilhar_token" as any, token)
+        .select("*") as any)
+        .eq("compartilhar_token", token)
         .single();
 
       if (error || !data) {
