@@ -446,6 +446,7 @@ export type Database = {
           nome: string | null
           onboarding_completo: boolean
           status_aprovacao: string
+          stripe_customer_id: string | null
           telefone: string | null
           tipo: string
           updated_at: string
@@ -466,6 +467,7 @@ export type Database = {
           nome?: string | null
           onboarding_completo?: boolean
           status_aprovacao?: string
+          stripe_customer_id?: string | null
           telefone?: string | null
           tipo?: string
           updated_at?: string
@@ -486,6 +488,7 @@ export type Database = {
           nome?: string | null
           onboarding_completo?: boolean
           status_aprovacao?: string
+          stripe_customer_id?: string | null
           telefone?: string | null
           tipo?: string
           updated_at?: string
@@ -675,7 +678,10 @@ export type Database = {
           origem_lat: number
           origem_lng: number
           passageiro_id: string
+          payment_intent_id: string | null
+          payment_status: string | null
           status: string
+          stripe_payment_method_id: string | null
           taxa_noshow: number | null
           valor: number | null
           valor_final: number | null
@@ -709,7 +715,10 @@ export type Database = {
           origem_lat: number
           origem_lng: number
           passageiro_id: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
           status?: string
+          stripe_payment_method_id?: string | null
           taxa_noshow?: number | null
           valor?: number | null
           valor_final?: number | null
@@ -743,7 +752,10 @@ export type Database = {
           origem_lat?: number
           origem_lng?: number
           passageiro_id?: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
           status?: string
+          stripe_payment_method_id?: string | null
           taxa_noshow?: number | null
           valor?: number | null
           valor_final?: number | null
