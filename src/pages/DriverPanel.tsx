@@ -469,6 +469,46 @@ const DriverPanel = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Selfie Verification Modal */}
+      <AnimatePresence>
+        {showSelfie && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-background p-6 overflow-y-auto"
+          >
+            <div className="max-w-md mx-auto pt-8">
+              <SelfieVerification
+                onVerified={() => {
+                  setSelfieVerified(true);
+                  setShowSelfie(false);
+                  setOnline(true);
+                }}
+                onSkip={() => {
+                  setSelfieVerified(true);
+                  setShowSelfie(false);
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Destination Mode when online */}
+      {online && (
+        <div className="absolute top-[140px] left-4 right-4 z-20">
+          <DestinationMode
+            active={destModeActive}
+            destinationAddress={destModeAddress}
+            onToggle={(active, lat, lng, addr) => {
+              setDestModeActive(active);
+              setDestModeAddress(addr);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
