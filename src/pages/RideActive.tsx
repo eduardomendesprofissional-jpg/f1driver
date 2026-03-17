@@ -284,6 +284,17 @@ const RideActive = () => {
       cancelado_por: isDriver ? "motorista" : "passageiro",
     } as any).eq("id", rideId);
 
+    // Auto-refund if payment was charged
+    if (ride?.payment_intent_id && ride?.payment_status === "paid") {
+      supabase.functions.invoke("refund-ride", {
+        body: { ride_id: rideId },
+      }).then(({ data }) => {
+        if (data?.status === "succeeded") {
+          toast.success("Reembolso processado! Prazo: 5 a 10 dias úteis no cartão.");
+        }
+      }).catch(() => {});
+    }
+
     // Check consecutive cancellations for driver
     if (isDriver) {
       const { data: recent } = await supabase
