@@ -38,6 +38,10 @@ const DriverPanel = () => {
   const [dailyEarnings, setDailyEarnings] = useState(0);
   const [dailyRides, setDailyRides] = useState(0);
   const [completionRate, setCompletionRate] = useState(100);
+  const [destModeActive, setDestModeActive] = useState(false);
+  const [destModeAddress, setDestModeAddress] = useState<string | undefined>();
+  const [showSelfie, setShowSelfie] = useState(false);
+  const [selfieVerified, setSelfieVerified] = useState(true);
 
   useDriverLocation(online);
   usePushNotifications(online);
