@@ -78,6 +78,9 @@ const DriverPanel = () => {
           <button onClick={() => navigate("/driver/referral")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Gift size={20} />
           </button>
+          <button onClick={() => navigate("/driver/achievements")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+            <Trophy size={20} />
+          </button>
           <button onClick={() => navigate("/driver/settings")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
             <Settings size={20} />
           </button>
