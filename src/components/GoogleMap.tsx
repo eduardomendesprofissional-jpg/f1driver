@@ -103,8 +103,9 @@ const GoogleMap = ({
         {center && loaded && (
           <button
             onClick={handleRecenter}
-            className="absolute bottom-20 right-3 z-10 p-2.5 rounded-full bg-card/90 backdrop-blur-md border border-border shadow-lg hover:bg-card transition-colors"
+            className="absolute bottom-20 right-3 z-30 p-2.5 rounded-full bg-card/90 backdrop-blur-md border border-border shadow-lg hover:bg-card transition-colors cursor-pointer"
             title="Centralizar no mapa"
+            type="button"
           >
             <Crosshair size={20} className="text-primary" />
           </button>
