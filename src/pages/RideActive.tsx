@@ -382,9 +382,25 @@ const RideActive = () => {
         supabase.functions.invoke("refund-ride", {
           body: { ride_id: rideId, amount_to_refund: Math.abs(diff) },
         }).catch(() => {});
+      } else if (diff > 0.50 && ride.stripe_payment_method_id) {
+        // Charge the difference on the same card
+        supabase.functions.invoke("charge-ride", {
+          body: {
+            ride_id: rideId,
+            payment_method_id: ride.stripe_payment_method_id,
+          },
+        }).then(({ data }) => {
+          if (data?.success) {
+            // Notify passenger about additional charge
+            supabase.from("notificacoes").insert({
+              user_id: ride.passageiro_id,
+              titulo: "Ajuste de valor",
+              mensagem: `Cobrança adicional de R$ ${diff.toFixed(2)} referente à diferença do valor estimado. Valor final: R$ ${finalValor.toFixed(2)}.`,
+              tipo: "pagamento",
+            }).then(() => {});
+          }
+        }).catch(() => {});
       }
-      // For higher values, we would charge the difference - but this requires
-      // a separate payment intent which is handled by the charge-ride function
     }
 
     if (isDriver) {
