@@ -5,7 +5,7 @@ import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigatio
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
-import NearbyPlaces from "@/components/NearbyPlaces";
+
 import SafetyTips from "@/components/SafetyTips";
 import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
