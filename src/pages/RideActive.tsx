@@ -718,6 +718,11 @@ const RideActive = () => {
         valor={tripSummaryRef.current.valor}
       />
 
+      {/* Chat */}
+      {status !== "solicitada" && status !== "finalizada" && status !== "cancelada" && (
+        <RideChat rideId={rideId} isDriver={!!isDriver} />
+      )}
+
       {/* Emergency FAB */}
       {(status === "aceita" || status === "aguardando" || status === "em_andamento") && <EmergencyFAB />}
     </div>
