@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft, Loader2, Calendar, Clock } from "lucide-react";
+import { MapPin, CreditCard, QrCode, ArrowLeft, Loader2, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
@@ -9,25 +9,26 @@ import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
 import ScheduleRidePicker from "@/components/ScheduleRidePicker";
 import SplitPayment from "@/components/SplitPayment";
 import VoucherInput from "@/components/VoucherInput";
+import PaymentMethodSelector, { SelectedPayment } from "@/components/PaymentMethodSelector";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-const paymentMethods = [
-  { id: "pix", label: "Pix", icon: QrCode },
-  { id: "card", label: "Cartão", icon: CreditCard },
-  { id: "cash", label: "Dinheiro", icon: Banknote },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const RideConfirm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { origem, destino } = (location.state as any) || {};
-  const [selectedPayment, setSelectedPayment] = useState("pix");
   const { estimate, estimating, createRide, creating } = useRide();
   const [est, setEst] = useState<RideEstimate | null>(null);
   const [stops, setStops] = useState<StopPoint[]>([]);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [showScheduler, setShowScheduler] = useState(false);
+  const [showPaymentSelector, setShowPaymentSelector] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<SelectedPayment>({
+    type: "pix",
+    label: "PIX",
+  });
+  const [charging, setCharging] = useState(false);
 
   useEffect(() => {
     if (!origem || !destino) { navigate("/passenger"); return; }
@@ -39,10 +40,53 @@ const RideConfirm = () => {
 
   const handleConfirm = async () => {
     if (!est) return;
-    const ride = await createRide(est, selectedPayment);
-    if (ride) navigate("/ride-active", { state: { rideId: ride.id } });
-    else toast.error("Erro ao solicitar corrida.");
+    setCharging(true);
+
+    try {
+      const formaPagamento = selectedPayment.type === "card" ? "card" : "pix";
+      const ride = await createRide(est, formaPagamento);
+      if (!ride) { toast.error("Erro ao solicitar corrida."); return; }
+
+      // If card payment, charge immediately
+      if (selectedPayment.type === "card" && selectedPayment.stripe_payment_method_id) {
+        // Save payment method on ride
+        await supabase.from("rides").update({
+          stripe_payment_method_id: selectedPayment.stripe_payment_method_id,
+        } as any).eq("id", ride.id);
+
+        const { data, error } = await supabase.functions.invoke("charge-ride", {
+          body: {
+            ride_id: ride.id,
+            payment_method_id: selectedPayment.stripe_payment_method_id,
+          },
+        });
+
+        if (error || data?.error) {
+          toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+          // Cancel the ride since payment failed
+          await supabase.from("rides").update({
+            status: "cancelada",
+            cancelada_em: new Date().toISOString(),
+            motivo_cancelamento: "Falha no pagamento",
+            cancelado_por: "sistema",
+          } as any).eq("id", ride.id);
+          return;
+        }
+
+        if (data?.payment_status === "paid") {
+          toast.success("Pagamento confirmado!");
+        }
+      }
+
+      navigate("/ride-active", { state: { rideId: ride.id } });
+    } catch (err) {
+      toast.error("Erro ao processar. Tente novamente.");
+    } finally {
+      setCharging(false);
+    }
   };
+
+  const isProcessing = creating || charging;
 
   return (
     <div className="min-h-screen bg-background flex flex-col safe-top">
@@ -100,27 +144,26 @@ const RideConfirm = () => {
           )}
         </motion.div>
 
-        {/* Payment */}
+        {/* Payment selection */}
         <div className="mt-5">
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Pagamento</p>
-          <div className="flex gap-2.5">
-            {paymentMethods.map((pm) => (
-              <button
-                key={pm.id}
-                onClick={() => setSelectedPayment(pm.id)}
-                className={`flex-1 flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all duration-200 press ${
-                  selectedPayment === pm.id
-                    ? "border-primary bg-primary/10 shadow-[0_0_12px_hsl(210_100%_56%/0.15)]"
-                    : "border-border/40 bg-secondary/40"
-                }`}
-              >
-                <pm.icon size={20} className={selectedPayment === pm.id ? "text-primary" : "text-muted-foreground"} />
-                <span className={`text-xs font-semibold ${selectedPayment === pm.id ? "text-primary" : "text-muted-foreground"}`}>
-                  {pm.label}
-                </span>
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={() => setShowPaymentSelector(true)}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card hover:bg-secondary/30 transition-all press"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              {selectedPayment.type === "pix" ? (
+                <QrCode size={18} className="text-primary" />
+              ) : (
+                <CreditCard size={18} className="text-primary" />
+              )}
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold text-foreground">{selectedPayment.label}</p>
+              <p className="text-xs text-muted-foreground">Toque para alterar</p>
+            </div>
+            <ArrowLeft size={14} className="text-muted-foreground rotate-180" />
+          </button>
         </div>
 
         {/* Multi-stop */}
@@ -166,9 +209,13 @@ const RideConfirm = () => {
 
       {/* CTA */}
       <div className="p-4 safe-bottom glass-heavy border-t border-border/30">
-        <Button onClick={handleConfirm} className="w-full h-14 text-base font-bold glow-blue rounded-xl" disabled={!est || creating}>
-          {creating ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-          {creating ? "Solicitando..." : scheduledDate ? "Agendar corrida" : "Confirmar corrida"}
+        <Button onClick={handleConfirm} className="w-full h-14 text-base font-bold glow-blue rounded-xl" disabled={!est || isProcessing}>
+          {isProcessing ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+          {isProcessing
+            ? "Processando..."
+            : scheduledDate
+            ? "Agendar corrida"
+            : `Confirmar • R$ ${est?.valor.toFixed(2) || "—"}`}
         </Button>
       </div>
 
@@ -181,6 +228,17 @@ const RideConfirm = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Payment Method Selector */}
+      <PaymentMethodSelector
+        open={showPaymentSelector}
+        onClose={() => setShowPaymentSelector(false)}
+        onSelect={(payment) => {
+          setSelectedPayment(payment);
+          setShowPaymentSelector(false);
+        }}
+        currentSelection={selectedPayment}
+      />
     </div>
   );
 };
