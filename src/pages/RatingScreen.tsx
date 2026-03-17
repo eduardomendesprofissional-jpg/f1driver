@@ -109,6 +109,9 @@ const RatingScreen = () => {
           </div>
         )}
 
+        {/* Tip */}
+        {ride && <TipSelector rideId={rideId} />}
+
         <Button
           onClick={handleSubmit}
           className="w-full h-12 font-bold glow-blue"

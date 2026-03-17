@@ -175,9 +175,19 @@ const RideConfirm = () => {
           disabled={!est || creating}
         >
           {creating ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-          {creating ? "Solicitando..." : "Confirmar corrida"}
+          {creating ? "Solicitando..." : scheduledDate ? "Agendar corrida" : "Confirmar corrida"}
         </Button>
       </div>
+
+      {/* Schedule Picker */}
+      <AnimatePresence>
+        {showScheduler && (
+          <ScheduleRidePicker
+            onSchedule={(dt) => { setScheduledDate(dt); setShowScheduler(false); }}
+            onCancel={() => setShowScheduler(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
