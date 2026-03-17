@@ -14,7 +14,16 @@ interface BottomNavProps {
 const BottomNav = ({ active, role }: BottomNavProps) => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<{ nome: string | null; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (user && role === "passenger") {
+      supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single().then(({ data }) => {
+        if (data) setProfile(data);
+      });
+    }
+  }, [user, role]);
 
   const menuItems = [
     { icon: User, label: "Meu Perfil", path: "/profile", color: "text-primary" },
