@@ -526,6 +526,7 @@ export type Database = {
         Row: {
           aceita_em: string | null
           cancelada_em: string | null
+          cancelado_por: string | null
           categoria: string
           chegou_em: string | null
           created_at: string
@@ -539,6 +540,7 @@ export type Database = {
           forma_pagamento: string
           id: string
           iniciada_em: string | null
+          motivo_cancelamento: string | null
           motorista_id: string | null
           motorista_tentativas: string[] | null
           origem_endereco: string
@@ -551,6 +553,7 @@ export type Database = {
         Insert: {
           aceita_em?: string | null
           cancelada_em?: string | null
+          cancelado_por?: string | null
           categoria?: string
           chegou_em?: string | null
           created_at?: string
@@ -564,6 +567,7 @@ export type Database = {
           forma_pagamento?: string
           id?: string
           iniciada_em?: string | null
+          motivo_cancelamento?: string | null
           motorista_id?: string | null
           motorista_tentativas?: string[] | null
           origem_endereco: string
@@ -576,6 +580,7 @@ export type Database = {
         Update: {
           aceita_em?: string | null
           cancelada_em?: string | null
+          cancelado_por?: string | null
           categoria?: string
           chegou_em?: string | null
           created_at?: string
@@ -589,6 +594,7 @@ export type Database = {
           forma_pagamento?: string
           id?: string
           iniciada_em?: string | null
+          motivo_cancelamento?: string | null
           motorista_id?: string | null
           motorista_tentativas?: string[] | null
           origem_endereco?: string

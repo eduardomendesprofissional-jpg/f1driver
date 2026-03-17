@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle } from "lucide-react";
+import { Phone, MessageCircle, X, Star, Loader2, Clock, Navigation, ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/GoogleMap";
 import EmergencyFAB from "@/components/EmergencyFAB";
@@ -9,6 +9,7 @@ import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import CancelRideDialog from "@/components/CancelRideDialog";
 
 const DISPATCH_TIMEOUT = 15;
 const WAIT_TIMER_SECONDS = 180; // 3 minutes
@@ -24,6 +25,8 @@ const RideActive = () => {
   const [eta, setEta] = useState<number | null>(null);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [waitExpired, setWaitExpired] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const { updateRideStatus } = useRide();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const redispatchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -188,8 +191,21 @@ const RideActive = () => {
 
   const status = ride?.status || "solicitada";
 
-  const handleCancel = async () => {
-    if (rideId) await updateRideStatus(rideId, "cancelada");
+  const handleCancel = async (motivo: string) => {
+    if (!rideId) return;
+    setCancelLoading(true);
+    const canceladoPor = isDriver ? "motorista" : "passageiro";
+    await supabase
+      .from("rides")
+      .update({
+        status: "cancelada",
+        cancelada_em: new Date().toISOString(),
+        motivo_cancelamento: motivo,
+        cancelado_por: canceladoPor,
+      } as any)
+      .eq("id", rideId);
+    setCancelLoading(false);
+    setShowCancelDialog(false);
     toast.info("Corrida cancelada.");
     navigate(isDriver ? "/driver" : "/passenger");
   };
@@ -224,7 +240,12 @@ const RideActive = () => {
     if (!rideId) return;
     await supabase
       .from("rides")
-      .update({ status: "cancelada", cancelada_em: new Date().toISOString() })
+      .update({
+        status: "cancelada",
+        cancelada_em: new Date().toISOString(),
+        motivo_cancelamento: "Passageiro não compareceu",
+        cancelado_por: "motorista",
+      } as any)
       .eq("id", rideId);
     toast.info("Passageiro não compareceu. Corrida cancelada.");
     navigate("/driver");
@@ -537,18 +558,18 @@ const RideActive = () => {
 
         <div className="flex gap-3">
           {status === "solicitada" && !isDriver && (
-            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
               <X size={16} className="mr-2" /> Cancelar
             </Button>
           )}
           {status === "aceita" && !isDriver && (
-            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
               <X size={16} className="mr-2" /> Cancelar
             </Button>
           )}
           {status === "aceita" && isDriver && (
             <>
-              <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleCancel}>
+              <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
                 <X size={16} className="mr-2" /> Cancelar
               </Button>
               <Button className="flex-1 h-12 font-bold bg-amber-500 hover:bg-amber-600 text-white" onClick={handleArrived}>
@@ -569,7 +590,7 @@ const RideActive = () => {
                 </>
               ) : (
                 <>
-                  <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={handleCancel}>
+                  <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
                     <X size={16} className="mr-2" /> Cancelar
                   </Button>
                   <Button className="flex-1 h-12 font-bold" onClick={handleStart}>
@@ -580,21 +601,41 @@ const RideActive = () => {
             </>
           )}
           {status === "aguardando" && !isDriver && (
-            <Button variant="destructive" className="w-full h-12 font-bold" onClick={handleCancel}>
+            <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
               <X size={16} className="mr-2" /> Cancelar corrida
             </Button>
           )}
           {status === "em_andamento" && isDriver && (
-            <Button className="w-full h-12 font-bold" onClick={handleFinish}>
-              Finalizar viagem
-            </Button>
+            <div className="flex gap-3 w-full">
+              <Button variant="destructive" className="flex-1 h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
+                <StopCircle size={16} className="mr-2" /> Encerrar
+              </Button>
+              <Button className="flex-1 h-12 font-bold" onClick={handleFinish}>
+                Finalizar viagem
+              </Button>
+            </div>
           )}
           {status === "em_andamento" && !isDriver && (
-            <div className="w-full text-center py-3 text-sm text-muted-foreground">
-              Viagem em andamento...
+            <div className="w-full flex flex-col gap-2">
+              <div className="text-center py-2 text-sm text-muted-foreground">
+                Viagem em andamento...
+              </div>
+              <Button variant="destructive" className="w-full h-12 font-bold" onClick={() => setShowCancelDialog(true)}>
+                <StopCircle size={16} className="mr-2" /> Encerrar viagem
+              </Button>
             </div>
           )}
         </div>
+
+        {/* Cancel Dialog */}
+        <CancelRideDialog
+          open={showCancelDialog}
+          onClose={() => setShowCancelDialog(false)}
+          onConfirm={handleCancel}
+          role={isDriver ? "driver" : "passenger"}
+          isDuringTrip={status === "em_andamento"}
+          loading={cancelLoading}
+        />
       </motion.div>
 
       {/* Emergency FAB - visible during active ride states */}
