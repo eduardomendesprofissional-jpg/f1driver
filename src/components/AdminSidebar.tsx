@@ -150,7 +150,7 @@ const SidebarItem = ({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
 
 const AdminSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   return (
-    <aside className="w-60 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
+    <aside className="w-60 h-full min-h-0 bg-sidebar flex flex-col border-r border-sidebar-border shrink-0 max-h-screen">
       <div className="p-4 flex items-center gap-2.5 border-b border-sidebar-border">
         <img src={logoF1} alt="Logo" className="w-9 h-9 rounded-xl" />
         <span className="text-sm font-bold text-sidebar-foreground tracking-wide uppercase">
