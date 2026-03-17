@@ -240,7 +240,12 @@ const RideActive = () => {
     if (!rideId) return;
     await supabase
       .from("rides")
-      .update({ status: "cancelada", cancelada_em: new Date().toISOString() })
+      .update({
+        status: "cancelada",
+        cancelada_em: new Date().toISOString(),
+        motivo_cancelamento: "Passageiro não compareceu",
+        cancelado_por: "motorista",
+      } as any)
       .eq("id", rideId);
     toast.info("Passageiro não compareceu. Corrida cancelada.");
     navigate("/driver");
