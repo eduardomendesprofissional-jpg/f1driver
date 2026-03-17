@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { searchTomTom, TomTomResult } from "@/lib/tomtom";
 
+console.log("[useGoogleSearch] Module loaded - TomTom version");
+
 const MAX_DISTANCE_KM = 25;
 const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
 
@@ -59,15 +61,18 @@ export const useGoogleSearch = () => {
     try {
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
+      console.log("[useGoogleSearch] Searching TomTom:", query, "lat:", lat, "lng:", lng);
 
       const ttResults = await searchTomTom(query, lat, lng);
+      console.log("[useGoogleSearch] TomTom results:", ttResults.length);
       const places = ttResults
         .map((r) => tomtomToPlace(r, lat, lng))
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
 
       setResults(places);
-    } catch {
+    } catch (err) {
+      console.error("[useGoogleSearch] Search error:", err);
       setResults([]);
     } finally {
       setLoading(false);
