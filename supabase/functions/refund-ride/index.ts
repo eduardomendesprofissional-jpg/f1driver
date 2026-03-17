@@ -33,7 +33,7 @@ serve(async (req) => {
 
     const { data: ride, error: rideError } = await supabase
       .from("rides")
-      .select("payment_intent_id, payment_status, valor, passageiro_id")
+      .select("payment_intent_id, payment_status, valor, forma_pagamento, passageiro_id")
       .eq("id", ride_id)
       .single();
 
@@ -88,13 +88,20 @@ serve(async (req) => {
       .update({ payment_status: newStatus })
       .eq("id", ride_id);
 
+    // Determine refund message based on payment type
+    const isPix = ride.forma_pagamento === "pix";
+    const refundAmount = amount_to_refund || ride.valor || 0;
+    const prazoMsg = isPix
+      ? "O reembolso via PIX é instantâneo."
+      : "Prazo de estorno: 5 a 10 dias úteis no cartão.";
+
     // Notify passenger
     await supabase.from("notificacoes").insert({
       user_id: ride.passageiro_id,
       titulo: "Reembolso processado",
       mensagem: amount_to_refund
-        ? `Reembolso parcial de R$ ${amount_to_refund.toFixed(2)} realizado. Prazo: 5 a 10 dias úteis no cartão ou instantâneo via PIX.`
-        : `Reembolso total de R$ ${(ride.valor || 0).toFixed(2)} realizado. Prazo: 5 a 10 dias úteis no cartão ou instantâneo via PIX.`,
+        ? `Reembolso parcial de R$ ${Number(refundAmount).toFixed(2)} realizado. ${prazoMsg}`
+        : `Reembolso total de R$ ${Number(refundAmount).toFixed(2)} realizado. ${prazoMsg}`,
       tipo: "pagamento",
     });
 
