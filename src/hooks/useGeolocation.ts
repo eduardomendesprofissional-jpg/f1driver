@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { TOMTOM_KEY } from "@/lib/tomtom";
 
 export interface GeoPosition {
   lat: number;
