@@ -111,10 +111,40 @@ const DriverPanel = () => {
     }
   };
 
+  // Bottom sheet drag logic
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef(0);
+  const dragStartTranslate = useRef(0);
+  const [sheetTranslate, setSheetTranslate] = useState(0);
+  const SNAP_EXPANDED = -200;
+  const SNAP_DEFAULT = 0;
+  const SNAP_COLLAPSED = 300;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    dragStartTranslate.current = sheetTranslate;
+    if (sheetRef.current) sheetRef.current.style.transition = "none";
+  }, [sheetTranslate]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const diff = e.touches[0].clientY - dragStartY.current;
+    const newT = Math.max(SNAP_EXPANDED, Math.min(SNAP_COLLAPSED, dragStartTranslate.current + diff));
+    setSheetTranslate(newT);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (sheetRef.current) sheetRef.current.style.transition = "";
+    const points = [SNAP_EXPANDED, SNAP_DEFAULT, SNAP_COLLAPSED];
+    const nearest = points.reduce((prev, curr) =>
+      Math.abs(curr - sheetTranslate) < Math.abs(prev - sheetTranslate) ? curr : prev
+    );
+    setSheetTranslate(nearest);
+  }, [sheetTranslate]);
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Header */}
-      <div className="p-4 flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between shrink-0 z-20 bg-background">
         <h1 className="text-lg font-bold">Painel do Motorista</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => navigate("/driver/wallet")} className="p-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors">
@@ -135,14 +165,12 @@ const DriverPanel = () => {
         </div>
       </div>
 
-      {/* Botão Iniciar/Parar centralizado e pulsante */}
-      <div className="flex justify-center py-3">
+      {/* Botão Iniciar/Parar */}
+      <div className="flex justify-center py-3 shrink-0 z-20 bg-background">
         <button
           onClick={() => setOnline(!online)}
           className={`relative flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg ${
-            online
-              ? "bg-blue-400 text-white shadow-blue-400/40"
-              : "bg-blue-900 text-blue-200 shadow-blue-900/40"
+            online ? "bg-blue-400 text-white shadow-blue-400/40" : "bg-blue-900 text-blue-200 shadow-blue-900/40"
           }`}
         >
           <span className={`absolute inset-0 rounded-full ${online ? "bg-blue-400" : "bg-blue-900"} animate-[pulse-btn_2s_ease-in-out_infinite] opacity-40`} />
@@ -151,12 +179,9 @@ const DriverPanel = () => {
         </button>
       </div>
 
-      {/* Real Map */}
-      <div className="relative" style={{ height: "45vh", minHeight: "250px" }}>
-        <DriverMapSearch
-          userPosition={position}
-          onSelectPlace={handleSearchSelect}
-        />
+      {/* Full Map */}
+      <div className="flex-1 relative">
+        <DriverMapSearch userPosition={position} onSelectPlace={handleSearchSelect} />
         <GoogleMap
           className="absolute inset-0 w-full h-full"
           zoom={15}
@@ -164,12 +189,7 @@ const DriverPanel = () => {
           onMapReady={(map) => { mapRef.current = map; }}
         />
         {showPermissionBanner && (
-          <LocationPermissionBanner
-            permission={permission as any}
-            loading={geoLoading}
-            error={geoError}
-            onRequest={requestLocation}
-          />
+          <LocationPermissionBanner permission={permission as any} loading={geoLoading} error={geoError} onRequest={requestLocation} />
         )}
         {!showPermissionBanner && !online && (
           <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10">
@@ -177,6 +197,20 @@ const DriverPanel = () => {
           </div>
         )}
       </div>
+
+      {/* Draggable Bottom Sheet */}
+      <div
+        ref={sheetRef}
+        className="absolute left-0 right-0 bottom-0 z-30 bg-card rounded-t-3xl shadow-[0_-4px_30px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out"
+        style={{ transform: `translateY(${sheetTranslate}px)`, maxHeight: "80vh" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag Handle */}
+        <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+        </div>
 
       {/* Earnings */}
       <div className="px-4 py-3 bg-card border-t border-border">
