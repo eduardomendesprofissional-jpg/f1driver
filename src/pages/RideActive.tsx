@@ -9,6 +9,9 @@ import {
 import { Button } from "@/components/ui/button";
 import GoogleMap from "@/components/GoogleMap";
 import EmergencyFAB from "@/components/EmergencyFAB";
+import RideChat from "@/components/RideChat";
+import ShareTrip from "@/components/ShareTrip";
+import SOSButton from "@/components/SOSButton";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
