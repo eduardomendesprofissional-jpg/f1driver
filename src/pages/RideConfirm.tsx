@@ -23,6 +23,9 @@ const RideConfirm = () => {
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const { estimate, estimating, createRide, creating } = useRide();
   const [est, setEst] = useState<RideEstimate | null>(null);
+  const [stops, setStops] = useState<StopPoint[]>([]);
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
     if (!origem || !destino) {
