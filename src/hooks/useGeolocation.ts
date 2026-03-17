@@ -59,6 +59,7 @@ export const useGeolocation = () => {
         const { latitude: lat, longitude: lng } = pos.coords;
         setPosition({ lat, lng });
         setPermission("granted");
+        setError(null);
         const addr = await reverseGeocode(lat, lng);
         setEndereco(addr);
         setLoading(false);
@@ -68,11 +69,13 @@ export const useGeolocation = () => {
         if (err.code === err.PERMISSION_DENIED) {
           setPermission("denied");
           setError("Permissão de localização negada. Habilite nas configurações do navegador.");
+        } else if (err.code === err.TIMEOUT) {
+          setError("Tempo esgotado ao obter localização. Tente novamente.");
         } else {
           setError("Não foi possível obter sua localização. Tente novamente.");
         }
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
     );
   }, [reverseGeocode]);
 
