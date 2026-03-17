@@ -626,6 +626,18 @@ const RideActive = () => {
           </div>
         )}
 
+        {/* Turn-by-turn navigation (driver) */}
+        {isDriver && (status === "aceita" || status === "em_andamento") && ride && (
+          <div className="mb-4">
+            <TurnByTurn
+              originLat={status === "aceita" ? ride.origem_lat : ride.origem_lat}
+              originLng={status === "aceita" ? ride.origem_lng : ride.origem_lng}
+              destLat={status === "aceita" ? ride.origem_lat : ride.destino_lat}
+              destLng={status === "aceita" ? ride.origem_lng : ride.destino_lng}
+            />
+          </div>
+        )}
+
         {/* Navigation buttons */}
         {isDriver && (status === "aceita" || status === "aguardando" || status === "em_andamento") && ride && (
           <div className="flex gap-2 mb-4">

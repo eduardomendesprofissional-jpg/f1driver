@@ -7,6 +7,8 @@ import { useRide, RideEstimate } from "@/hooks/useRide";
 import { toast } from "sonner";
 import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
 import ScheduleRidePicker from "@/components/ScheduleRidePicker";
+import SplitPayment from "@/components/SplitPayment";
+import VoucherInput from "@/components/VoucherInput";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
