@@ -178,22 +178,24 @@ const MapaCalor = () => {
 
       <Card className="bg-card border-border">
         <CardContent className="p-4">
-          {loading && points.length === 0 ? (
-            <div className="w-full h-[500px] rounded-lg bg-muted flex items-center justify-center">
-              <p className="text-muted-foreground animate-pulse">Carregando dados…</p>
-            </div>
-          ) : points.length === 0 ? (
-            <div className="w-full h-[500px] rounded-lg bg-muted flex flex-col items-center justify-center gap-2">
-              <MapPin size={32} className="text-muted-foreground" />
-              <p className="text-muted-foreground">Nenhuma corrida encontrada neste período.</p>
-            </div>
-          ) : (
+          <div className="relative">
             <GoogleMap
               className="w-full h-[500px] rounded-lg overflow-hidden"
               showUserMarker={false}
               onMapReady={handleMapReady}
             />
-          )}
+            {loading && points.length === 0 && (
+              <div className="absolute inset-0 rounded-lg bg-muted/80 flex items-center justify-center z-10">
+                <p className="text-muted-foreground animate-pulse">Carregando dados…</p>
+              </div>
+            )}
+            {!loading && points.length === 0 && (
+              <div className="absolute inset-0 rounded-lg bg-muted/60 flex flex-col items-center justify-center gap-2 z-10">
+                <MapPin size={32} className="text-muted-foreground" />
+                <p className="text-muted-foreground">Nenhuma corrida encontrada neste período.</p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
