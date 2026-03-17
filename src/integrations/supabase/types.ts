@@ -155,6 +155,27 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_conquistas: {
+        Row: {
+          conquistado_em: string
+          driver_id: string
+          id: string
+          marco_key: string
+        }
+        Insert: {
+          conquistado_em?: string
+          driver_id: string
+          id?: string
+          marco_key: string
+        }
+        Update: {
+          conquistado_em?: string
+          driver_id?: string
+          id?: string
+          marco_key?: string
+        }
+        Relationships: []
+      }
       driver_locations: {
         Row: {
           driver_id: string
