@@ -135,7 +135,21 @@ const RideActive = () => {
             toast.info("Motorista chegou ao local! Dirija-se ao veículo.");
           }
           if (updated.status === "finalizada") {
-            if (!isDriver) navigate("/rating", { state: { rideId } });
+            if (!isDriver) {
+              // If payment is card, redirect to Stripe checkout
+              const valor = Number(updated.valor_final || updated.valor || 0);
+              if (updated.forma_pagamento === "card" && valor > 0) {
+                navigate("/checkout", {
+                  state: {
+                    amount: Math.round(valor * 100),
+                    rideId: rideId,
+                    returnTo: "/rating",
+                  },
+                });
+              } else {
+                navigate("/rating", { state: { rideId } });
+              }
+            }
           }
           if (updated.status === "cancelada" || updated.status === "no_show") {
             toast.info(updated.status === "no_show" ? "Passageiro não compareceu." : "Corrida cancelada.");
@@ -350,7 +364,18 @@ const RideActive = () => {
     if (isDriver) {
       setShowSummary(true);
     } else {
-      navigate("/rating", { state: { rideId } });
+      // If card payment, go to checkout first
+      if (ride?.forma_pagamento === "card" && finalValor > 0) {
+        navigate("/checkout", {
+          state: {
+            amount: Math.round(finalValor * 100),
+            rideId: rideId,
+            returnTo: "/rating",
+          },
+        });
+      } else {
+        navigate("/rating", { state: { rideId } });
+      }
     }
   };
 

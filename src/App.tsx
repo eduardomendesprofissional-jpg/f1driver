@@ -66,6 +66,7 @@ import DriverEarnings from "./pages/DriverEarnings";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
 import RideTrack from "./pages/RideTrack";
+import StripeCheckout from "./pages/StripeCheckout";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
             <Route path="/ride-confirm" element={<ProtectedRoute><RideConfirm /></ProtectedRoute>} />
             <Route path="/ride-active" element={<ProtectedRoute><RideActive /></ProtectedRoute>} />
+            <Route path="/checkout" element={<ProtectedRoute><StripeCheckout /></ProtectedRoute>} />
             <Route path="/rating" element={<ProtectedRoute><RatingScreen /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryScreen /></ProtectedRoute>} />
             <Route path="/envios" element={<ProtectedRoute><EnviosScreen /></ProtectedRoute>} />
