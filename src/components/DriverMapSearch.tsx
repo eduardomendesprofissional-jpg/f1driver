@@ -77,7 +77,7 @@ const DriverMapSearch = ({ userPosition, onSelectPlace }: DriverMapSearchProps) 
                   {place.place_name !== place.text ? place.place_name : ""}
                 </p>
                 {place.blocked && (
-                  <p className="text-[10px] text-red-400 font-medium">Acima de 25 km</p>
+                  <p className="text-[10px] text-red-400 font-medium">Acima de 100 km</p>
                 )}
               </div>
               {place.distance && (

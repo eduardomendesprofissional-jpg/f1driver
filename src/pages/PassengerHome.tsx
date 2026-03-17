@@ -33,7 +33,7 @@ const PassengerHome = () => {
     if (!position || !endereco) return;
     if (place.blocked) {
       const { toast } = await import("sonner");
-      toast.error("Destino acima de 25 km. Escolha um destino mais próximo.");
+      toast.error("Destino acima de 100 km. Escolha um destino mais próximo.");
       return;
     }
     saveRoute({
@@ -282,7 +282,7 @@ const PassengerHome = () => {
                         <div className="flex-1 min-w-0">
                           <span className="text-sm text-foreground font-medium">{place.place_name}</span>
                           {place.blocked && (
-                            <p className="text-[10px] text-destructive font-semibold mt-0.5">Acima de 25 km — indisponível</p>
+                            <p className="text-[10px] text-destructive font-semibold mt-0.5">Acima de 100 km — indisponível</p>
                           )}
                         </div>
                         {place.distance && (
