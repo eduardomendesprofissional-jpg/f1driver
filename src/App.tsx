@@ -66,6 +66,7 @@ import DriverEarnings from "./pages/DriverEarnings";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
 import RideTrack from "./pages/RideTrack";
+import StripeCheckout from "./pages/StripeCheckout";
 
 const queryClient = new QueryClient();
 
