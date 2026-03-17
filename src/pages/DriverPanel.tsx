@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import SafetyTips from "@/components/SafetyTips";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
-  Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift, Wallet, Trophy
+  Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift, Wallet, Trophy,
+  TrendingUp, Car
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,8 @@ import { useDriverRideRequests } from "@/hooks/useDriverRideRequests";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useDriverEnvios } from "@/hooks/useDriverEnvios";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import mapboxgl from "mapbox-gl";
 
