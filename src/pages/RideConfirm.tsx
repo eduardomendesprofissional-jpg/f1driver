@@ -1,10 +1,14 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, CreditCard, Banknote, QrCode, ArrowLeft, Loader2, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
 import { toast } from "sonner";
+import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
+import ScheduleRidePicker from "@/components/ScheduleRidePicker";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const paymentMethods = [
   { id: "pix", label: "Pix", icon: QrCode },
