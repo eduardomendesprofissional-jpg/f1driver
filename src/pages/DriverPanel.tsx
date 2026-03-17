@@ -180,10 +180,22 @@ const DriverPanel = () => {
 
       {/* Earnings */}
       <div className="px-4 py-3 bg-card border-t border-border">
-        <div className="flex items-center gap-2">
-          <DollarSign size={18} className="text-primary" />
-          <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
-          <span className="text-lg font-bold text-primary">R$ 0,00</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DollarSign size={18} className="text-primary" />
+            <span className="text-sm text-muted-foreground">Ganhos hoje:</span>
+            <span className="text-lg font-bold text-primary">R$ {dailyEarnings.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Car size={14} className="text-muted-foreground" />
+              <span className="text-xs font-semibold text-foreground">{dailyRides}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <TrendingUp size={14} className={completionRate >= 90 ? "text-green-500" : "text-amber-500"} />
+              <span className="text-xs font-semibold text-foreground">{completionRate}%</span>
+            </div>
+          </div>
         </div>
       </div>
 
