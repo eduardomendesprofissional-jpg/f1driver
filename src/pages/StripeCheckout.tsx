@@ -126,7 +126,7 @@ const StripeCheckout = () => {
       setState("error");
     } else if (paymentIntent?.status === "requires_action") {
       // PIX QR code is shown by Stripe via next_action
-      const pixAction = paymentIntent.next_action;
+      const pixAction = paymentIntent.next_action as any;
       if (pixAction?.pix_display_qr_code) {
         setState("form"); // stay on form to show QR
       }
