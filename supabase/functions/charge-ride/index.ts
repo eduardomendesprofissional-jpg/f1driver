@@ -115,8 +115,8 @@ serve(async (req) => {
       params.append("confirm", "true");
       params.append("off_session", "true");
     } else if (isPix) {
+      // Try PIX - if not enabled in Stripe, will return error
       params.append("payment_method_types[]", "pix");
-      params.append("confirm", "false");
     } else {
       // Fallback - no valid payment method for card
       console.error("No valid payment method. forma_pagamento:", ride.forma_pagamento, "pmId:", pmId);
