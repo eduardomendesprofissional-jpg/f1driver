@@ -115,8 +115,8 @@ serve(async (req) => {
       params.append("confirm", "true");
       params.append("off_session", "true");
     } else if (isPix) {
+      // Try PIX - if not enabled in Stripe, will return error
       params.append("payment_method_types[]", "pix");
-      params.append("confirm", "false");
     } else {
       // Fallback - no valid payment method for card
       console.error("No valid payment method. forma_pagamento:", ride.forma_pagamento, "pmId:", pmId);
@@ -143,8 +143,12 @@ serve(async (req) => {
     console.log("PaymentIntent response:", JSON.stringify({ id: paymentIntent.id, status: paymentIntent.status, error: paymentIntent.error?.message }));
     
     if (paymentIntent.error) {
+      let userMessage = paymentIntent.error.message;
+      if (paymentIntent.error.message?.includes("pix")) {
+        userMessage = "PIX não está disponível nesta conta. Por favor, use um cartão de crédito.";
+      }
       return new Response(
-        JSON.stringify({ success: false, error: paymentIntent.error.message }),
+        JSON.stringify({ success: false, error: userMessage }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
