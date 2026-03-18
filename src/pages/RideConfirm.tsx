@@ -72,6 +72,7 @@ const RideConfirm = () => {
       }
 
       // Charge ride - MUST succeed before dispatching
+      console.log("Calling charge-ride with:", { ride_id: ride.id, payment_method_id: selectedPayment.stripe_payment_method_id || null });
       const { data, error } = await supabase.functions.invoke("charge-ride", {
         body: {
           ride_id: ride.id,
@@ -79,8 +80,12 @@ const RideConfirm = () => {
         },
       });
 
+      console.log("charge-ride response:", { data, error });
+
       if (error || (!data?.success && !data?.pix)) {
-        toast.error(data?.error || "Erro ao processar pagamento. Tente novamente.");
+        const errorMsg = data?.error || error?.message || "Erro ao processar pagamento. Tente novamente.";
+        console.error("Payment failed:", errorMsg);
+        toast.error(errorMsg);
         // Cancel the ride since payment failed
         await supabase
           .from("rides")
