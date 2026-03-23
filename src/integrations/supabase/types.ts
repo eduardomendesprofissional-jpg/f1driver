@@ -435,11 +435,14 @@ export type Database = {
       }
       profiles: {
         Row: {
+          asaas_customer_id: string | null
+          asaas_wallet_id: string | null
           avatar_url: string | null
           cnh: string | null
           codigo_indicacao: string | null
           cpf: string | null
           created_at: string
+          credit_card_token: string | null
           data_nascimento: string | null
           endereco: string | null
           id: string
@@ -456,11 +459,14 @@ export type Database = {
           verificacao_facial: boolean
         }
         Insert: {
+          asaas_customer_id?: string | null
+          asaas_wallet_id?: string | null
           avatar_url?: string | null
           cnh?: string | null
           codigo_indicacao?: string | null
           cpf?: string | null
           created_at?: string
+          credit_card_token?: string | null
           data_nascimento?: string | null
           endereco?: string | null
           id: string
@@ -477,11 +483,14 @@ export type Database = {
           verificacao_facial?: boolean
         }
         Update: {
+          asaas_customer_id?: string | null
+          asaas_wallet_id?: string | null
           avatar_url?: string | null
           cnh?: string | null
           codigo_indicacao?: string | null
           cpf?: string | null
           created_at?: string
+          credit_card_token?: string | null
           data_nascimento?: string | null
           endereco?: string | null
           id?: string
