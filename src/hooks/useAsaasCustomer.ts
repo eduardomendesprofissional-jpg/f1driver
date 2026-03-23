@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+const isValidAsaasId = (id: string | null | undefined): id is string =>
+  !!id && id.startsWith("cus_");
+
 /**
  * Hook that ensures the current user has a valid asaas_customer_id.
- * - On mount, checks if the profile already has one.
- * - `ensureCustomer()` creates the customer in Asaas if missing,
- *   saves it in profiles, and returns the id.
+ * Rejects mock/test values — only accepts IDs starting with "cus_".
  */
 export const useAsaasCustomer = () => {
   const { user } = useAuth();
@@ -20,32 +21,33 @@ export const useAsaasCustomer = () => {
       setLoading(false);
       return;
     }
-    const fetch = async () => {
+    const fetchId = async () => {
       const { data } = await supabase
         .from("profiles")
         .select("asaas_customer_id")
         .eq("id", user.id)
         .single();
-      setCustomerId(data?.asaas_customer_id ?? null);
+      const id = data?.asaas_customer_id ?? null;
+      setCustomerId(isValidAsaasId(id) ? id : null);
       setLoading(false);
     };
-    fetch();
+    fetchId();
   }, [user]);
 
   const ensureCustomer = useCallback(async (): Promise<string | null> => {
-    if (customerId) return customerId;
+    if (isValidAsaasId(customerId)) return customerId;
     if (!user) return null;
 
     setCreating(true);
     try {
-      // Re-check DB (may have been set by another tab/flow)
+      // Re-check DB
       const { data: profile } = await supabase
         .from("profiles")
         .select("asaas_customer_id, nome, cpf")
         .eq("id", user.id)
         .single();
 
-      if (profile?.asaas_customer_id) {
+      if (isValidAsaasId(profile?.asaas_customer_id)) {
         setCustomerId(profile.asaas_customer_id);
         return profile.asaas_customer_id;
       }
@@ -65,8 +67,8 @@ export const useAsaasCustomer = () => {
         },
       });
 
-      if (error || !data?.success) {
-        toast.error(data?.error || "Erro ao criar cadastro de pagamento.");
+      if (error || !data?.success || !isValidAsaasId(data?.asaas_customer_id)) {
+        toast.error(data?.error || "Erro: Perfil financeiro não sincronizado.");
         return null;
       }
 
@@ -80,3 +82,6 @@ export const useAsaasCustomer = () => {
 
   return { customerId, loading, creating, ensureCustomer };
 };
+
+/** Standalone validation for use outside the hook (e.g. RideActive) */
+export { isValidAsaasId };
