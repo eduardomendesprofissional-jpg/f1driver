@@ -16,7 +16,7 @@ const PRESET_VALUES = [20, 50, 100, 200];
 const DriverCredits = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { ensureCustomer, creating: creatingCustomer } = useAsaasCustomer();
+  const { ensureCustomer, syncing: syncingCustomer } = useAsaasCustomer();
   const [driverBalance, setDriverBalance] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
