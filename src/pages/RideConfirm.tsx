@@ -174,11 +174,14 @@ const RideConfirm = () => {
         body: {
           rideId: ride.id,
           amount: est.valor,
-          paymentMethod: formaPagamento,
+          paymentMethod: "pix", // minúsculo — backend converte para PIX
         },
       });
 
+      console.log("Resposta da Função:", paymentData, paymentError);
+
       if (paymentError || paymentData?.error) {
+        console.error("Erro pagamento:", paymentData?.error || paymentError?.message);
         toast.error(paymentData?.error || paymentError?.message || "Erro ao processar pagamento.");
         await cancelRide(ride.id, "Falha no pagamento");
         return;
@@ -198,7 +201,7 @@ const RideConfirm = () => {
           encoded_image: paymentData.pix.encodedImage || paymentData.pix.encoded_image,
           payload: paymentData.pix.payload,
           ride_id: ride.id,
-          payment_intent_id: paymentData.id || paymentData.payment_id,
+          payment_intent_id: paymentData.payment_id || paymentData.id,
           expiration_date: paymentData.pix.expirationDate || paymentData.pix.expiration_date,
         });
         setShowPixModal(true);
