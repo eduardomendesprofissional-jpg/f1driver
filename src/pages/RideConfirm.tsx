@@ -177,26 +177,16 @@ const RideConfirm = () => {
 
       subscribeToRide(ride.id);
 
-      // Ensure Asaas customer exists
+      // Ensure Asaas customer exists before paying
       const resolvedCustomerId = await ensureCustomer();
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("credit_card_token")
-        .eq("id", ride.passageiro_id)
-        .single();
-
-      const hasAsaasSetup = !!(profile as any)?.credit_card_token && !!resolvedCustomerId;
-
-      if (hasAsaasSetup) {
+      if (resolvedCustomerId) {
         const isPix = selectedPayment.type === "pix";
 
         const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
           body: {
-            action: "create_payment",
-            amount: est.valor,
-            customer_id: resolvedCustomerId,
-            driver_wallet_id: "",
+            action: "pay",
+            ride_id: ride.id,
             billing_type: isPix ? "PIX" : "CREDIT_CARD",
           },
         });
