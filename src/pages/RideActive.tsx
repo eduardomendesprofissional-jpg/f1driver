@@ -388,6 +388,46 @@ const RideActive = () => {
       valor_final: finalValor,
     } as any).eq("id", rideId);
 
+    // ── Cash payment: deduct platform commission from driver_balance ──
+    if (ride?.forma_pagamento === "dinheiro" && ride?.motorista_id && finalValor > 0) {
+      const COMMISSION_RATE = 0.20;
+      const commission = Math.round(finalValor * COMMISSION_RATE * 100) / 100;
+
+      try {
+        // Deduct commission (negative amount)
+        await supabase.rpc("add_driver_balance", {
+          p_user_id: ride.motorista_id,
+          p_amount: -commission,
+        });
+
+        // Check updated balance
+        const { data: updatedProfile } = await supabase
+          .from("profiles")
+          .select("driver_balance, is_blocked")
+          .eq("id", ride.motorista_id)
+          .single();
+
+        const newBalance = Number((updatedProfile as any)?.driver_balance || 0);
+        const nowBlocked = !!(updatedProfile as any)?.is_blocked;
+
+        toast.info(`Comissão de R$ ${commission.toFixed(2)} debitada do seu saldo.`);
+
+        if (nowBlocked || newBalance < -40) {
+          toast.error(
+            "Conta bloqueada por saldo negativo. Recarregue para continuar recebendo chamadas.",
+            { duration: 10000 }
+          );
+        } else if (newBalance < 0) {
+          toast.warning(
+            `Atenção: seu saldo está R$ ${Math.abs(newBalance).toFixed(2)} negativo. Bloqueio em R$ -40,00.`,
+            { duration: 8000 }
+          );
+        }
+      } catch (err) {
+        console.error("Cash commission deduction error:", err);
+      }
+    }
+
     // ── Asaas payment at ride end (if not already paid) ──
     if (ride?.payment_status !== "paid" && ride?.passageiro_id) {
       try {
