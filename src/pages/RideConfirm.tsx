@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, CreditCard, QrCode, ArrowLeft, Loader2, Calendar, Clock, XCircle } from "lucide-react";
+import { MapPin, CreditCard, QrCode, ArrowLeft, Loader2, Calendar, Clock, XCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
