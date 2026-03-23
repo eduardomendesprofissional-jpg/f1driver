@@ -74,15 +74,8 @@ const PassengerWallet = () => {
 
     setTopupLoading(true);
     try {
-      // Get asaas_customer_id
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("asaas_customer_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!(profile as any)?.asaas_customer_id) {
-        toast.error("Configure seu cadastro de pagamento primeiro.");
+      const customerId = await ensureCustomer();
+      if (!customerId) {
         setTopupLoading(false);
         return;
       }
