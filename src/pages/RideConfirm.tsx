@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, CreditCard, QrCode, ArrowLeft, Loader2, Calendar, Clock, XCircle } from "lucide-react";
+import { MapPin, CreditCard, QrCode, ArrowLeft, Loader2, Calendar, Clock, XCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
@@ -108,9 +108,63 @@ const RideConfirm = () => {
 
   const handleConfirm = async () => {
     if (!est || !selectedPayment) return;
-    setPhase("waiting_payment");
 
     try {
+      // ── WALLET PAYMENT: check balance and deduct immediately ──
+      if (selectedPayment.type === "wallet") {
+        setPhase("waiting_payment");
+
+        // Check balance
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("balance")
+          .eq("id", (await supabase.auth.getUser()).data.user?.id || "")
+          .single();
+
+        const currentBalance = Number((profile as any)?.balance || 0);
+        if (currentBalance < est.valor) {
+          toast.error(`Saldo insuficiente (R$ ${currentBalance.toFixed(2)}). Recarregue sua carteira.`);
+          setPhase("confirm");
+          return;
+        }
+
+        // Create ride with status solicitada directly
+        const formaPagamento = "wallet";
+        const ride = await createRide(est, formaPagamento);
+        if (!ride) {
+          toast.error("Erro ao solicitar corrida.");
+          setPhase("confirm");
+          return;
+        }
+
+        // Deduct balance via secure RPC
+        const { data: deducted } = await supabase.rpc("deduct_wallet_balance" as any, {
+          p_user_id: ride.passageiro_id,
+          p_amount: est.valor,
+        });
+
+        if (!deducted) {
+          toast.error("Saldo insuficiente. Recarregue sua carteira.");
+          await cancelRide(ride.id, "Saldo insuficiente");
+          return;
+        }
+
+        // Mark as paid and dispatch immediately
+        await supabase
+          .from("rides")
+          .update({ status: "solicitada", payment_status: "paid" } as any)
+          .eq("id", ride.id);
+
+        setCurrentRideId(ride.id);
+        setPhase("searching_driver");
+        toast.success("Pagamento via carteira confirmado! Buscando motorista...");
+        await dispatchRide(ride.id, est);
+        navigate("/ride-active", { state: { rideId: ride.id } });
+        return;
+      }
+
+      // ── EXISTING PIX/CARD FLOW ──
+      setPhase("waiting_payment");
       const formaPagamento = selectedPayment.type === "card" ? "card" : "pix";
       const ride = await createRide(est, formaPagamento);
       if (!ride) {
@@ -121,7 +175,6 @@ const RideConfirm = () => {
 
       setCurrentRideId(ride.id);
 
-      // Save stripe payment method if card
       if (selectedPayment.type === "card" && selectedPayment.stripe_payment_method_id) {
         await supabase
           .from("rides")
@@ -129,10 +182,8 @@ const RideConfirm = () => {
           .eq("id", ride.id);
       }
 
-      // Subscribe to realtime updates for this ride
       subscribeToRide(ride.id);
 
-      // Get passenger profile for Asaas info
       const { data: profile } = await supabase
         .from("profiles")
         .select("credit_card_token, asaas_customer_id")
@@ -160,7 +211,6 @@ const RideConfirm = () => {
           return;
         }
 
-        // Save payment_id on ride
         await supabase
           .from("rides")
           .update({
@@ -169,7 +219,6 @@ const RideConfirm = () => {
           } as any)
           .eq("id", ride.id);
 
-        // If already confirmed (card instant), go straight to dispatch
         if (asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED") {
           setPhase("searching_driver");
           toast.success("Pagamento confirmado! Buscando motorista...");
@@ -179,7 +228,6 @@ const RideConfirm = () => {
           return;
         }
 
-        // PIX: show QR modal, wait for realtime webhook confirmation
         if (isPix && asaasData.pix) {
           setPixData({
             encoded_image: asaasData.pix.encoded_image,
@@ -189,10 +237,9 @@ const RideConfirm = () => {
             expiration_date: asaasData.pix.expiration_date,
           });
           setShowPixModal(true);
-          return; // Stay on page, realtime will handle the rest
+          return;
         }
 
-        // PENDING card: wait for webhook
         toast.info("Aguardando confirmação do pagamento...");
         return;
       }
@@ -211,7 +258,6 @@ const RideConfirm = () => {
         return;
       }
 
-      // Stripe PIX flow
       if (selectedPayment.type === "pix" && data?.pix) {
         setPixData({
           qr_code_url: data.pix.qr_code_url,
@@ -223,7 +269,6 @@ const RideConfirm = () => {
         return;
       }
 
-      // Stripe card confirmed
       if (data?.payment_status === "paid") {
         setPhase("searching_driver");
         toast.success("Pagamento confirmado! Buscando motorista...");
@@ -396,7 +441,9 @@ const RideConfirm = () => {
               className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card hover:bg-secondary/30 transition-all press"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                {selectedPayment?.type === "pix" ? (
+                {selectedPayment?.type === "wallet" ? (
+                  <Wallet size={18} className="text-primary" />
+                ) : selectedPayment?.type === "pix" ? (
                   <QrCode size={18} className="text-primary" />
                 ) : selectedPayment?.type === "card" ? (
                   <CreditCard size={18} className="text-primary" />

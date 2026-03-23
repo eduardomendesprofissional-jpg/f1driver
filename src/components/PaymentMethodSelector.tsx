@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, QrCode, Plus, X, Loader2, ChevronRight } from "lucide-react";
+import { CreditCard, QrCode, Plus, X, Loader2, ChevronRight, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ interface SavedCard {
 }
 
 export interface SelectedPayment {
-  type: "pix" | "card";
+  type: "pix" | "card" | "wallet";
   stripe_payment_method_id?: string;
   label: string;
 }
@@ -39,6 +39,7 @@ const PaymentMethodSelector = ({ open, onClose, onSelect, currentSelection }: Pr
   const navigate = useNavigate();
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
     if (open && user) {
@@ -50,6 +51,16 @@ const PaymentMethodSelector = ({ open, onClose, onSelect, currentSelection }: Pr
         })
         .catch(() => {})
         .finally(() => setLoading(false));
+
+      // Fetch wallet balance
+      supabase
+        .from("profiles")
+        .select("balance")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          setWalletBalance(Number((data as any)?.balance || 0));
+        });
     }
   }, [open, user]);
 
@@ -78,6 +89,29 @@ const PaymentMethodSelector = ({ open, onClose, onSelect, currentSelection }: Pr
           </div>
 
           <div className="space-y-2">
+            {/* Wallet option */}
+            <button
+              onClick={() => onSelect({ type: "wallet", label: `Carteira • R$ ${walletBalance.toFixed(2)}` })}
+              className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                currentSelection?.type === "wallet"
+                  ? "border-primary bg-primary/5"
+                  : "border-border/40 bg-secondary/30 hover:bg-secondary/50"
+              }`}
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Wallet size={18} className="text-primary" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-foreground text-sm">Carteira</p>
+                <p className="text-xs text-muted-foreground">Saldo: R$ {walletBalance.toFixed(2)}</p>
+              </div>
+              {currentSelection?.type === "wallet" && (
+                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                </div>
+              )}
+            </button>
+
             {/* PIX option */}
             <button
               onClick={() => onSelect({ type: "pix", label: "PIX" })}

@@ -17,9 +17,9 @@ serve(async (req) => {
       throw new Error("ASAAS_API_KEY not configured");
     }
 
-    const { action, amount, driver_wallet_id, customer_id, billing_type } = await req.json();
+    const { action, amount, driver_wallet_id, customer_id, billing_type, topup_id } = await req.json();
     const billingType = (billing_type || "PIX").toUpperCase();
-    console.log("asaas-payment called:", JSON.stringify({ action, amount, driver_wallet_id, customer_id, billingType }));
+    console.log("asaas-payment called:", JSON.stringify({ action, amount, driver_wallet_id, customer_id, billingType, topup_id }));
 
     if (action !== "create_payment") {
       return new Response(
@@ -43,7 +43,7 @@ serve(async (req) => {
       billingType,
       value: amount,
       dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      description: "Pagamento de corrida",
+      description: topup_id ? "Recarga de carteira" : "Pagamento de corrida",
     };
 
     if (driver_wallet_id) {

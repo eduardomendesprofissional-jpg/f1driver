@@ -68,6 +68,7 @@ import PassengerReferral from "./pages/PassengerReferral";
 import RideTrack from "./pages/RideTrack";
 import StripeCheckout from "./pages/StripeCheckout";
 import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
+import PassengerWallet from "./pages/PassengerWallet";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,7 @@ const App = () => (
             <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
             <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsScreen /></ProtectedRoute>} />
+            <Route path="/wallet" element={<ProtectedRoute><PassengerWallet /></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><PassengerInbox /></ProtectedRoute>} />
             <Route path="/referral" element={<ProtectedRoute><PassengerReferral /></ProtectedRoute>} />
             <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
