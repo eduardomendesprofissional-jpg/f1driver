@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, Clock, User, Package, Menu, CreditCard, HelpCircle, Settings, LogOut, Gift, Shield, Bell, ChevronRight, X } from "lucide-react";
+import { Home, Clock, User, Package, Menu, CreditCard, HelpCircle, Settings, LogOut, Gift, Shield, Bell, ChevronRight, X, Wallet } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
