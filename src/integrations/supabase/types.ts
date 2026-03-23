@@ -664,6 +664,7 @@ export type Database = {
         Row: {
           aceita_em: string | null
           agendada_para: string | null
+          broadcast_search: boolean
           cancelada_em: string | null
           cancelado_por: string | null
           categoria: string
@@ -701,6 +702,7 @@ export type Database = {
         Insert: {
           aceita_em?: string | null
           agendada_para?: string | null
+          broadcast_search?: boolean
           cancelada_em?: string | null
           cancelado_por?: string | null
           categoria?: string
@@ -738,6 +740,7 @@ export type Database = {
         Update: {
           aceita_em?: string | null
           agendada_para?: string | null
+          broadcast_search?: boolean
           cancelada_em?: string | null
           cancelado_por?: string | null
           categoria?: string
