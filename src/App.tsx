@@ -114,6 +114,7 @@ const App = () => (
             <Route path="/driver/referral" element={<ProtectedRoute><DriverReferral /></ProtectedRoute>} />
             <Route path="/driver/wallet" element={<ProtectedRoute><DriverWallet /></ProtectedRoute>} />
             <Route path="/driver/achievements" element={<ProtectedRoute><DriverAchievements /></ProtectedRoute>} />
+            <Route path="/driver/credits" element={<ProtectedRoute><DriverCredits /></ProtectedRoute>} />
             <Route path="/driver/earnings" element={<ProtectedRoute><DriverEarnings /></ProtectedRoute>} />
 
             {/* Admin routes - email restricted */}
