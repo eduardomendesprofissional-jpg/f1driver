@@ -295,7 +295,7 @@ const RideConfirm = () => {
               <Loader2 size={32} className="animate-spin text-primary" />
             </div>
             <p className="text-base font-bold text-foreground">
-              {syncingCustomer ? "Sincronizando perfil financeiro..." : "Processando pagamento..."}
+              Processando pagamento...
             </p>
             <p className="text-sm text-muted-foreground text-center">
               Aguarde a confirmação. Não feche esta tela.
