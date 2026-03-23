@@ -109,7 +109,11 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { action } = body;
+    // Support both formats: { action, ... } and { rideId, amount, paymentMethod }
+    let action = body.action;
+    if (!action && body.rideId) {
+      action = "pay"; // Simplified frontend format
+    }
     console.log("asaas-payment action:", action, JSON.stringify(body));
 
     // ════════════════════════════════════════════════════
@@ -172,7 +176,9 @@ serve(async (req) => {
     // Accepts: ride_id (required)
     // ════════════════════════════════════════════════════
     if (action === "pay" || action === "create_payment") {
-      const { ride_id, billing_type } = body;
+      // Accept both formats: { ride_id, billing_type } and { rideId, paymentMethod }
+      const ride_id = body.ride_id || body.rideId;
+      const billing_type = body.billing_type || body.paymentMethod;
 
       if (!ride_id) return jsonRes({ error: "ride_id é obrigatório." }, 400);
 
