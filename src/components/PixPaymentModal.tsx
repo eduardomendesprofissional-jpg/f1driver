@@ -10,10 +10,13 @@ interface PixPaymentModalProps {
   onClose: () => void;
   onSuccess: () => void;
   pixData: {
-    qr_code_url: string;
-    qr_code_data: string;
-    payment_intent_id: string;
+    encoded_image?: string;
+    payload?: string;
+    qr_code_url?: string;
+    qr_code_data?: string;
+    payment_intent_id?: string;
     ride_id: string;
+    expiration_date?: string;
   } | null;
 }
 
@@ -21,13 +24,12 @@ const PIX_TIMEOUT = 30 * 60; // 30 minutes
 
 const PixPaymentModal = ({ open, onClose, onSuccess, pixData }: PixPaymentModalProps) => {
   const [timeLeft, setTimeLeft] = useState(PIX_TIMEOUT);
-  const [checking, setChecking] = useState(false);
   const [paid, setPaid] = useState(false);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Realtime subscription to rides table
   useEffect(() => {
-    if (!open || !pixData) return;
+    if (!open || !pixData?.ride_id) return;
 
     setTimeLeft(PIX_TIMEOUT);
     setPaid(false);
@@ -36,10 +38,8 @@ const PixPaymentModal = ({ open, onClose, onSuccess, pixData }: PixPaymentModalP
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // Expired
           clearInterval(timerRef.current!);
-          clearInterval(pollingRef.current!);
-          toast.error("Tempo para pagamento PIX expirou. Corrida cancelada.");
+          toast.error("Tempo para pagamento PIX expirou.");
           onClose();
           return 0;
         }
@@ -47,37 +47,48 @@ const PixPaymentModal = ({ open, onClose, onSuccess, pixData }: PixPaymentModalP
       });
     }, 1000);
 
-    // Poll every 3 seconds
-    pollingRef.current = setInterval(async () => {
-      setChecking(true);
-      try {
-        const { data } = await supabase.functions.invoke("check-pix-status", {
-          body: {
-            payment_intent_id: pixData.payment_intent_id,
-            ride_id: pixData.ride_id,
-          },
-        });
-        if (data?.paid) {
-          setPaid(true);
-          clearInterval(pollingRef.current!);
-          clearInterval(timerRef.current!);
-          toast.success("Pagamento PIX confirmado!");
-          setTimeout(() => onSuccess(), 1500);
+    // Realtime: listen for payment_status changes on this ride
+    const channel = supabase
+      .channel(`pix-ride-${pixData.ride_id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "rides",
+          filter: `id=eq.${pixData.ride_id}`,
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          if (updated.payment_status === "paid") {
+            setPaid(true);
+            clearInterval(timerRef.current!);
+            toast.success("Pagamento PIX confirmado!");
+            setTimeout(() => onSuccess(), 1500);
+          }
         }
-      } catch {}
-      setChecking(false);
-    }, 3000);
+      )
+      .subscribe();
 
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
+      supabase.removeChannel(channel);
     };
-  }, [open, pixData]);
+  }, [open, pixData?.ride_id]);
 
-  const copyCode = () => {
-    if (pixData?.qr_code_data) {
-      navigator.clipboard.writeText(pixData.qr_code_data);
+  const qrImageSrc = pixData?.encoded_image
+    ? `data:image/png;base64,${pixData.encoded_image}`
+    : pixData?.qr_code_url || "";
+
+  const copyPayload = pixData?.payload || pixData?.qr_code_data || "";
+
+  const handleCopy = async () => {
+    if (!copyPayload) return;
+    try {
+      await navigator.clipboard.writeText(copyPayload);
       toast.success("Código PIX copiado!");
+    } catch {
+      toast.error("Erro ao copiar. Tente manualmente.");
     }
   };
 
@@ -115,63 +126,72 @@ const PixPaymentModal = ({ open, onClose, onSuccess, pixData }: PixPaymentModalP
               </motion.div>
               <p className="text-lg font-bold text-foreground">Pagamento confirmado!</p>
               <p className="text-sm text-muted-foreground">Buscando motorista...</p>
+              <Loader2 size={20} className="animate-spin text-primary" />
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-lg text-foreground">Pagamento PIX</h2>
-                <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <QrCode size={16} className="text-primary" />
+                  </div>
+                  <h2 className="font-bold text-lg text-foreground">Pagar com PIX</h2>
+                </div>
+                <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                   <X size={18} className="text-muted-foreground" />
                 </button>
               </div>
 
               {/* Timer */}
-              <div className="flex items-center justify-center gap-2 mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+              <div className="flex items-center justify-center gap-2 mb-5 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                 <Clock size={16} className="text-amber-500" />
-                <span className="text-sm font-bold text-amber-600">
+                <span className="text-sm font-bold text-amber-500">
                   Expira em {formatTime(timeLeft)}
                 </span>
               </div>
 
               {/* QR Code */}
-              <div className="flex justify-center mb-4">
-                <div className="bg-white rounded-2xl p-4">
-                  <img
-                    src={pixData.qr_code_url}
-                    alt="QR Code PIX"
-                    className="w-48 h-48 object-contain"
-                  />
+              {qrImageSrc && (
+                <div className="flex justify-center mb-5">
+                  <div className="bg-white rounded-2xl p-4 shadow-lg">
+                    <img
+                      src={qrImageSrc}
+                      alt="QR Code PIX"
+                      className="w-52 h-52 object-contain"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Copy code */}
-              <div className="space-y-3">
-                <p className="text-xs text-muted-foreground text-center">
-                  Ou copie o código abaixo e cole no app do seu banco
-                </p>
-                <div className="bg-secondary/50 rounded-xl p-3 flex items-center gap-2">
-                  <p className="flex-1 text-xs font-mono text-foreground truncate">
-                    {pixData.qr_code_data}
+              {copyPayload && (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Ou copie o código e cole no app do seu banco
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={copyCode}
-                    className="shrink-0"
-                  >
-                    <Copy size={14} className="mr-1" /> Copiar
-                  </Button>
+                  <div className="bg-secondary/50 rounded-xl p-3 space-y-2">
+                    <p className="text-[11px] font-mono text-foreground break-all leading-relaxed line-clamp-3">
+                      {copyPayload}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopy}
+                      className="w-full gap-2"
+                    >
+                      <Copy size={14} />
+                      Copiar código PIX
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Status */}
-              <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
-                {checking ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <QrCode size={14} />
-                )}
-                <span>Aguardando pagamento...</span>
+              {/* Waiting indicator */}
+              <div className="flex items-center justify-center gap-2 mt-5 py-3 bg-secondary/30 rounded-xl">
+                <Loader2 size={14} className="animate-spin text-primary" />
+                <span className="text-xs text-muted-foreground font-medium">
+                  Aguardando pagamento...
+                </span>
               </div>
             </>
           )}

@@ -29,10 +29,13 @@ const RideConfirm = () => {
   const [charging, setCharging] = useState(false);
   const [showPixModal, setShowPixModal] = useState(false);
   const [pixData, setPixData] = useState<{
-    qr_code_url: string;
-    qr_code_data: string;
-    payment_intent_id: string;
+    encoded_image?: string;
+    payload?: string;
+    qr_code_url?: string;
+    qr_code_data?: string;
+    payment_intent_id?: string;
     ride_id: string;
+    expiration_date?: string;
   } | null>(null);
   const [currentRideId, setCurrentRideId] = useState<string | null>(null);
 
@@ -81,18 +84,21 @@ const RideConfirm = () => {
       const hasAsaasToken = !!(profile as any)?.credit_card_token && !!(profile as any)?.asaas_customer_id;
 
       if (hasAsaasToken) {
-        console.log("Using Asaas payment flow");
+        const isPix = selectedPayment.type === "pix";
+        console.log("Using Asaas payment flow, billing_type:", isPix ? "PIX" : "CREDIT_CARD");
+
         const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
           body: {
             action: "create_payment",
             amount: est.valor,
             customer_id: (profile as any).asaas_customer_id,
-            driver_wallet_id: "", // Will be filled after driver accepts
+            driver_wallet_id: "",
+            billing_type: isPix ? "PIX" : "CREDIT_CARD",
           },
         });
 
         if (asaasError || !asaasData?.success) {
-          const errorMsg = asaasData?.error || asaasError?.message || "Erro ao processar pagamento Asaas.";
+          const errorMsg = asaasData?.error || asaasError?.message || "Erro ao processar pagamento.";
           console.error("Asaas payment failed:", errorMsg);
           toast.error(errorMsg);
           await supabase
@@ -107,17 +113,39 @@ const RideConfirm = () => {
           return;
         }
 
-        // Payment created successfully – update ride
-        if (asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED" || asaasData.status === "PENDING") {
-          await supabase
-            .from("rides")
-            .update({
-              payment_status: asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED" ? "paid" : "pending",
-              payment_intent_id: asaasData.payment_id,
-            } as any)
-            .eq("id", ride.id);
+        // Save payment_id on ride
+        await supabase
+          .from("rides")
+          .update({
+            payment_intent_id: asaasData.payment_id,
+            payment_status: asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED" ? "paid" : "pending",
+          } as any)
+          .eq("id", ride.id);
 
+        // PIX flow: show QR code modal, wait for realtime confirmation
+        if (isPix && asaasData.pix) {
+          setPixData({
+            encoded_image: asaasData.pix.encoded_image,
+            payload: asaasData.pix.payload,
+            ride_id: ride.id,
+            payment_intent_id: asaasData.payment_id,
+            expiration_date: asaasData.pix.expiration_date,
+          });
+          setShowPixModal(true);
+          return;
+        }
+
+        // Card flow: already confirmed
+        if (asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED") {
           toast.success("Pagamento confirmado!");
+          await dispatchRide(ride.id, est);
+          navigate("/ride-active", { state: { rideId: ride.id } });
+          return;
+        }
+
+        // PENDING card - still dispatch
+        if (asaasData.status === "PENDING") {
+          toast.info("Pagamento em processamento...");
           await dispatchRide(ride.id, est);
           navigate("/ride-active", { state: { rideId: ride.id } });
           return;
