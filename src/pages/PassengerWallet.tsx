@@ -17,7 +17,7 @@ const PRESET_VALUES = [20, 50, 100, 200];
 const PassengerWallet = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { ensureCustomer, creating: creatingCustomer } = useAsaasCustomer();
+  const { ensureCustomer, syncing: syncingCustomer } = useAsaasCustomer();
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [customAmount, setCustomAmount] = useState("");
@@ -175,6 +175,26 @@ const PassengerWallet = () => {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Syncing Banner */}
+        <AnimatePresence>
+          {syncingCustomer && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Loader2 size={20} className="text-primary animate-spin shrink-0" />
+                  <p className="text-sm font-medium text-foreground">
+                    Sincronizando perfil financeiro...
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Balance Card */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card className="bg-primary text-primary-foreground">

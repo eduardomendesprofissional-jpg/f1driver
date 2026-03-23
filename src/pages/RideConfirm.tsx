@@ -43,7 +43,7 @@ const RideConfirm = () => {
   const [currentRideId, setCurrentRideId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const realtimeChannelRef = useRef<any>(null);
-  const { ensureCustomer } = useAsaasCustomer();
+  const { ensureCustomer, syncing: syncingCustomer } = useAsaasCustomer();
 
   useEffect(() => {
     if (!origem || !destino) {
@@ -319,7 +319,7 @@ const RideConfirm = () => {
     }
   };
 
-  const isProcessing = creating || phase === "waiting_payment" || phase === "searching_driver";
+  const isProcessing = creating || syncingCustomer || phase === "waiting_payment" || phase === "searching_driver";
 
   return (
     <div className="min-h-screen bg-background flex flex-col safe-top">
@@ -353,7 +353,9 @@ const RideConfirm = () => {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               <Loader2 size={32} className="animate-spin text-primary" />
             </div>
-            <p className="text-base font-bold text-foreground">Processando pagamento...</p>
+            <p className="text-base font-bold text-foreground">
+              {syncingCustomer ? "Sincronizando perfil financeiro..." : "Processando pagamento..."}
+            </p>
             <p className="text-sm text-muted-foreground text-center">
               Aguarde a confirmação. Não feche esta tela.
             </p>
