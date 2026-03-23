@@ -161,8 +161,24 @@ const DriverPanel = () => {
       <div className="flex justify-center py-3 shrink-0 z-20">
         <motion.button
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
+          onClick={async () => {
             if (!online && !selfieVerified) { setShowSelfie(true); return; }
+            // Check balance before going online
+            if (!online && user) {
+              const { data: prof } = await supabase
+                .from("profiles")
+                .select("driver_balance, is_blocked")
+                .eq("id", user.id)
+                .single();
+              const balance = Number((prof as any)?.driver_balance || 0);
+              const blocked = !!(prof as any)?.is_blocked;
+              if (blocked || balance < -40) {
+                const { toast } = await import("sonner");
+                toast.error("Conta bloqueada por saldo negativo. Recarregue para continuar recebendo chamadas.", { duration: 6000 });
+                navigate("/driver/credits");
+                return;
+              }
+            }
             setOnline(!online);
           }}
           className={`relative flex items-center gap-2.5 px-10 py-3.5 rounded-full font-bold text-sm transition-all duration-300 shadow-xl ${
@@ -463,7 +479,19 @@ const DriverPanel = () => {
           >
             <div className="max-w-md mx-auto pt-8">
               <SelfieVerification
-                onVerified={() => { setSelfieVerified(true); setShowSelfie(false); setOnline(true); }}
+                onVerified={async () => {
+                  setSelfieVerified(true); setShowSelfie(false);
+                  if (user) {
+                    const { data: prof } = await supabase.from("profiles").select("driver_balance, is_blocked").eq("id", user.id).single();
+                    if (!!(prof as any)?.is_blocked || Number((prof as any)?.driver_balance || 0) < -40) {
+                      const { toast } = await import("sonner");
+                      toast.error("Conta bloqueada por saldo negativo. Recarregue para continuar recebendo chamadas.", { duration: 6000 });
+                      navigate("/driver/credits");
+                      return;
+                    }
+                  }
+                  setOnline(true);
+                }}
                 onSkip={() => { setSelfieVerified(true); setShowSelfie(false); }}
               />
             </div>
