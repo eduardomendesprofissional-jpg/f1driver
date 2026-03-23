@@ -372,18 +372,76 @@ const RideActive = () => {
       valor_final: finalValor,
     } as any).eq("id", rideId);
 
-    // Handle value adjustment if payment was already charged
+    // ── Asaas payment at ride end (if not already paid) ──
+    if (ride?.payment_status !== "paid" && ride?.passageiro_id) {
+      try {
+        const { data: passengerProfile } = await supabase
+          .from("profiles")
+          .select("credit_card_token, asaas_customer_id")
+          .eq("id", ride.passageiro_id)
+          .single();
+
+        const hasAsaasToken = !!(passengerProfile as any)?.credit_card_token && !!(passengerProfile as any)?.asaas_customer_id;
+
+        if (hasAsaasToken && ride.motorista_id) {
+          // Get driver's asaas_wallet_id
+          const { data: driverProfile } = await supabase
+            .from("profiles")
+            .select("asaas_wallet_id")
+            .eq("id", ride.motorista_id)
+            .single();
+
+          const driverWalletId = (driverProfile as any)?.asaas_wallet_id || "";
+
+          const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
+            body: {
+              action: "create_payment",
+              amount: finalValor,
+              customer_id: (passengerProfile as any).asaas_customer_id,
+              driver_wallet_id: driverWalletId,
+            },
+          });
+
+          if (!asaasError && asaasData?.success) {
+            const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
+            await supabase.from("rides").update({
+              payment_status: isPaid ? "paid" : "pending",
+              payment_intent_id: asaasData.payment_id,
+            } as any).eq("id", rideId);
+
+            if (isPaid) {
+              toast.success(`Pagamento de R$ ${finalValor.toFixed(2)} confirmado!`);
+            } else {
+              toast.info("Pagamento criado. Aguardando confirmação.");
+            }
+
+            // Notify passenger
+            await supabase.from("notificacoes").insert({
+              user_id: ride.passageiro_id,
+              titulo: "Corrida finalizada",
+              mensagem: `Sua corrida foi finalizada. Valor cobrado: R$ ${finalValor.toFixed(2)}.`,
+              tipo: "pagamento",
+            });
+          } else {
+            console.error("Asaas payment on finish failed:", asaasData?.error || asaasError?.message);
+            toast.error("Erro ao processar pagamento. O passageiro será notificado.");
+          }
+        }
+      } catch (err) {
+        console.error("Payment on finish error:", err);
+      }
+    }
+
+    // Handle value adjustment if payment was already charged (Stripe fallback)
     if (ride?.payment_intent_id && ride?.payment_status === "paid") {
       const estimatedValor = Number(ride.valor || 0);
       const diff = finalValor - estimatedValor;
 
       if (diff < -0.50) {
-        // Refund the difference
         supabase.functions.invoke("refund-ride", {
           body: { ride_id: rideId, amount_to_refund: Math.abs(diff) },
         }).catch(() => {});
       } else if (diff > 0.50 && ride.stripe_payment_method_id) {
-        // Charge the difference on the same card
         supabase.functions.invoke("charge-ride", {
           body: {
             ride_id: rideId,
@@ -391,7 +449,6 @@ const RideActive = () => {
           },
         }).then(({ data }) => {
           if (data?.success) {
-            // Notify passenger about additional charge
             supabase.from("notificacoes").insert({
               user_id: ride.passageiro_id,
               titulo: "Ajuste de valor",

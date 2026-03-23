@@ -61,7 +61,7 @@ const RideConfirm = () => {
 
       setCurrentRideId(ride.id);
 
-      // Save payment method on ride if card
+      // Save payment method on ride if card (Stripe)
       if (selectedPayment.type === "card" && selectedPayment.stripe_payment_method_id) {
         await supabase
           .from("rides")
@@ -71,8 +71,61 @@ const RideConfirm = () => {
           .eq("id", ride.id);
       }
 
-      // Charge ride - MUST succeed before dispatching
-      console.log("Calling charge-ride with:", { ride_id: ride.id, payment_method_id: selectedPayment.stripe_payment_method_id || null });
+      // ── Try Asaas payment first if user has credit_card_token ──
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("credit_card_token, asaas_customer_id")
+        .eq("id", ride.passageiro_id)
+        .single();
+
+      const hasAsaasToken = !!(profile as any)?.credit_card_token && !!(profile as any)?.asaas_customer_id;
+
+      if (hasAsaasToken) {
+        console.log("Using Asaas payment flow");
+        const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
+          body: {
+            action: "create_payment",
+            amount: est.valor,
+            customer_id: (profile as any).asaas_customer_id,
+            driver_wallet_id: "", // Will be filled after driver accepts
+          },
+        });
+
+        if (asaasError || !asaasData?.success) {
+          const errorMsg = asaasData?.error || asaasError?.message || "Erro ao processar pagamento Asaas.";
+          console.error("Asaas payment failed:", errorMsg);
+          toast.error(errorMsg);
+          await supabase
+            .from("rides")
+            .update({
+              status: "cancelada",
+              cancelada_em: new Date().toISOString(),
+              motivo_cancelamento: "Falha no pagamento",
+              cancelado_por: "sistema",
+            } as any)
+            .eq("id", ride.id);
+          return;
+        }
+
+        // Payment created successfully – update ride
+        if (asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED" || asaasData.status === "PENDING") {
+          await supabase
+            .from("rides")
+            .update({
+              payment_status: asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED" ? "paid" : "pending",
+              payment_intent_id: asaasData.payment_id,
+            } as any)
+            .eq("id", ride.id);
+
+          toast.success("Pagamento confirmado!");
+          await dispatchRide(ride.id, est);
+          navigate("/ride-active", { state: { rideId: ride.id } });
+          return;
+        }
+      }
+
+      // ── Fallback: Stripe charge-ride flow ──
+      console.log("Using Stripe payment flow");
       const { data, error } = await supabase.functions.invoke("charge-ride", {
         body: {
           ride_id: ride.id,
@@ -86,7 +139,6 @@ const RideConfirm = () => {
         const errorMsg = data?.error || error?.message || "Erro ao processar pagamento. Tente novamente.";
         console.error("Payment failed:", errorMsg);
         toast.error(errorMsg);
-        // Cancel the ride since payment failed
         await supabase
           .from("rides")
           .update({
@@ -108,7 +160,7 @@ const RideConfirm = () => {
           ride_id: ride.id,
         });
         setShowPixModal(true);
-        return; // Don't navigate yet, wait for PIX confirmation
+        return;
       }
 
       // Card flow - payment succeeded, dispatch and navigate
