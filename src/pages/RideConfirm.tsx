@@ -43,7 +43,7 @@ const RideConfirm = () => {
   const [currentRideId, setCurrentRideId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const realtimeChannelRef = useRef<any>(null);
-  const { ensureCustomer } = useAsaasCustomer();
+  const { ensureCustomer, syncing: syncingCustomer } = useAsaasCustomer();
 
   useEffect(() => {
     if (!origem || !destino) {
