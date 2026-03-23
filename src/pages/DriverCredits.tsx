@@ -75,14 +75,35 @@ const DriverCredits = () => {
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("asaas_customer_id")
+        .select("asaas_customer_id, nome, cpf")
         .eq("id", user.id)
         .single();
 
-      if (!(profile as any)?.asaas_customer_id) {
-        toast.error("Configure seu cadastro de pagamento primeiro.");
-        setTopupLoading(false);
-        return;
+      let customerId = profile?.asaas_customer_id;
+
+      // Auto-create Asaas customer if not yet registered
+      if (!customerId) {
+        if (!profile?.nome || !profile?.cpf) {
+          toast.error("Preencha seu nome e CPF no perfil antes de recarregar.");
+          setTopupLoading(false);
+          return;
+        }
+        const { data: custData, error: custErr } = await supabase.functions.invoke("asaas-payment", {
+          body: {
+            action: "create_customer",
+            user_id: user.id,
+            name: profile.nome,
+            cpf_cnpj: profile.cpf,
+            email: user.email,
+          },
+        });
+        if (custErr || !custData?.success) {
+          toast.error(custData?.error || "Erro ao criar cadastro de pagamento.");
+          setTopupLoading(false);
+          return;
+        }
+        customerId = custData.asaas_customer_id;
+        toast.success("Cadastro de pagamento criado!");
       }
 
       const { data: topup, error: topupErr } = await supabase
