@@ -69,6 +69,7 @@ import RideTrack from "./pages/RideTrack";
 import StripeCheckout from "./pages/StripeCheckout";
 import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
 import PassengerWallet from "./pages/PassengerWallet";
+import DriverCredits from "./pages/DriverCredits";
 
 const queryClient = new QueryClient();
 
