@@ -445,8 +445,10 @@ export type Database = {
           created_at: string
           credit_card_token: string | null
           data_nascimento: string | null
+          driver_balance: number
           endereco: string | null
           id: string
+          is_blocked: boolean
           nome: string | null
           onboarding_completo: boolean
           status_aprovacao: string
@@ -470,8 +472,10 @@ export type Database = {
           created_at?: string
           credit_card_token?: string | null
           data_nascimento?: string | null
+          driver_balance?: number
           endereco?: string | null
           id: string
+          is_blocked?: boolean
           nome?: string | null
           onboarding_completo?: boolean
           status_aprovacao?: string
@@ -495,8 +499,10 @@ export type Database = {
           created_at?: string
           credit_card_token?: string | null
           data_nascimento?: string | null
+          driver_balance?: number
           endereco?: string | null
           id?: string
+          is_blocked?: boolean
           nome?: string | null
           onboarding_completo?: boolean
           status_aprovacao?: string
