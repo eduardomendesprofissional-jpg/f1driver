@@ -14,6 +14,7 @@ import PixPaymentModal from "@/components/PixPaymentModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useAsaasCustomer } from "@/hooks/useAsaasCustomer";
 
 type RidePhase = "confirm" | "waiting_payment" | "searching_driver";
 
