@@ -41,6 +41,7 @@ const DriverPanel = () => {
   const [destModeAddress, setDestModeAddress] = useState<string | undefined>();
   const [showSelfie, setShowSelfie] = useState(false);
   const [selfieVerified, setSelfieVerified] = useState(true);
+  const [driverBalance, setDriverBalance] = useState(0);
 
   useDriverLocation(online);
   usePushNotifications(online);
