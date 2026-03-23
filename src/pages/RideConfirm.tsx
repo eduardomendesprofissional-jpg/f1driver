@@ -156,7 +156,7 @@ const RideConfirm = () => {
         return;
       }
 
-      // ── EXISTING PIX/CARD FLOW ──
+      // ── PIX / CARD FLOW — Simple POST to Edge Function ──
       setPhase("waiting_payment");
       const formaPagamento = selectedPayment.type === "card" ? "card" : "pix";
       const ride = await createRide(est, formaPagamento);
@@ -167,104 +167,45 @@ const RideConfirm = () => {
       }
 
       setCurrentRideId(ride.id);
-
-      if (selectedPayment.type === "card" && selectedPayment.stripe_payment_method_id) {
-        await supabase
-          .from("rides")
-          .update({ stripe_payment_method_id: selectedPayment.stripe_payment_method_id } as any)
-          .eq("id", ride.id);
-      }
-
       subscribeToRide(ride.id);
 
-      // Ensure Asaas customer exists before paying
-      const resolvedCustomerId = await ensureCustomer();
-
-      if (resolvedCustomerId) {
-        const isPix = selectedPayment.type === "pix";
-
-        const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
-          body: {
-            action: "pay",
-            ride_id: ride.id,
-            billing_type: isPix ? "PIX" : "CREDIT_CARD",
-          },
-        });
-
-        if (asaasError || !asaasData?.success) {
-          toast.error(asaasData?.error || asaasError?.message || "Erro ao processar pagamento.");
-          await cancelRide(ride.id, "Falha no pagamento");
-          return;
-        }
-
-        await supabase
-          .from("rides")
-          .update({
-            payment_intent_id: asaasData.payment_id,
-            payment_status: asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED" ? "paid" : "pending",
-          } as any)
-          .eq("id", ride.id);
-
-        if (asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED") {
-          setPhase("searching_driver");
-          toast.success("Pagamento confirmado! Buscando motorista...");
-          await supabase.from("rides").update({ status: "solicitada" } as any).eq("id", ride.id);
-          await dispatchRide(ride.id, est);
-          navigate("/ride-active", { state: { rideId: ride.id } });
-          return;
-        }
-
-        if (isPix && asaasData.pix) {
-          setPixData({
-            encoded_image: asaasData.pix.encoded_image,
-            payload: asaasData.pix.payload,
-            ride_id: ride.id,
-            payment_intent_id: asaasData.payment_id,
-            expiration_date: asaasData.pix.expiration_date,
-          });
-          setShowPixModal(true);
-          return;
-        }
-
-        toast.info("Aguardando confirmação do pagamento...");
-        return;
-      }
-
-      // ── Fallback: Stripe charge-ride flow ──
-      const { data, error } = await supabase.functions.invoke("charge-ride", {
+      // Single POST — Edge Function resolves all IDs server-side
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke("asaas-payment", {
         body: {
-          ride_id: ride.id,
-          payment_method_id: selectedPayment.stripe_payment_method_id || null,
+          rideId: ride.id,
+          amount: est.valor,
+          paymentMethod: formaPagamento,
         },
       });
 
-      if (error || (!data?.success && !data?.pix)) {
-        toast.error(data?.error || error?.message || "Erro ao processar pagamento.");
+      if (paymentError || paymentData?.error) {
+        toast.error(paymentData?.error || paymentError?.message || "Erro ao processar pagamento.");
         await cancelRide(ride.id, "Falha no pagamento");
         return;
       }
 
-      if (selectedPayment.type === "pix" && data?.pix) {
+      // If already paid (card instant confirmation)
+      if (paymentData?.status === "CONFIRMED" || paymentData?.status === "RECEIVED") {
+        setPhase("searching_driver");
+        toast.success("Pagamento confirmado! Buscando motorista...");
+        navigate("/ride-active", { state: { rideId: ride.id } });
+        return;
+      }
+
+      // PIX — show QR Code modal and wait for Realtime confirmation
+      if (formaPagamento === "pix" && paymentData?.pix) {
         setPixData({
-          qr_code_url: data.pix.qr_code_url,
-          qr_code_data: data.pix.qr_code_data,
-          payment_intent_id: data.payment_intent_id,
+          encoded_image: paymentData.pix.encodedImage || paymentData.pix.encoded_image,
+          payload: paymentData.pix.payload,
           ride_id: ride.id,
+          payment_intent_id: paymentData.id || paymentData.payment_id,
+          expiration_date: paymentData.pix.expirationDate || paymentData.pix.expiration_date,
         });
         setShowPixModal(true);
         return;
       }
 
-      if (data?.payment_status === "paid") {
-        setPhase("searching_driver");
-        toast.success("Pagamento confirmado! Buscando motorista...");
-        await supabase.from("rides").update({ status: "solicitada" } as any).eq("id", ride.id);
-        await dispatchRide(ride.id, est);
-        navigate("/ride-active", { state: { rideId: ride.id } });
-      } else {
-        toast.error("Pagamento não confirmado.");
-        await cancelRide(ride.id, "Pagamento não confirmado");
-      }
+      toast.info("Aguardando confirmação do pagamento...");
     } catch (err) {
       toast.error("Erro ao processar. Tente novamente.");
       setPhase("confirm");
