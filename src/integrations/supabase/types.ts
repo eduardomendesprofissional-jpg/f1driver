@@ -1006,6 +1006,10 @@ export type Database = {
         Returns: string
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      redispatch_expanded_radius: {
+        Args: { p_ride_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
