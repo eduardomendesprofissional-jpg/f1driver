@@ -193,10 +193,8 @@ const RideConfirm = () => {
 
         const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
           body: {
-            action: "create_payment",
-            amount: est.valor,
-            customer_id: resolvedCustomerId,
-            driver_wallet_id: "",
+            action: "pay",
+            ride_id: ride.id,
             billing_type: isPix ? "PIX" : "CREDIT_CARD",
           },
         });

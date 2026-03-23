@@ -59,11 +59,8 @@ export const useAsaasCustomer = () => {
 
       const { data, error } = await supabase.functions.invoke("asaas-payment", {
         body: {
-          action: "create_customer",
+          action: "sync",
           user_id: user.id,
-          name: profile.nome,
-          cpf_cnpj: profile.cpf,
-          email: user.email,
         },
       });
 

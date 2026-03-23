@@ -96,9 +96,9 @@ const PassengerWallet = () => {
       // Call asaas-payment for PIX
       const { data: asaasData, error: asaasErr } = await supabase.functions.invoke("asaas-payment", {
         body: {
-          action: "create_payment",
+          action: "pay",
+          user_id: user.id,
           amount,
-          customer_id: customerId,
           billing_type: "PIX",
           topup_id: (topup as any).id,
         },

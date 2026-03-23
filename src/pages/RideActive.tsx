@@ -431,41 +431,15 @@ const RideActive = () => {
     // ── Asaas payment at ride end (if not already paid) ──
     if (ride?.payment_status !== "paid" && ride?.passageiro_id) {
       try {
-        const { data: passengerProfile } = await supabase
-          .from("profiles")
-          .select("credit_card_token, asaas_customer_id")
-          .eq("id", ride.passageiro_id)
-          .single();
+        const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
+          body: {
+            action: "pay",
+            ride_id: rideId,
+          },
+        });
 
-        const custId = (passengerProfile as any)?.asaas_customer_id;
-        const isValidCust = typeof custId === "string" && custId.startsWith("cus_");
-        const hasAsaasToken = !!(passengerProfile as any)?.credit_card_token && isValidCust;
-
-        if (hasAsaasToken && ride.motorista_id) {
-          // Get driver's asaas_wallet_id
-          const { data: driverProfile } = await supabase
-            .from("profiles")
-            .select("asaas_wallet_id")
-            .eq("id", ride.motorista_id)
-            .single();
-
-          const driverWalletId = (driverProfile as any)?.asaas_wallet_id || "";
-
-          const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
-            body: {
-              action: "create_payment",
-              amount: finalValor,
-              customer_id: custId,
-              driver_wallet_id: driverWalletId,
-            },
-          });
-
-          if (!asaasError && asaasData?.success) {
-            const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
-            await supabase.from("rides").update({
-              payment_status: isPaid ? "paid" : "pending",
-              payment_intent_id: asaasData.payment_id,
-            } as any).eq("id", rideId);
+        if (!asaasError && asaasData?.success) {
+          const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
 
             if (isPaid) {
               toast.success(`Pagamento de R$ ${finalValor.toFixed(2)} confirmado!`);
