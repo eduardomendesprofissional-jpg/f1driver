@@ -441,23 +441,22 @@ const RideActive = () => {
         if (!asaasError && asaasData?.success) {
           const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
 
-            if (isPaid) {
-              toast.success(`Pagamento de R$ ${finalValor.toFixed(2)} confirmado!`);
-            } else {
-              toast.info("Pagamento criado. Aguardando confirmação.");
-            }
-
-            // Notify passenger
-            await supabase.from("notificacoes").insert({
-              user_id: ride.passageiro_id,
-              titulo: "Corrida finalizada",
-              mensagem: `Sua corrida foi finalizada. Valor cobrado: R$ ${finalValor.toFixed(2)}.`,
-              tipo: "pagamento",
-            });
+          if (isPaid) {
+            toast.success(`Pagamento de R$ ${finalValor.toFixed(2)} confirmado!`);
           } else {
-            console.error("Asaas payment on finish failed:", asaasData?.error || asaasError?.message);
-            toast.error("Erro ao processar pagamento. O passageiro será notificado.");
+            toast.info("Pagamento criado. Aguardando confirmação.");
           }
+
+          // Notify passenger
+          await supabase.from("notificacoes").insert({
+            user_id: ride.passageiro_id,
+            titulo: "Corrida finalizada",
+            mensagem: `Sua corrida foi finalizada. Valor cobrado: R$ ${finalValor.toFixed(2)}.`,
+            tipo: "pagamento",
+          });
+        } else {
+          console.error("Asaas payment on finish failed:", asaasData?.error || asaasError?.message);
+          toast.error("Erro ao processar pagamento. O passageiro será notificado.");
         }
       } catch (err) {
         console.error("Payment on finish error:", err);
