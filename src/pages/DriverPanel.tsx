@@ -74,6 +74,21 @@ const DriverPanel = () => {
 
   useEffect(() => {
     if (!user) return;
+    const fetchBalance = async () => {
+      const { data } = await supabase.from("profiles").select("driver_balance").eq("id", user.id).single();
+      setDriverBalance(Number(data?.driver_balance || 0));
+    };
+    fetchBalance();
+    const channel = supabase
+      .channel(`driver-balance-banner-${user.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        (payload) => setDriverBalance(Number((payload.new as any).driver_balance || 0))
+      ).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     const checkSelfie = async () => {
       const { count } = await supabase.from("rides").select("id", { count: "exact", head: true })
         .eq("motorista_id", user.id).eq("status", "finalizada");
