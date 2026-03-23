@@ -260,7 +260,7 @@ const RideConfirm = () => {
     }
   };
 
-  const isProcessing = creating || syncingCustomer || phase === "waiting_payment" || phase === "searching_driver";
+  const isProcessing = creating || phase === "waiting_payment" || phase === "searching_driver";
 
   return (
     <div className="min-h-screen bg-background flex flex-col safe-top">
