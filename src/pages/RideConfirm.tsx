@@ -83,20 +83,11 @@ const RideConfirm = () => {
           const updated = payload.new as any;
 
           if (updated.payment_status === "paid" && phase !== "searching_driver") {
-            // Payment confirmed via webhook → dispatch!
+            // Payment confirmed — DB trigger already set status=solicitada,
+            // broadcast_search=true and assigned nearest driver
             setPhase("searching_driver");
             setShowPixModal(false);
             toast.success("Pagamento confirmado! Buscando motorista...");
-
-            // Update ride status to solicitada for dispatch
-            await supabase
-              .from("rides")
-              .update({ status: "solicitada" } as any)
-              .eq("id", rideId);
-
-            if (est) {
-              await dispatchRide(rideId, est);
-            }
             navigate("/ride-active", { state: { rideId } });
           }
         }
