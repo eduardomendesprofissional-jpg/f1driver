@@ -956,12 +956,47 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_topups: {
+        Row: {
+          created_at: string
+          id: string
+          payment_id: string | null
+          status: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          status?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          status?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_wallet_balance: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: undefined
+      }
       check_and_redispatch: { Args: { p_ride_id: string }; Returns: string }
+      deduct_wallet_balance: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
       dispatch_ride: { Args: { p_ride_id: string }; Returns: string }
       find_nearest_driver: {
         Args: { p_exclude?: string[]; p_lat: number; p_lng: number }
