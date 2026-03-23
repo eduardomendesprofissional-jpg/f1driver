@@ -194,70 +194,95 @@ serve(async (req) => {
       const amount = Number(ride.valor_final || ride.valor || 0);
       if (amount <= 0) return jsonRes({ error: "Valor inválido para pagamento." }, 400);
 
-      // 2. Fetch passenger's asaas_customer_id from DB (server-side, no test IDs)
+      // 2. Validate passenger's asaas_customer_id
       const { data: passenger } = await supabase
         .from("profiles")
         .select("asaas_customer_id")
         .eq("id", ride.passageiro_id)
         .single();
 
-      if (!passenger?.asaas_customer_id?.startsWith("cus_")) {
-        return jsonRes({ error: "Passageiro não sincronizado com Asaas. Aguarde a sincronização do perfil." }, 400);
+      const customerId = passenger?.asaas_customer_id;
+      if (!customerId || !customerId.startsWith("cus_")) {
+        return jsonRes({ error: "Usuário sem ID Asaas válido. Aguarde a sincronização do perfil financeiro." }, 400);
       }
 
-      // 3. Fetch driver's asaas_wallet_id for split
-      let driverWalletId = "";
+      // 3. Fetch driver's asaas_wallet_id for split (conditional)
+      let driverWalletId: string | null = null;
       if (ride.motorista_id) {
         const { data: driver } = await supabase
           .from("profiles")
           .select("asaas_wallet_id")
           .eq("id", ride.motorista_id)
           .single();
-        driverWalletId = driver?.asaas_wallet_id || "";
+        const wid = driver?.asaas_wallet_id || "";
+        // Only use if it looks like a valid Asaas wallet ID
+        if (wid && wid.length > 5) {
+          driverWalletId = wid;
+        }
       }
 
-      // 4. Determine billing type
+      // 4. Determine billing type (pix → PIX, card → CREDIT_CARD)
       const billingType = (billing_type || ride.forma_pagamento || "pix").toUpperCase() === "PIX" ? "PIX" : "CREDIT_CARD";
 
-      // 5. Build payment
+      // 5. Build payment — dueDate always tomorrow to avoid retroactive date errors
+      const dueDate = new Date(Date.now() + 86400000).toISOString().split("T")[0];
       const paymentBody: Record<string, unknown> = {
-        customer: passenger.asaas_customer_id,
+        customer: customerId,
         billingType,
         value: amount,
-        dueDate: new Date().toISOString().split("T")[0], // Vencimento HOJE
+        dueDate,
         description: `Corrida #${ride_id}`,
       };
 
-      // Split: 80% driver, 20% platform
+      // Split: only if driver wallet is valid — otherwise 100% to master account
       if (driverWalletId) {
         paymentBody.split = [{ walletId: driverWalletId, percentualValue: 80 }];
       }
 
       console.log("Creating Asaas payment:", JSON.stringify(paymentBody));
 
-      const asaasRes = await fetch(`${ASAAS_BASE}/payments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
-        body: JSON.stringify(paymentBody),
-      });
-      const asaasData = await asaasRes.json();
-      console.log("Asaas payment response:", JSON.stringify(asaasData));
+      // 6. Call Asaas API with full error capture
+      let asaasRes: Response;
+      let asaasRawText: string;
+      try {
+        asaasRes = await fetch(`${ASAAS_BASE}/payments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+          body: JSON.stringify(paymentBody),
+        });
+        asaasRawText = await asaasRes.text();
+      } catch (fetchErr) {
+        console.error("Asaas fetch error:", fetchErr.message);
+        return jsonRes({ error: "Falha de conexão com o Asaas.", asaas_error: fetchErr.message }, 502);
+      }
+
+      console.log("Asaas raw response:", asaasRawText);
+
+      let asaasData: Record<string, unknown>;
+      try {
+        asaasData = JSON.parse(asaasRawText);
+      } catch {
+        return jsonRes({ error: "Resposta inválida do Asaas.", asaas_raw: asaasRawText }, 502);
+      }
 
       if (!asaasRes.ok) {
+        const errors = (asaasData.errors as Array<{ code?: string; description?: string }>) || [];
+        const errorMsg = errors.map((e) => `${e.code}: ${e.description}`).join("; ") || "Erro desconhecido do Asaas";
+        console.error("Asaas payment error:", errorMsg);
         return jsonRes(
-          { error: asaasData.errors?.[0]?.description || "Erro ao criar cobrança no Asaas", details: asaasData },
-          asaasRes.status
+          { error: errorMsg, asaas_status: asaasRes.status, asaas_errors: errors },
+          422
         );
       }
 
-      // 6. Update ride payment fields
+      // 7. Update ride payment fields
       const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
       await supabase.from("rides").update({
-        payment_intent_id: asaasData.id,
+        payment_intent_id: asaasData.id as string,
         payment_status: isPaid ? "paid" : "pending",
       }).eq("id", ride_id);
 
-      // 7. Build response
+      // 8. Build response
       const response: Record<string, unknown> = {
         success: true,
         payment_id: asaasData.id,
@@ -269,18 +294,24 @@ serve(async (req) => {
         billing_type: billingType,
       };
 
-      // 8. If PIX, fetch QR Code
+      // 9. If PIX, fetch QR Code
       if (billingType === "PIX" && asaasData.id) {
-        const pixRes = await fetch(`${ASAAS_BASE}/payments/${asaasData.id}/pixQrCode`, {
-          headers: { access_token: ASAAS_API_KEY },
-        });
-        const pixData = await pixRes.json();
-        if (pixRes.ok && pixData.encodedImage) {
-          response.pix = {
-            encoded_image: pixData.encodedImage,
-            payload: pixData.payload,
-            expiration_date: pixData.expirationDate,
-          };
+        try {
+          const pixRes = await fetch(`${ASAAS_BASE}/payments/${asaasData.id}/pixQrCode`, {
+            headers: { access_token: ASAAS_API_KEY },
+          });
+          const pixRaw = await pixRes.text();
+          console.log("Asaas PIX QR response:", pixRaw);
+          const pixData = JSON.parse(pixRaw);
+          if (pixRes.ok && pixData.encodedImage) {
+            response.pix = {
+              encodedImage: pixData.encodedImage,
+              payload: pixData.payload,
+              expirationDate: pixData.expirationDate,
+            };
+          }
+        } catch (pixErr) {
+          console.error("PIX QR Code fetch error:", pixErr.message);
         }
       }
 
@@ -289,7 +320,7 @@ serve(async (req) => {
 
     return jsonRes({ error: `Ação '${action}' não suportada. Use 'sync' ou 'pay'.` }, 400);
   } catch (err) {
-    console.error("asaas-payment error:", err.message);
-    return jsonRes({ error: err.message }, 500);
+    console.error("asaas-payment critical error:", err.message);
+    return jsonRes({ error: err.message, stack: err.stack }, 500);
   }
 });
