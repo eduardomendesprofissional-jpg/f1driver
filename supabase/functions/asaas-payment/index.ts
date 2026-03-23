@@ -109,7 +109,11 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { action } = body;
+    // Support both formats: { action, ... } and { rideId, amount, paymentMethod }
+    let action = body.action;
+    if (!action && body.rideId) {
+      action = "pay"; // Simplified frontend format
+    }
     console.log("asaas-payment action:", action, JSON.stringify(body));
 
     // ════════════════════════════════════════════════════
