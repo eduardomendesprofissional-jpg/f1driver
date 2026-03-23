@@ -278,25 +278,17 @@ const PaymentMethodsScreen = () => {
               exit={{ opacity: 0, height: 0 }}
             >
               <Card className="bg-card border-primary/30">
-                <CardContent className="p-4">
-                  <p className="font-semibold text-foreground mb-3">
+                <CardContent className="p-5">
+                  <p className="font-semibold text-foreground mb-4">
                     Adicionar novo cartão
                   </p>
-                  <Elements stripe={stripePromise}>
-                    <AddCardForm
-                      onSuccess={() => {
-                        setShowAddForm(false);
-                        fetchCards();
-                      }}
-                    />
-                  </Elements>
-                  <Button
-                    variant="ghost"
-                    className="w-full mt-2"
-                    onClick={() => setShowAddForm(false)}
-                  >
-                    Cancelar
-                  </Button>
+                  <AsaasCardForm
+                    onSuccess={() => {
+                      setShowAddForm(false);
+                      fetchCards();
+                    }}
+                    onCancel={() => setShowAddForm(false)}
+                  />
                 </CardContent>
               </Card>
             </motion.div>
