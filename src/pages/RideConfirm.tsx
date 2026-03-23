@@ -14,6 +14,7 @@ import PixPaymentModal from "@/components/PixPaymentModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useAsaasCustomer } from "@/hooks/useAsaasCustomer";
 
 type RidePhase = "confirm" | "waiting_payment" | "searching_driver";
 
@@ -42,6 +43,7 @@ const RideConfirm = () => {
   const [currentRideId, setCurrentRideId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const realtimeChannelRef = useRef<any>(null);
+  const { ensureCustomer } = useAsaasCustomer();
 
   useEffect(() => {
     if (!origem || !destino) {
@@ -175,22 +177,25 @@ const RideConfirm = () => {
 
       subscribeToRide(ride.id);
 
+      // Ensure Asaas customer exists
+      const resolvedCustomerId = await ensureCustomer();
+
       const { data: profile } = await supabase
         .from("profiles")
-        .select("credit_card_token, asaas_customer_id")
+        .select("credit_card_token")
         .eq("id", ride.passageiro_id)
         .single();
 
-      const hasAsaasToken = !!(profile as any)?.credit_card_token && !!(profile as any)?.asaas_customer_id;
+      const hasAsaasSetup = !!(profile as any)?.credit_card_token && !!resolvedCustomerId;
 
-      if (hasAsaasToken) {
+      if (hasAsaasSetup) {
         const isPix = selectedPayment.type === "pix";
 
         const { data: asaasData, error: asaasError } = await supabase.functions.invoke("asaas-payment", {
           body: {
             action: "create_payment",
             amount: est.valor,
-            customer_id: (profile as any).asaas_customer_id,
+            customer_id: resolvedCustomerId,
             driver_wallet_id: "",
             billing_type: isPix ? "PIX" : "CREDIT_CARD",
           },

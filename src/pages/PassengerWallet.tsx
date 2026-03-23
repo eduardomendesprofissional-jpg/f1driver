@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsaasCustomer } from "@/hooks/useAsaasCustomer";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/BottomNav";
@@ -16,6 +17,7 @@ const PRESET_VALUES = [20, 50, 100, 200];
 const PassengerWallet = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { ensureCustomer, creating: creatingCustomer } = useAsaasCustomer();
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [customAmount, setCustomAmount] = useState("");
@@ -72,15 +74,8 @@ const PassengerWallet = () => {
 
     setTopupLoading(true);
     try {
-      // Get asaas_customer_id
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("asaas_customer_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!(profile as any)?.asaas_customer_id) {
-        toast.error("Configure seu cadastro de pagamento primeiro.");
+      const customerId = await ensureCustomer();
+      if (!customerId) {
         setTopupLoading(false);
         return;
       }
@@ -103,7 +98,7 @@ const PassengerWallet = () => {
         body: {
           action: "create_payment",
           amount,
-          customer_id: (profile as any).asaas_customer_id,
+          customer_id: customerId,
           billing_type: "PIX",
           topup_id: (topup as any).id,
         },

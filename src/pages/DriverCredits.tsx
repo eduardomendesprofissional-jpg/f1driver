@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsaasCustomer } from "@/hooks/useAsaasCustomer";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,6 +16,7 @@ const PRESET_VALUES = [20, 50, 100, 200];
 const DriverCredits = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { ensureCustomer, creating: creatingCustomer } = useAsaasCustomer();
   const [driverBalance, setDriverBalance] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -73,37 +75,10 @@ const DriverCredits = () => {
 
     setTopupLoading(true);
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("asaas_customer_id, nome, cpf")
-        .eq("id", user.id)
-        .single();
-
-      let customerId = profile?.asaas_customer_id;
-
-      // Auto-create Asaas customer if not yet registered
+      const customerId = await ensureCustomer();
       if (!customerId) {
-        if (!profile?.nome || !profile?.cpf) {
-          toast.error("Preencha seu nome e CPF no perfil antes de recarregar.");
-          setTopupLoading(false);
-          return;
-        }
-        const { data: custData, error: custErr } = await supabase.functions.invoke("asaas-payment", {
-          body: {
-            action: "create_customer",
-            user_id: user.id,
-            name: profile.nome,
-            cpf_cnpj: profile.cpf,
-            email: user.email,
-          },
-        });
-        if (custErr || !custData?.success) {
-          toast.error(custData?.error || "Erro ao criar cadastro de pagamento.");
-          setTopupLoading(false);
-          return;
-        }
-        customerId = custData.asaas_customer_id;
-        toast.success("Cadastro de pagamento criado!");
+        setTopupLoading(false);
+        return;
       }
 
       const { data: topup, error: topupErr } = await supabase
