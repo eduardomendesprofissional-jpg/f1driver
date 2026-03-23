@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   DollarSign, Power, MapPin, Navigation, Banknote, Clock, Loader2,
   Package, CheckCircle, Truck, ArrowRight, Settings, Bell, Gift, Wallet, Trophy,
-  TrendingUp, Car, BarChart3
+  TrendingUp, Car, BarChart3, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ const DriverPanel = () => {
   const [destModeAddress, setDestModeAddress] = useState<string | undefined>();
   const [showSelfie, setShowSelfie] = useState(false);
   const [selfieVerified, setSelfieVerified] = useState(true);
+  const [driverBalance, setDriverBalance] = useState(0);
 
   useDriverLocation(online);
   usePushNotifications(online);
@@ -69,6 +70,21 @@ const DriverPanel = () => {
     fetchStats();
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchBalance = async () => {
+      const { data } = await supabase.from("profiles").select("driver_balance").eq("id", user.id).single();
+      setDriverBalance(Number(data?.driver_balance || 0));
+    };
+    fetchBalance();
+    const channel = supabase
+      .channel(`driver-balance-banner-${user.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        (payload) => setDriverBalance(Number((payload.new as any).driver_balance || 0))
+      ).subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   useEffect(() => {
@@ -141,8 +157,24 @@ const DriverPanel = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
+      {/* Negative Balance Banner */}
+      {driverBalance < 0 && (
+        <div className="shrink-0 z-20 bg-destructive/10 border-b border-destructive/30 px-4 py-2.5 flex items-center justify-between gap-3 safe-top">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle size={18} className="text-destructive shrink-0" />
+            <p className="text-xs font-semibold text-destructive truncate">
+              Saldo: R$ {driverBalance.toFixed(2)}
+              {driverBalance <= -40 && " • Conta bloqueada"}
+            </p>
+          </div>
+          <Button size="sm" variant="destructive" className="shrink-0 text-xs h-7 px-3" onClick={() => navigate("/driver/credits")}>
+            Recarregar
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="p-4 pb-2 flex items-center justify-between shrink-0 z-20 safe-top glass-heavy border-b border-border/20">
+      <div className={`p-4 pb-2 flex items-center justify-between shrink-0 z-20 glass-heavy border-b border-border/20 ${driverBalance >= 0 ? "safe-top" : ""}`}>
         <div className="flex items-center gap-2.5">
           <div className={`w-2 h-2 rounded-full ${online ? "bg-success animate-pulse" : "bg-muted-foreground"}`} />
           <h1 className="text-base font-bold">{online ? "Online" : "Offline"}</h1>
