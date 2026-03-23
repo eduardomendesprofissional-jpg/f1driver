@@ -161,6 +161,22 @@ const RideActive = () => {
     return () => { supabase.removeChannel(channel); };
   }, [rideId]);
 
+  // Fallback: expand search radius to 10km after 30 seconds if no driver assigned
+  useEffect(() => {
+    if (!ride || ride.status !== "solicitada" || ride.motorista_id || isDriver) return;
+
+    const timer = setTimeout(async () => {
+      const { data } = await supabase.rpc("redispatch_expanded_radius" as any, { p_ride_id: rideId });
+      if (data === "redispatched_10km") {
+        toast.info("Expandindo busca para 10km...");
+      } else if (data === "no_drivers_10km") {
+        toast.warning("Nenhum motorista disponível no momento. Aguarde...");
+      }
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [ride?.status, ride?.motorista_id, rideId, isDriver]);
+
   // Live GPS tracking during trip (driver only)
   useEffect(() => {
     if (!isDriver || ride?.status !== "em_andamento") {
