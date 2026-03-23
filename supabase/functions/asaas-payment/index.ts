@@ -14,8 +14,7 @@ const ASAAS_BASE = "https://www.asaas.com/api/v3";
 function validateCpf(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, "");
   if (digits.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(digits)) return false; // all same digit
-  // Validate check digits
+  if (/^(\d)\1{10}$/.test(digits)) return false;
   for (let t = 9; t < 11; t++) {
     let sum = 0;
     for (let i = 0; i < t; i++) {
@@ -28,14 +27,11 @@ function validateCpf(cpf: string): boolean {
   return true;
 }
 
-function validateCnpj(cnpj: string): boolean {
-  const digits = cnpj.replace(/\D/g, "");
-  return digits.length === 14;
-}
-
 function isValidCpfCnpj(value: string): boolean {
   const digits = value.replace(/\D/g, "");
-  return digits.length === 11 ? validateCpf(value) : digits.length === 14 ? validateCnpj(value) : false;
+  if (digits.length === 11) return validateCpf(value);
+  if (digits.length === 14) return true; // CNPJ basic length check
+  return false;
 }
 
 function jsonRes(data: Record<string, unknown>, status = 200) {
@@ -45,20 +41,18 @@ function jsonRes(data: Record<string, unknown>, status = 200) {
   });
 }
 
-// ─── ASAAS HELPERS ───
+// ─── ASAAS CUSTOMER HELPERS ───
 
 async function findExistingAsaasCustomer(cpfCnpj: string, apiKey: string): Promise<string | null> {
   const res = await fetch(`${ASAAS_BASE}/customers?cpfCnpj=${cpfCnpj}`, {
     headers: { access_token: apiKey },
   });
   const data = await res.json();
-  if (res.ok && data.data?.length > 0) {
-    return data.data[0].id; // Return first matching customer
-  }
+  if (res.ok && data.data?.length > 0) return data.data[0].id;
   return null;
 }
 
-async function createAsaasCustomer(
+async function ensureAsaasCustomer(
   name: string,
   cpfCnpj: string,
   email: string | null,
@@ -66,10 +60,10 @@ async function createAsaasCustomer(
 ): Promise<{ id: string | null; error: string | null }> {
   const cleanCpf = cpfCnpj.replace(/\D/g, "");
 
-  // First try to find existing customer with this CPF/CNPJ
+  // Try to find existing customer first
   const existingId = await findExistingAsaasCustomer(cleanCpf, apiKey);
   if (existingId) {
-    console.log(`Found existing Asaas customer: ${existingId} for CPF ${cleanCpf}`);
+    console.log(`Found existing Asaas customer: ${existingId}`);
     return { id: existingId, error: null };
   }
 
@@ -86,8 +80,8 @@ async function createAsaasCustomer(
   console.log("Asaas create customer response:", JSON.stringify(data));
 
   if (!res.ok) {
-    // Handle duplicate error — try to find existing
     const errDesc = data.errors?.[0]?.description || "";
+    // Handle duplicate — try to find existing
     if (errDesc.toLowerCase().includes("já existe") || errDesc.toLowerCase().includes("already") || res.status === 409) {
       const fallbackId = await findExistingAsaasCustomer(cleanCpf, apiKey);
       if (fallbackId) return { id: fallbackId, error: null };
@@ -109,80 +103,64 @@ serve(async (req) => {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
     if (!ASAAS_API_KEY) throw new Error("ASAAS_API_KEY not configured");
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")! // Service Role — resolve tudo server-side
+    );
 
     const body = await req.json();
     const { action } = body;
     console.log("asaas-payment action:", action, JSON.stringify(body));
 
     // ════════════════════════════════════════════════════
-    // ACTION: sync — Create/find Asaas customer and save to profiles
-    // Called from DB trigger or frontend hook
+    // ACTION: sync — Create/find Asaas customer for a user
     // ════════════════════════════════════════════════════
     if (action === "sync" || action === "create_customer") {
-      const { user_id, name, cpf_cnpj, email } = body;
-
+      const { user_id } = body;
       if (!user_id) return jsonRes({ error: "Campo 'user_id' é obrigatório." }, 400);
 
-      // If name/cpf not provided, fetch from DB
-      let resolvedName = name;
-      let resolvedCpf = cpf_cnpj;
-      let resolvedEmail = email;
+      // Fetch profile data server-side
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("nome, cpf, asaas_customer_id")
+        .eq("id", user_id)
+        .single();
 
-      if (!resolvedName || !resolvedCpf) {
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("nome, cpf, asaas_customer_id")
-          .eq("id", user_id)
-          .single();
+      if (!profile) return jsonRes({ error: "Perfil não encontrado." }, 404);
 
-        if (!profile) return jsonRes({ error: "Perfil não encontrado." }, 404);
-
-        // Already synced? Return existing ID
-        if (profile.asaas_customer_id?.startsWith("cus_")) {
-          return jsonRes({ success: true, asaas_customer_id: profile.asaas_customer_id });
-        }
-
-        resolvedName = resolvedName || profile.nome;
-        resolvedCpf = resolvedCpf || profile.cpf;
+      // Already synced?
+      if (profile.asaas_customer_id?.startsWith("cus_")) {
+        return jsonRes({ success: true, asaas_customer_id: profile.asaas_customer_id });
       }
 
-      if (!resolvedName || !resolvedCpf) {
+      if (!profile.nome || !profile.cpf) {
         return jsonRes({ error: "Nome e CPF são obrigatórios. Preencha o perfil." }, 400);
       }
 
-      // Validate CPF/CNPJ
-      if (!isValidCpfCnpj(resolvedCpf)) {
+      if (!isValidCpfCnpj(profile.cpf)) {
         return jsonRes({ error: "CPF/CNPJ inválido. Verifique os dados do perfil." }, 400);
       }
 
-      // Get email from auth.users if not provided
-      if (!resolvedEmail) {
-        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user_id);
-        resolvedEmail = authUser?.user?.email || null;
-      }
+      // Get email from auth.users
+      const { data: authUser } = await supabase.auth.admin.getUserById(user_id);
+      const email = authUser?.user?.email || null;
 
       // Create or find customer in Asaas
-      const result = await createAsaasCustomer(resolvedName, resolvedCpf, resolvedEmail, ASAAS_API_KEY);
+      const result = await ensureAsaasCustomer(profile.nome, profile.cpf, email, ASAAS_API_KEY);
 
       if (!result.id) {
         return jsonRes({ error: result.error || "Erro ao sincronizar com Asaas." }, 422);
       }
 
       // Save to profiles
-      const { error: updateErr } = await supabaseAdmin
+      const { error: updateErr } = await supabase
         .from("profiles")
         .update({ asaas_customer_id: result.id })
         .eq("id", user_id);
 
       if (updateErr) {
         console.error("Error saving asaas_customer_id:", updateErr.message);
-        return jsonRes(
-          { error: "Cliente criado no Asaas mas falha ao salvar no banco.", asaas_customer_id: result.id },
-          500
-        );
+        return jsonRes({ error: "Cliente criado mas falha ao salvar no banco.", asaas_customer_id: result.id }, 500);
       }
 
       console.log(`Synced user ${user_id} → Asaas customer ${result.id}`);
@@ -190,87 +168,63 @@ serve(async (req) => {
     }
 
     // ════════════════════════════════════════════════════
-    // ACTION: pay — Create payment, resolving all data server-side
-    // Accepts: ride_id OR (user_id + amount + topup_id)
+    // ACTION: pay — Create payment resolving ALL data server-side
+    // Accepts: ride_id (required)
     // ════════════════════════════════════════════════════
     if (action === "pay" || action === "create_payment") {
-      const { ride_id, user_id, amount, billing_type, topup_id, customer_id, driver_wallet_id } = body;
-      const billingType = (billing_type || "PIX").toUpperCase();
+      const { ride_id, billing_type } = body;
 
-      let resolvedAmount = amount;
-      let resolvedCustomerId = customer_id;
-      let resolvedDriverWalletId = driver_wallet_id || "";
-      let resolvedPassengerId = user_id;
-      let description = topup_id ? "Recarga de carteira" : "Pagamento de corrida";
+      if (!ride_id) return jsonRes({ error: "ride_id é obrigatório." }, 400);
 
-      // ── If ride_id provided, resolve everything from the ride ──
-      if (ride_id) {
-        const { data: ride } = await supabaseAdmin
-          .from("rides")
-          .select("passageiro_id, motorista_id, valor, valor_final, forma_pagamento")
-          .eq("id", ride_id)
-          .single();
+      // 1. Fetch ride data
+      const { data: ride, error: rideError } = await supabase
+        .from("rides")
+        .select("passageiro_id, motorista_id, valor, valor_final, forma_pagamento")
+        .eq("id", ride_id)
+        .single();
 
-        if (!ride) return jsonRes({ error: "Corrida não encontrada." }, 404);
+      if (rideError || !ride) return jsonRes({ error: "Corrida não encontrada." }, 404);
 
-        resolvedAmount = resolvedAmount || Number(ride.valor_final || ride.valor || 0);
-        resolvedPassengerId = ride.passageiro_id;
+      const amount = Number(ride.valor_final || ride.valor || 0);
+      if (amount <= 0) return jsonRes({ error: "Valor inválido para pagamento." }, 400);
 
-        // Get passenger's asaas_customer_id
-        const { data: passengerProfile } = await supabaseAdmin
+      // 2. Fetch passenger's asaas_customer_id from DB (server-side, no test IDs)
+      const { data: passenger } = await supabase
+        .from("profiles")
+        .select("asaas_customer_id")
+        .eq("id", ride.passageiro_id)
+        .single();
+
+      if (!passenger?.asaas_customer_id?.startsWith("cus_")) {
+        return jsonRes({ error: "Passageiro não sincronizado com Asaas. Aguarde a sincronização do perfil." }, 400);
+      }
+
+      // 3. Fetch driver's asaas_wallet_id for split
+      let driverWalletId = "";
+      if (ride.motorista_id) {
+        const { data: driver } = await supabase
           .from("profiles")
-          .select("asaas_customer_id")
-          .eq("id", ride.passageiro_id)
+          .select("asaas_wallet_id")
+          .eq("id", ride.motorista_id)
           .single();
-
-        resolvedCustomerId = passengerProfile?.asaas_customer_id;
-
-        // Get driver's asaas_wallet_id for split
-        if (ride.motorista_id) {
-          const { data: driverProfile } = await supabaseAdmin
-            .from("profiles")
-            .select("asaas_wallet_id")
-            .eq("id", ride.motorista_id)
-            .single();
-          resolvedDriverWalletId = driverProfile?.asaas_wallet_id || "";
-        }
+        driverWalletId = driver?.asaas_wallet_id || "";
       }
 
-      // ── If still no customer_id, try resolving from user_id ──
-      if (!resolvedCustomerId && resolvedPassengerId) {
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("asaas_customer_id")
-          .eq("id", resolvedPassengerId)
-          .single();
-        resolvedCustomerId = profile?.asaas_customer_id;
-      }
+      // 4. Determine billing type
+      const billingType = (billing_type || ride.forma_pagamento || "pix").toUpperCase() === "PIX" ? "PIX" : "CREDIT_CARD";
 
-      // ── Validate customer_id is real ──
-      if (!resolvedCustomerId || !resolvedCustomerId.startsWith("cus_")) {
-        return jsonRes(
-          { error: "Erro: Perfil financeiro não sincronizado. Cadastre-se antes de pagar." },
-          400
-        );
-      }
-
-      if (!resolvedAmount || resolvedAmount <= 0) {
-        return jsonRes({ error: "Valor inválido para pagamento." }, 400);
-      }
-
-      // Build payment body
+      // 5. Build payment
       const paymentBody: Record<string, unknown> = {
-        customer: resolvedCustomerId,
+        customer: passenger.asaas_customer_id,
         billingType,
-        value: resolvedAmount,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description,
+        value: amount,
+        dueDate: new Date().toISOString().split("T")[0], // Vencimento HOJE
+        description: `Corrida #${ride_id}`,
       };
 
       // Split: 80% driver, 20% platform
-      if (resolvedDriverWalletId) {
-        const driverAmount = Math.round(resolvedAmount * 0.8 * 100) / 100;
-        paymentBody.split = [{ walletId: resolvedDriverWalletId, fixedValue: driverAmount }];
+      if (driverWalletId) {
+        paymentBody.split = [{ walletId: driverWalletId, percentualValue: 80 }];
       }
 
       console.log("Creating Asaas payment:", JSON.stringify(paymentBody));
@@ -290,6 +244,14 @@ serve(async (req) => {
         );
       }
 
+      // 6. Update ride payment fields
+      const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
+      await supabase.from("rides").update({
+        payment_intent_id: asaasData.id,
+        payment_status: isPaid ? "paid" : "pending",
+      }).eq("id", ride_id);
+
+      // 7. Build response
       const response: Record<string, unknown> = {
         success: true,
         payment_id: asaasData.id,
@@ -301,7 +263,7 @@ serve(async (req) => {
         billing_type: billingType,
       };
 
-      // Fetch PIX QR code
+      // 8. If PIX, fetch QR Code
       if (billingType === "PIX" && asaasData.id) {
         const pixRes = await fetch(`${ASAAS_BASE}/payments/${asaasData.id}/pixQrCode`, {
           headers: { access_token: ASAAS_API_KEY },
@@ -316,22 +278,10 @@ serve(async (req) => {
         }
       }
 
-      // If ride_id, auto-update ride payment fields
-      if (ride_id) {
-        const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
-        await supabaseAdmin.from("rides").update({
-          payment_intent_id: asaasData.payment_id || asaasData.id,
-          payment_status: isPaid ? "paid" : "pending",
-        }).eq("id", ride_id);
-      }
-
-      return jsonRes(response as Record<string, unknown>);
+      return jsonRes(response);
     }
 
-    return jsonRes(
-      { error: `Ação '${action}' não suportada. Use 'sync' ou 'pay'.` },
-      400
-    );
+    return jsonRes({ error: `Ação '${action}' não suportada. Use 'sync' ou 'pay'.` }, 400);
   } catch (err) {
     console.error("asaas-payment error:", err.message);
     return jsonRes({ error: err.message }, 500);
