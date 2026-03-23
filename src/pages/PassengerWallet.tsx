@@ -17,7 +17,7 @@ const PRESET_VALUES = [20, 50, 100, 200];
 const PassengerWallet = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { ensureCustomer, creating: creatingCustomer } = useAsaasCustomer();
+  const { ensureCustomer, syncing: syncingCustomer } = useAsaasCustomer();
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [customAmount, setCustomAmount] = useState("");
