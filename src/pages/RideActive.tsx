@@ -437,7 +437,9 @@ const RideActive = () => {
           .eq("id", ride.passageiro_id)
           .single();
 
-        const hasAsaasToken = !!(passengerProfile as any)?.credit_card_token && !!(passengerProfile as any)?.asaas_customer_id;
+        const custId = (passengerProfile as any)?.asaas_customer_id;
+        const isValidCust = typeof custId === "string" && custId.startsWith("cus_");
+        const hasAsaasToken = !!(passengerProfile as any)?.credit_card_token && isValidCust;
 
         if (hasAsaasToken && ride.motorista_id) {
           // Get driver's asaas_wallet_id
@@ -453,7 +455,7 @@ const RideActive = () => {
             body: {
               action: "create_payment",
               amount: finalValor,
-              customer_id: (passengerProfile as any).asaas_customer_id,
+              customer_id: custId,
               driver_wallet_id: driverWalletId,
             },
           });
