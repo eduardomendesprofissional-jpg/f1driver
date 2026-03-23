@@ -98,7 +98,7 @@ const PassengerWallet = () => {
         body: {
           action: "create_payment",
           amount,
-          customer_id: (profile as any).asaas_customer_id,
+          customer_id: customerId,
           billing_type: "PIX",
           topup_id: (topup as any).id,
         },
