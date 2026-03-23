@@ -9,6 +9,97 @@ const corsHeaders = {
 
 const ASAAS_BASE = "https://www.asaas.com/api/v3";
 
+// ─── HELPERS ───
+
+function validateCpf(cpf: string): boolean {
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(digits)) return false; // all same digit
+  // Validate check digits
+  for (let t = 9; t < 11; t++) {
+    let sum = 0;
+    for (let i = 0; i < t; i++) {
+      sum += parseInt(digits[i]) * (t + 1 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10) remainder = 0;
+    if (remainder !== parseInt(digits[t])) return false;
+  }
+  return true;
+}
+
+function validateCnpj(cnpj: string): boolean {
+  const digits = cnpj.replace(/\D/g, "");
+  return digits.length === 14;
+}
+
+function isValidCpfCnpj(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 11 ? validateCpf(value) : digits.length === 14 ? validateCnpj(value) : false;
+}
+
+function jsonRes(data: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// ─── ASAAS HELPERS ───
+
+async function findExistingAsaasCustomer(cpfCnpj: string, apiKey: string): Promise<string | null> {
+  const res = await fetch(`${ASAAS_BASE}/customers?cpfCnpj=${cpfCnpj}`, {
+    headers: { access_token: apiKey },
+  });
+  const data = await res.json();
+  if (res.ok && data.data?.length > 0) {
+    return data.data[0].id; // Return first matching customer
+  }
+  return null;
+}
+
+async function createAsaasCustomer(
+  name: string,
+  cpfCnpj: string,
+  email: string | null,
+  apiKey: string
+): Promise<{ id: string | null; error: string | null }> {
+  const cleanCpf = cpfCnpj.replace(/\D/g, "");
+
+  // First try to find existing customer with this CPF/CNPJ
+  const existingId = await findExistingAsaasCustomer(cleanCpf, apiKey);
+  if (existingId) {
+    console.log(`Found existing Asaas customer: ${existingId} for CPF ${cleanCpf}`);
+    return { id: existingId, error: null };
+  }
+
+  // Create new customer
+  const body: Record<string, string> = { name, cpfCnpj: cleanCpf };
+  if (email) body.email = email;
+
+  const res = await fetch(`${ASAAS_BASE}/customers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", access_token: apiKey },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  console.log("Asaas create customer response:", JSON.stringify(data));
+
+  if (!res.ok) {
+    // Handle duplicate error — try to find existing
+    const errDesc = data.errors?.[0]?.description || "";
+    if (errDesc.toLowerCase().includes("já existe") || errDesc.toLowerCase().includes("already") || res.status === 409) {
+      const fallbackId = await findExistingAsaasCustomer(cleanCpf, apiKey);
+      if (fallbackId) return { id: fallbackId, error: null };
+    }
+    return { id: null, error: errDesc || "Erro ao criar cliente no Asaas" };
+  }
+
+  return { id: data.id, error: null };
+}
+
+// ─── MAIN ───
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -24,99 +115,165 @@ serve(async (req) => {
 
     const body = await req.json();
     const { action } = body;
-    console.log("asaas-payment called:", JSON.stringify(body));
+    console.log("asaas-payment action:", action, JSON.stringify(body));
 
-    // ─── ACTION: create_customer ───
-    if (action === "create_customer") {
+    // ════════════════════════════════════════════════════
+    // ACTION: sync — Create/find Asaas customer and save to profiles
+    // Called from DB trigger or frontend hook
+    // ════════════════════════════════════════════════════
+    if (action === "sync" || action === "create_customer") {
       const { user_id, name, cpf_cnpj, email } = body;
-      if (!user_id || !name || !cpf_cnpj) {
-        return new Response(
-          JSON.stringify({ error: "Campos 'user_id', 'name' e 'cpf_cnpj' são obrigatórios." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+
+      if (!user_id) return jsonRes({ error: "Campo 'user_id' é obrigatório." }, 400);
+
+      // If name/cpf not provided, fetch from DB
+      let resolvedName = name;
+      let resolvedCpf = cpf_cnpj;
+      let resolvedEmail = email;
+
+      if (!resolvedName || !resolvedCpf) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("nome, cpf, asaas_customer_id")
+          .eq("id", user_id)
+          .single();
+
+        if (!profile) return jsonRes({ error: "Perfil não encontrado." }, 404);
+
+        // Already synced? Return existing ID
+        if (profile.asaas_customer_id?.startsWith("cus_")) {
+          return jsonRes({ success: true, asaas_customer_id: profile.asaas_customer_id });
+        }
+
+        resolvedName = resolvedName || profile.nome;
+        resolvedCpf = resolvedCpf || profile.cpf;
       }
 
-      const customerBody: Record<string, any> = {
-        name,
-        cpfCnpj: cpf_cnpj.replace(/\D/g, ""),
-      };
-      if (email) customerBody.email = email;
-
-      console.log("Creating Asaas customer:", JSON.stringify(customerBody));
-
-      const asaasRes = await fetch(`${ASAAS_BASE}/customers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
-        body: JSON.stringify(customerBody),
-      });
-      const asaasData = await asaasRes.json();
-      console.log("Asaas customer response:", JSON.stringify(asaasData));
-
-      if (!asaasRes.ok) {
-        return new Response(
-          JSON.stringify({ error: asaasData.errors?.[0]?.description || "Erro ao criar cliente no Asaas", details: asaasData }),
-          { status: asaasRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (!resolvedName || !resolvedCpf) {
+        return jsonRes({ error: "Nome e CPF são obrigatórios. Preencha o perfil." }, 400);
       }
 
-      // Save asaas_customer_id to profiles
+      // Validate CPF/CNPJ
+      if (!isValidCpfCnpj(resolvedCpf)) {
+        return jsonRes({ error: "CPF/CNPJ inválido. Verifique os dados do perfil." }, 400);
+      }
+
+      // Get email from auth.users if not provided
+      if (!resolvedEmail) {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user_id);
+        resolvedEmail = authUser?.user?.email || null;
+      }
+
+      // Create or find customer in Asaas
+      const result = await createAsaasCustomer(resolvedName, resolvedCpf, resolvedEmail, ASAAS_API_KEY);
+
+      if (!result.id) {
+        return jsonRes({ error: result.error || "Erro ao sincronizar com Asaas." }, 422);
+      }
+
+      // Save to profiles
       const { error: updateErr } = await supabaseAdmin
         .from("profiles")
-        .update({ asaas_customer_id: asaasData.id })
+        .update({ asaas_customer_id: result.id })
         .eq("id", user_id);
 
       if (updateErr) {
         console.error("Error saving asaas_customer_id:", updateErr.message);
-        return new Response(
-          JSON.stringify({ error: "Cliente criado no Asaas mas falha ao salvar no banco.", asaas_customer_id: asaasData.id }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        return jsonRes(
+          { error: "Cliente criado no Asaas mas falha ao salvar no banco.", asaas_customer_id: result.id },
+          500
         );
       }
 
-      return new Response(
-        JSON.stringify({ success: true, asaas_customer_id: asaasData.id }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log(`Synced user ${user_id} → Asaas customer ${result.id}`);
+      return jsonRes({ success: true, asaas_customer_id: result.id });
     }
 
-    // ─── ACTION: create_payment ───
-    if (action === "create_payment") {
-      const { amount, customer_id, user_id, billing_type, driver_wallet_id, topup_id } = body;
+    // ════════════════════════════════════════════════════
+    // ACTION: pay — Create payment, resolving all data server-side
+    // Accepts: ride_id OR (user_id + amount + topup_id)
+    // ════════════════════════════════════════════════════
+    if (action === "pay" || action === "create_payment") {
+      const { ride_id, user_id, amount, billing_type, topup_id, customer_id, driver_wallet_id } = body;
       const billingType = (billing_type || "PIX").toUpperCase();
 
-      // Resolve real customer_id: prefer explicit, otherwise fetch from DB
+      let resolvedAmount = amount;
       let resolvedCustomerId = customer_id;
-      if (!resolvedCustomerId && user_id) {
+      let resolvedDriverWalletId = driver_wallet_id || "";
+      let resolvedPassengerId = user_id;
+      let description = topup_id ? "Recarga de carteira" : "Pagamento de corrida";
+
+      // ── If ride_id provided, resolve everything from the ride ──
+      if (ride_id) {
+        const { data: ride } = await supabaseAdmin
+          .from("rides")
+          .select("passageiro_id, motorista_id, valor, valor_final, forma_pagamento")
+          .eq("id", ride_id)
+          .single();
+
+        if (!ride) return jsonRes({ error: "Corrida não encontrada." }, 404);
+
+        resolvedAmount = resolvedAmount || Number(ride.valor_final || ride.valor || 0);
+        resolvedPassengerId = ride.passageiro_id;
+
+        // Get passenger's asaas_customer_id
+        const { data: passengerProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("asaas_customer_id")
+          .eq("id", ride.passageiro_id)
+          .single();
+
+        resolvedCustomerId = passengerProfile?.asaas_customer_id;
+
+        // Get driver's asaas_wallet_id for split
+        if (ride.motorista_id) {
+          const { data: driverProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("asaas_wallet_id")
+            .eq("id", ride.motorista_id)
+            .single();
+          resolvedDriverWalletId = driverProfile?.asaas_wallet_id || "";
+        }
+      }
+
+      // ── If still no customer_id, try resolving from user_id ──
+      if (!resolvedCustomerId && resolvedPassengerId) {
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("asaas_customer_id")
-          .eq("id", user_id)
+          .eq("id", resolvedPassengerId)
           .single();
         resolvedCustomerId = profile?.asaas_customer_id;
       }
 
-      if (!amount || !resolvedCustomerId) {
-        return new Response(
-          JSON.stringify({ error: "Campos 'amount' e 'customer_id' (ou 'user_id' com cadastro Asaas) são obrigatórios." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      // ── Validate customer_id is real ──
+      if (!resolvedCustomerId || !resolvedCustomerId.startsWith("cus_")) {
+        return jsonRes(
+          { error: "Erro: Perfil financeiro não sincronizado. Cadastre-se antes de pagar." },
+          400
         );
       }
 
-      const driverAmount = Math.round(amount * 0.8 * 100) / 100;
-
-      const paymentBody: Record<string, any> = {
-        customer: resolvedCustomerId,
-        billingType,
-        value: amount,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        description: topup_id ? "Recarga de carteira" : "Pagamento de corrida",
-      };
-
-      if (driver_wallet_id) {
-        paymentBody.split = [{ walletId: driver_wallet_id, fixedValue: driverAmount }];
+      if (!resolvedAmount || resolvedAmount <= 0) {
+        return jsonRes({ error: "Valor inválido para pagamento." }, 400);
       }
 
-      console.log("Calling Asaas API:", JSON.stringify(paymentBody));
+      // Build payment body
+      const paymentBody: Record<string, unknown> = {
+        customer: resolvedCustomerId,
+        billingType,
+        value: resolvedAmount,
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        description,
+      };
+
+      // Split: 80% driver, 20% platform
+      if (resolvedDriverWalletId) {
+        const driverAmount = Math.round(resolvedAmount * 0.8 * 100) / 100;
+        paymentBody.split = [{ walletId: resolvedDriverWalletId, fixedValue: driverAmount }];
+      }
+
+      console.log("Creating Asaas payment:", JSON.stringify(paymentBody));
 
       const asaasRes = await fetch(`${ASAAS_BASE}/payments`, {
         method: "POST",
@@ -127,13 +284,13 @@ serve(async (req) => {
       console.log("Asaas payment response:", JSON.stringify(asaasData));
 
       if (!asaasRes.ok) {
-        return new Response(
-          JSON.stringify({ error: asaasData.errors?.[0]?.description || "Erro ao criar cobrança no Asaas", details: asaasData }),
-          { status: asaasRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        return jsonRes(
+          { error: asaasData.errors?.[0]?.description || "Erro ao criar cobrança no Asaas", details: asaasData },
+          asaasRes.status
         );
       }
 
-      const response: Record<string, any> = {
+      const response: Record<string, unknown> = {
         success: true,
         payment_id: asaasData.id,
         status: asaasData.status,
@@ -144,6 +301,7 @@ serve(async (req) => {
         billing_type: billingType,
       };
 
+      // Fetch PIX QR code
       if (billingType === "PIX" && asaasData.id) {
         const pixRes = await fetch(`${ASAAS_BASE}/payments/${asaasData.id}/pixQrCode`, {
           headers: { access_token: ASAAS_API_KEY },
@@ -158,20 +316,24 @@ serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify(response), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // If ride_id, auto-update ride payment fields
+      if (ride_id) {
+        const isPaid = asaasData.status === "CONFIRMED" || asaasData.status === "RECEIVED";
+        await supabaseAdmin.from("rides").update({
+          payment_intent_id: asaasData.payment_id || asaasData.id,
+          payment_status: isPaid ? "paid" : "pending",
+        }).eq("id", ride_id);
+      }
+
+      return jsonRes(response as Record<string, unknown>);
     }
 
-    return new Response(
-      JSON.stringify({ error: `Ação '${action}' não suportada. Use 'create_customer' ou 'create_payment'.` }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return jsonRes(
+      { error: `Ação '${action}' não suportada. Use 'sync' ou 'pay'.` },
+      400
     );
   } catch (err) {
     console.error("asaas-payment error:", err.message);
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonRes({ error: err.message }, 500);
   }
 });
