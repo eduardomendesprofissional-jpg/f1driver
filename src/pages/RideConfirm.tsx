@@ -29,10 +29,13 @@ const RideConfirm = () => {
   const [charging, setCharging] = useState(false);
   const [showPixModal, setShowPixModal] = useState(false);
   const [pixData, setPixData] = useState<{
-    qr_code_url: string;
-    qr_code_data: string;
-    payment_intent_id: string;
+    encoded_image?: string;
+    payload?: string;
+    qr_code_url?: string;
+    qr_code_data?: string;
+    payment_intent_id?: string;
     ride_id: string;
+    expiration_date?: string;
   } | null>(null);
   const [currentRideId, setCurrentRideId] = useState<string | null>(null);
 
