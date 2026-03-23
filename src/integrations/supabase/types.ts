@@ -438,6 +438,7 @@ export type Database = {
           asaas_customer_id: string | null
           asaas_wallet_id: string | null
           avatar_url: string | null
+          balance: number
           cnh: string | null
           codigo_indicacao: string | null
           cpf: string | null
@@ -462,6 +463,7 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           avatar_url?: string | null
+          balance?: number
           cnh?: string | null
           codigo_indicacao?: string | null
           cpf?: string | null
@@ -486,6 +488,7 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_wallet_id?: string | null
           avatar_url?: string | null
+          balance?: number
           cnh?: string | null
           codigo_indicacao?: string | null
           cpf?: string | null
