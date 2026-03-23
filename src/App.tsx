@@ -68,6 +68,7 @@ import PassengerReferral from "./pages/PassengerReferral";
 import RideTrack from "./pages/RideTrack";
 import StripeCheckout from "./pages/StripeCheckout";
 import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
+import PassengerWallet from "./pages/PassengerWallet";
 
 const queryClient = new QueryClient();
 
