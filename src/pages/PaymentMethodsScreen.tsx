@@ -7,17 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import AsaasCardForm from "@/components/AsaasCardForm";
 
 const STRIPE_PK =
   "pk_live_51TC220RyZVjSW4KRd1Wol4LRPKRsCPd18ign2HL8q3AJjsmLvVVZc3QFYo84hbWZHmaTZ1Vzpi3LQBtJNn9lNS1500Djwg5bNk";
