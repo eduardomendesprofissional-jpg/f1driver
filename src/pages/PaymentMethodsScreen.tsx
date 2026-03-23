@@ -9,10 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import AsaasCardForm from "@/components/AsaasCardForm";
 
-const STRIPE_PK =
-  "pk_live_51TC220RyZVjSW4KRd1Wol4LRPKRsCPd18ign2HL8q3AJjsmLvVVZc3QFYo84hbWZHmaTZ1Vzpi3LQBtJNn9lNS1500Djwg5bNk";
-const stripePromise = loadStripe(STRIPE_PK);
-
 interface SavedCard {
   id: string;
   brand: string;
@@ -27,111 +23,6 @@ const brandIcon: Record<string, string> = {
   amex: "💳 Amex",
   elo: "💳 Elo",
   hipercard: "💳 Hiper",
-};
-
-const elementStyle = {
-  style: {
-    base: {
-      fontSize: "16px",
-      color: "hsl(var(--foreground))",
-      "::placeholder": { color: "hsl(var(--muted-foreground))" },
-    },
-  },
-};
-
-const AddCardForm = ({ onSuccess }: { onSuccess: () => void }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [loading, setLoading] = useState(false);
-  const [cardName, setCardName] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    const cardNumber = elements.getElement(CardNumberElement);
-    if (!cardNumber) return;
-
-    setLoading(true);
-    try {
-      // Create payment method with Stripe.js
-      const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({
-        type: "card",
-        card: cardNumber,
-        billing_details: { name: cardName || undefined },
-      });
-
-      if (pmError) throw new Error(pmError.message);
-      if (!paymentMethod) throw new Error("Erro ao criar método de pagamento");
-
-      // Send to save-card edge function
-      const { data, error } = await supabase.functions.invoke("save-card", {
-        body: { payment_method_id: paymentMethod.id },
-      });
-
-      if (error || data?.error) {
-        throw new Error(data?.error || "Erro ao salvar cartão");
-      }
-
-      toast.success("Cartão salvo com sucesso!");
-      onSuccess();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar cartão");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label className="text-xs text-muted-foreground mb-1.5 block">
-          Nome impresso no cartão
-        </Label>
-        <Input
-          value={cardName}
-          onChange={(e) => setCardName(e.target.value)}
-          placeholder="NOME COMO NO CARTÃO"
-          className="h-12 uppercase"
-        />
-      </div>
-
-      <div>
-        <Label className="text-xs text-muted-foreground mb-1.5 block">
-          Número do cartão
-        </Label>
-        <div className="p-3.5 rounded-xl border border-border bg-secondary/30">
-          <CardNumberElement options={elementStyle} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-xs text-muted-foreground mb-1.5 block">
-            Validade
-          </Label>
-          <div className="p-3.5 rounded-xl border border-border bg-secondary/30">
-            <CardExpiryElement options={elementStyle} />
-          </div>
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground mb-1.5 block">CVV</Label>
-          <div className="p-3.5 rounded-xl border border-border bg-secondary/30">
-            <CardCvcElement options={elementStyle} />
-          </div>
-        </div>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full h-12 font-bold"
-        disabled={!stripe || loading}
-      >
-        {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-        {loading ? "Salvando..." : "Salvar cartão"}
-      </Button>
-    </form>
-  );
 };
 
 const PaymentMethodsScreen = () => {
