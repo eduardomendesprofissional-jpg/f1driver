@@ -39,6 +39,7 @@ const PaymentMethodSelector = ({ open, onClose, onSelect, currentSelection }: Pr
   const navigate = useNavigate();
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
     if (open && user) {
@@ -50,6 +51,16 @@ const PaymentMethodSelector = ({ open, onClose, onSelect, currentSelection }: Pr
         })
         .catch(() => {})
         .finally(() => setLoading(false));
+
+      // Fetch wallet balance
+      supabase
+        .from("profiles")
+        .select("balance")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          setWalletBalance(Number((data as any)?.balance || 0));
+        });
     }
   }, [open, user]);
 
