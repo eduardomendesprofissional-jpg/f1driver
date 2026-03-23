@@ -14,7 +14,7 @@ interface SavedCard {
 }
 
 export interface SelectedPayment {
-  type: "pix" | "card";
+  type: "pix" | "card" | "wallet";
   stripe_payment_method_id?: string;
   label: string;
 }
