@@ -441,7 +441,9 @@ const RideConfirm = () => {
               className="w-full flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card hover:bg-secondary/30 transition-all press"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                {selectedPayment?.type === "pix" ? (
+                {selectedPayment?.type === "wallet" ? (
+                  <Wallet size={18} className="text-primary" />
+                ) : selectedPayment?.type === "pix" ? (
                   <QrCode size={18} className="text-primary" />
                 ) : selectedPayment?.type === "card" ? (
                   <CreditCard size={18} className="text-primary" />
