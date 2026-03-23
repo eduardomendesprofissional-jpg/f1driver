@@ -53,13 +53,11 @@ serve(async (req) => {
         .maybeSingle();
 
       if (topup && topup.status !== "paid") {
-        // Add balance to user's wallet
         await supabase.rpc("add_wallet_balance", {
           p_user_id: topup.user_id,
           p_amount: topup.valor,
         });
 
-        // Mark topup as paid
         await supabase
           .from("wallet_topups")
           .update({ status: "paid" })
@@ -76,7 +74,7 @@ serve(async (req) => {
       // 2. Check if it's a ride payment
       const { data: ride, error: findError } = await supabase
         .from("rides")
-        .select("id")
+        .select("id, origem_endereco, destino_endereco, valor, motorista_id, origem_lat, origem_lng")
         .eq("payment_intent_id", paymentId)
         .maybeSingle();
 
@@ -85,6 +83,10 @@ serve(async (req) => {
       }
 
       if (ride) {
+        // Update payment_status to 'paid' — the DB trigger will handle:
+        // - setting status to 'solicitada'
+        // - setting broadcast_search to true
+        // - finding and assigning the nearest driver within 5km
         const { error: updateError } = await supabase
           .from("rides")
           .update({ payment_status: "paid" })
@@ -93,7 +95,29 @@ serve(async (req) => {
         if (updateError) {
           console.error("Error updating ride:", updateError.message);
         } else {
-          console.log(`Ride ${ride.id} marked as paid`);
+          console.log(`Ride ${ride.id} payment confirmed — trigger will handle dispatch`);
+
+          // Re-fetch to get the driver assigned by trigger
+          const { data: updatedRide } = await supabase
+            .from("rides")
+            .select("motorista_id, origem_endereco, destino_endereco, valor")
+            .eq("id", ride.id)
+            .single();
+
+          // Send push notification to the assigned driver
+          if (updatedRide?.motorista_id) {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                user_id: updatedRide.motorista_id,
+                title: "Nova corrida disponível!",
+                body: `De ${updatedRide.origem_endereco} → ${updatedRide.destino_endereco} | R$ ${Number(updatedRide.valor || 0).toFixed(2)}`,
+                data: { ride_id: ride.id },
+              },
+            });
+            console.log(`Push notification sent to driver ${updatedRide.motorista_id}`);
+          } else {
+            console.log(`No driver found within 5km for ride ${ride.id}`);
+          }
         }
       } else {
         console.log(`No ride or topup found for payment ${paymentId}`);
