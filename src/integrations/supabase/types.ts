@@ -971,6 +971,7 @@ export type Database = {
           id: string
           payment_id: string | null
           status: string
+          tipo: string
           user_id: string
           valor: number
         }
@@ -979,6 +980,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           status?: string
+          tipo?: string
           user_id: string
           valor: number
         }
@@ -987,6 +989,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           status?: string
+          tipo?: string
           user_id?: string
           valor?: number
         }
@@ -997,6 +1000,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_driver_balance: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: undefined
+      }
       add_wallet_balance: {
         Args: { p_amount: number; p_user_id: string }
         Returns: undefined

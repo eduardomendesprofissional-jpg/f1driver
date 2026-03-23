@@ -45,27 +45,36 @@ serve(async (req) => {
     }
 
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
-      // 1. Check if it's a wallet top-up
+      // 1. Check if it's a wallet top-up (passenger or driver)
       const { data: topup } = await supabase
         .from("wallet_topups")
-        .select("id, user_id, valor, status")
+        .select("id, user_id, valor, status, tipo")
         .eq("payment_id", paymentId)
         .maybeSingle();
 
       if (topup && topup.status !== "paid") {
-        await supabase.rpc("add_wallet_balance", {
-          p_user_id: topup.user_id,
-          p_amount: topup.valor,
-        });
+        if (topup.tipo === "driver") {
+          // Driver credit top-up → add to driver_balance
+          await supabase.rpc("add_driver_balance", {
+            p_user_id: topup.user_id,
+            p_amount: topup.valor,
+          });
+          console.log(`Driver topup ${topup.id} completed: +R$${topup.valor} for driver ${topup.user_id}`);
+        } else {
+          // Passenger wallet top-up → add to balance
+          await supabase.rpc("add_wallet_balance", {
+            p_user_id: topup.user_id,
+            p_amount: topup.valor,
+          });
+          console.log(`Wallet topup ${topup.id} completed: +R$${topup.valor} for user ${topup.user_id}`);
+        }
 
         await supabase
           .from("wallet_topups")
           .update({ status: "paid" })
           .eq("id", topup.id);
 
-        console.log(`Wallet topup ${topup.id} completed: +R$${topup.valor} for user ${topup.user_id}`);
-
-        return new Response(JSON.stringify({ received: true, type: "wallet_topup" }), {
+        return new Response(JSON.stringify({ received: true, type: topup.tipo === "driver" ? "driver_topup" : "wallet_topup" }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
