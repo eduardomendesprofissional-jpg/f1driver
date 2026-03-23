@@ -103,7 +103,7 @@ export const useRide = () => {
           duracao_min: est.duracao_min,
           valor: est.valor,
           forma_pagamento,
-          status: "solicitada",
+          status: "waiting_payment",
         })
         .select()
         .single();
