@@ -158,13 +158,12 @@ const DriverPanel = () => {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Negative Balance Banner */}
-      {driverBalance < 0 && (
+      {driverBalance < 20 && (
         <div className="shrink-0 z-20 bg-destructive/10 border-b border-destructive/30 px-4 py-2.5 flex items-center justify-between gap-3 safe-top">
           <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle size={18} className="text-destructive shrink-0" />
             <p className="text-xs font-semibold text-destructive truncate">
-              Saldo: R$ {driverBalance.toFixed(2)}
-              {driverBalance <= -40 && " • Conta bloqueada"}
+              Saldo: R$ {driverBalance.toFixed(2)} • Mínimo R$ 20,00
             </p>
           </div>
           <Button size="sm" variant="destructive" className="shrink-0 text-xs h-7 px-3" onClick={() => navigate("/driver/credits")}>
