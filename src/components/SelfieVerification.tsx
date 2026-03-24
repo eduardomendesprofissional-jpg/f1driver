@@ -63,7 +63,7 @@ const SelfieVerification = ({ onVerified, onSkip }: SelfieVerificationProps) => 
         canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8)
       );
 
-      const fileName = `selfie_${user.id}_${Date.now()}.jpg`;
+      const fileName = `${user.id}/selfie_${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, blob, { contentType: "image/jpeg", upsert: true });
