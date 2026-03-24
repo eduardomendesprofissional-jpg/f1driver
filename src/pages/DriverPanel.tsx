@@ -173,7 +173,7 @@ const DriverPanel = () => {
       )}
 
       {/* Header */}
-      <div className={`p-4 pb-2 flex items-center justify-between shrink-0 z-20 glass-heavy border-b border-border/20 ${driverBalance >= 0 ? "safe-top" : ""}`}>
+      <div className={`p-4 pb-2 flex items-center justify-between shrink-0 z-20 glass-heavy border-b border-border/20 ${driverBalance >= 20 ? "safe-top" : ""}`}>
         <div className="flex items-center gap-2.5">
           <div className={`w-2 h-2 rounded-full ${online ? "bg-success animate-pulse" : "bg-muted-foreground"}`} />
           <h1 className="text-base font-bold">{online ? "Online" : "Offline"}</h1>
