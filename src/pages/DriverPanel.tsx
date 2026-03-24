@@ -158,13 +158,12 @@ const DriverPanel = () => {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Negative Balance Banner */}
-      {driverBalance < 0 && (
+      {driverBalance < 20 && (
         <div className="shrink-0 z-20 bg-destructive/10 border-b border-destructive/30 px-4 py-2.5 flex items-center justify-between gap-3 safe-top">
           <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle size={18} className="text-destructive shrink-0" />
             <p className="text-xs font-semibold text-destructive truncate">
-              Saldo: R$ {driverBalance.toFixed(2)}
-              {driverBalance <= -40 && " • Conta bloqueada"}
+              Saldo: R$ {driverBalance.toFixed(2)} • Mínimo R$ 20,00
             </p>
           </div>
           <Button size="sm" variant="destructive" className="shrink-0 text-xs h-7 px-3" onClick={() => navigate("/driver/credits")}>
@@ -174,7 +173,7 @@ const DriverPanel = () => {
       )}
 
       {/* Header */}
-      <div className={`p-4 pb-2 flex items-center justify-between shrink-0 z-20 glass-heavy border-b border-border/20 ${driverBalance >= 0 ? "safe-top" : ""}`}>
+      <div className={`p-4 pb-2 flex items-center justify-between shrink-0 z-20 glass-heavy border-b border-border/20 ${driverBalance >= 20 ? "safe-top" : ""}`}>
         <div className="flex items-center gap-2.5">
           <div className={`w-2 h-2 rounded-full ${online ? "bg-success animate-pulse" : "bg-muted-foreground"}`} />
           <h1 className="text-base font-bold">{online ? "Online" : "Offline"}</h1>
@@ -204,9 +203,9 @@ const DriverPanel = () => {
                 .single();
               const balance = Number((prof as any)?.driver_balance || 0);
               const blocked = !!(prof as any)?.is_blocked;
-              if (blocked || balance < -40) {
+              if (blocked || balance < 20) {
                 const { toast } = await import("sonner");
-                toast.error("Conta bloqueada por saldo negativo. Recarregue para continuar recebendo chamadas.", { duration: 6000 });
+                toast.error("Saldo insuficiente. Você precisa ter no mínimo R$ 20,00 para ficar online.", { duration: 6000 });
                 navigate("/driver/credits");
                 return;
               }
@@ -515,9 +514,9 @@ const DriverPanel = () => {
                   setSelfieVerified(true); setShowSelfie(false);
                   if (user) {
                     const { data: prof } = await supabase.from("profiles").select("driver_balance, is_blocked").eq("id", user.id).single();
-                    if (!!(prof as any)?.is_blocked || Number((prof as any)?.driver_balance || 0) < -40) {
+                    if (!!(prof as any)?.is_blocked || Number((prof as any)?.driver_balance || 0) < 20) {
                       const { toast } = await import("sonner");
-                      toast.error("Conta bloqueada por saldo negativo. Recarregue para continuar recebendo chamadas.", { duration: 6000 });
+                      toast.error("Saldo insuficiente. Você precisa ter no mínimo R$ 20,00 para ficar online.", { duration: 6000 });
                       navigate("/driver/credits");
                       return;
                     }
