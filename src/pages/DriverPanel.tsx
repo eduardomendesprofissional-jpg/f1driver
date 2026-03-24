@@ -515,9 +515,9 @@ const DriverPanel = () => {
                   setSelfieVerified(true); setShowSelfie(false);
                   if (user) {
                     const { data: prof } = await supabase.from("profiles").select("driver_balance, is_blocked").eq("id", user.id).single();
-                    if (!!(prof as any)?.is_blocked || Number((prof as any)?.driver_balance || 0) < -40) {
+                    if (!!(prof as any)?.is_blocked || Number((prof as any)?.driver_balance || 0) < 20) {
                       const { toast } = await import("sonner");
-                      toast.error("Conta bloqueada por saldo negativo. Recarregue para continuar recebendo chamadas.", { duration: 6000 });
+                      toast.error("Saldo insuficiente. Você precisa ter no mínimo R$ 20,00 para ficar online.", { duration: 6000 });
                       navigate("/driver/credits");
                       return;
                     }
