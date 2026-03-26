@@ -284,6 +284,33 @@ export type Database = {
         }
         Relationships: []
       }
+      extrato_creditos: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          status: string
+          url_comprovante: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          status?: string
+          url_comprovante?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          status?: string
+          url_comprovante?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       indicacoes: {
         Row: {
           bonus_valor: number
