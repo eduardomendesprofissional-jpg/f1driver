@@ -70,6 +70,7 @@ const navItems: NavItem[] = [
   { label: "Relatório Estabelecimentos", icon: FileText, path: "/admin/relatorio-estabelecimentos" },
   { label: "Relatório de Viagens", icon: BarChart3, path: "/admin/relatorio-viagens" },
   
+  { label: "Aprovações Créditos", icon: CreditCard, path: "/admin/aprovacoes-creditos" },
   { label: "Mapa de Motoristas", icon: Map, path: "/admin/mapa-motoristas" },
   { label: "Suporte Emergencial", icon: Shield, path: "/admin/suporte" },
   { label: "Administradores", icon: UserPlus, path: "/admin/administradores" },
