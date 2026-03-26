@@ -50,6 +50,7 @@ import MapaMotoristas from "./pages/admin/MapaMotoristas";
 import SuporteEmergencial from "./pages/admin/SuporteEmergencial";
 import ConfigurarApp from "./pages/admin/ConfigurarApp";
 import Administradores from "./pages/admin/Administradores";
+import AprovacoesCreditos from "./pages/admin/AprovacoesCreditos";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
 import OnboardingScreen from "./pages/OnboardingScreen";
