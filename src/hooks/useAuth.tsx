@@ -21,13 +21,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Set up listener FIRST (but don't setLoading(false) on INITIAL_SESSION)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
-        setLoading(false);
+        // Only mark as ready on non-initial events (sign in/out/token refresh)
+        if (event !== 'INITIAL_SESSION') {
+          setLoading(false);
+        }
       }
     );
 
+    // 2. Then restore session from storage — this is the authoritative "ready" signal
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);

@@ -14,20 +14,7 @@ export const useGeolocation = () => {
   const [permission, setPermission] = useState<PermissionStatus>("prompt");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setPermission("unsupported");
-      return;
-    }
-    navigator.permissions?.query({ name: "geolocation" }).then((result) => {
-      setPermission(result.state as PermissionStatus);
-      result.onchange = () => setPermission(result.state as PermissionStatus);
-      if (result.state === "granted") {
-        requestLocation();
-      }
-    }).catch(() => {});
-  }, []);
+  const initialRequestDone = useRef(false);
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
@@ -71,6 +58,7 @@ export const useGeolocation = () => {
           setError("Permissão de localização negada. Habilite nas configurações do navegador.");
         } else if (err.code === err.TIMEOUT) {
           setError("Tempo esgotado ao obter localização. Tente novamente.");
+          // Don't change permission on timeout — user may have granted it
         } else {
           setError("Não foi possível obter sua localização. Tente novamente.");
         }
@@ -79,7 +67,38 @@ export const useGeolocation = () => {
     );
   }, [reverseGeocode]);
 
-  // Poll position every 10 seconds for real-time updates
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setPermission("unsupported");
+      return;
+    }
+
+    // navigator.permissions.query is not supported on iOS Safari for geolocation
+    if (navigator.permissions?.query) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        setPermission(result.state as PermissionStatus);
+        result.onchange = () => setPermission(result.state as PermissionStatus);
+        if (result.state === "granted" && !initialRequestDone.current) {
+          initialRequestDone.current = true;
+          requestLocation();
+        }
+      }).catch(() => {
+        // Fallback: permissions API not available, try requesting directly
+        if (!initialRequestDone.current) {
+          initialRequestDone.current = true;
+          requestLocation();
+        }
+      });
+    } else {
+      // iOS Safari fallback — just try to get location
+      if (!initialRequestDone.current) {
+        initialRequestDone.current = true;
+        requestLocation();
+      }
+    }
+  }, [requestLocation]);
+
+  // Poll position every 15 seconds for real-time updates (reduced from 10s)
   useEffect(() => {
     if (permission !== "granted" || !navigator.geolocation) return;
 
@@ -92,13 +111,11 @@ export const useGeolocation = () => {
           setEndereco(addr);
         },
         () => {},
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 15000 }
       );
     };
 
-    updatePosition();
-    const intervalId = setInterval(updatePosition, 10000);
-
+    const intervalId = setInterval(updatePosition, 15000);
     return () => clearInterval(intervalId);
   }, [permission, reverseGeocode]);
 
