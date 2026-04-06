@@ -75,9 +75,11 @@ const LoginScreen = () => {
         if (error) throw error;
         toast.success("Conta criada! Verifique seu e-mail para confirmar.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate(mode === "passenger" ? "/passenger" : "/driver");
+        // Navigate based on user metadata type
+        const tipo = data.user?.user_metadata?.tipo;
+        navigate(tipo === "motorista" ? "/driver" : "/passenger");
       }
     } catch (err: any) {
       toast.error(err.message || "Erro ao autenticar.");
