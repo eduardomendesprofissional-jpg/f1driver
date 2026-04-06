@@ -71,7 +71,7 @@ import StripeCheckout from "./pages/StripeCheckout";
 import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
 import PassengerWallet from "./pages/PassengerWallet";
 import DriverCredits from "./pages/DriverCredits";
-
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -79,6 +79,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAInstallPrompt />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
