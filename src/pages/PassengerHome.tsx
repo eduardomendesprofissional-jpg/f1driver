@@ -320,6 +320,7 @@ const PassengerHome = () => {
         )}
       </AnimatePresence>
 
+      <GpsJustificationModal open={showGpsModal} onAccept={acceptGpsModal} onCancel={dismissGpsModal} />
       <BottomNav active="home" role="passenger" />
     </div>
   );
