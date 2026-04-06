@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, User, Car, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/logo-f1driver.jpeg";
@@ -58,10 +59,12 @@ const LoginScreen = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { toast.error("Preencha todos os campos."); return; }
+    if (isSignUp && !acceptedPrivacy) { toast.error("Aceite a Política de Privacidade para continuar."); return; }
     setLoading(true);
     try {
       if (isSignUp) {
@@ -145,6 +148,23 @@ const LoginScreen = () => {
               {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+
+          {isSignUp && (
+            <div className="flex items-start gap-2 mt-1">
+              <Checkbox
+                id="privacy"
+                checked={acceptedPrivacy}
+                onCheckedChange={(v) => setAcceptedPrivacy(v === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="privacy" className="text-xs text-muted-foreground leading-tight">
+                Li e aceito a{" "}
+                <Link to="/privacy-policy" className="text-primary underline" target="_blank">
+                  Política de Privacidade
+                </Link>
+              </label>
+            </div>
+          )}
 
           <Button type="submit" className="w-full h-13 text-base font-bold glow-blue rounded-xl mt-1" disabled={loading}>
             {loading ? <Loader2 className="animate-spin" size={20} /> : isSignUp ? "Criar Conta" : "Entrar"}
