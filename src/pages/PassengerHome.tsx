@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
 import SafetyTips from "@/components/SafetyTips";
+import GpsJustificationModal from "@/components/GpsJustificationModal";
 import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
@@ -16,7 +17,7 @@ const PassengerHome = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [destination, setDestination] = useState("");
-  const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
+  const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
   const { results, loading, search, clear } = useGoogleSearch();
   const { routes: savedRoutes, saveRoute } = useSavedRoutes();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
