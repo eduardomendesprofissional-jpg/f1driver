@@ -14,6 +14,7 @@ export const useGeolocation = () => {
   const [permission, setPermission] = useState<PermissionStatus>("prompt");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGpsModal, setShowGpsModal] = useState(false);
   const initialRequestDone = useRef(false);
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
@@ -73,7 +74,6 @@ export const useGeolocation = () => {
       return;
     }
 
-    // navigator.permissions.query is not supported on iOS Safari for geolocation
     if (navigator.permissions?.query) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
         setPermission(result.state as PermissionStatus);
@@ -81,22 +81,34 @@ export const useGeolocation = () => {
         if (result.state === "granted" && !initialRequestDone.current) {
           initialRequestDone.current = true;
           requestLocation();
+        } else if (result.state === "prompt" && !initialRequestDone.current) {
+          // Show justification modal before requesting
+          setShowGpsModal(true);
         }
       }).catch(() => {
-        // Fallback: permissions API not available, try requesting directly
         if (!initialRequestDone.current) {
-          initialRequestDone.current = true;
-          requestLocation();
+          setShowGpsModal(true);
         }
       });
     } else {
-      // iOS Safari fallback — just try to get location
+      // iOS Safari fallback — show modal first
       if (!initialRequestDone.current) {
-        initialRequestDone.current = true;
-        requestLocation();
+        setShowGpsModal(true);
       }
     }
   }, [requestLocation]);
+
+  const acceptGpsModal = useCallback(() => {
+    setShowGpsModal(false);
+    if (!initialRequestDone.current) {
+      initialRequestDone.current = true;
+      requestLocation();
+    }
+  }, [requestLocation]);
+
+  const dismissGpsModal = useCallback(() => {
+    setShowGpsModal(false);
+  }, []);
 
   // Poll position every 15 seconds for real-time updates (reduced from 10s)
   useEffect(() => {
@@ -119,5 +131,5 @@ export const useGeolocation = () => {
     return () => clearInterval(intervalId);
   }, [permission, reverseGeocode]);
 
-  return { position, endereco, permission, loading, error, requestLocation };
+  return { position, endereco, permission, loading, error, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal };
 };
