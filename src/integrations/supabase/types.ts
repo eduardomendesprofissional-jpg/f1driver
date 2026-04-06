@@ -1040,6 +1040,7 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
       }
+      delete_user_data: { Args: { p_user_id: string }; Returns: undefined }
       dispatch_ride: { Args: { p_ride_id: string }; Returns: string }
       find_nearest_driver: {
         Args: { p_exclude?: string[]; p_lat: number; p_lng: number }

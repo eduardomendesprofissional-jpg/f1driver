@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, CreditCard, Settings, ChevronRight, ArrowLeft, LogOut,
   Camera, Shield, CheckCircle2, Plus, Trash2, Star, Edit2, Save, X,
-  Fingerprint, AlertCircle, Bell, Gift
+  Fingerprint, AlertCircle, Bell, Gift, UserX, FileText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
+import DeleteAccountDialog from "@/components/DeleteAccountDialog";
 
 interface Profile {
   nome: string | null;
@@ -61,6 +62,7 @@ const ProfileScreen = () => {
   const [newPaymentType, setNewPaymentType] = useState("pix");
   const [newPaymentLabel, setNewPaymentLabel] = useState("");
   const [newPaymentKey, setNewPaymentKey] = useState("");
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -478,11 +480,19 @@ const ProfileScreen = () => {
             <ChevronRight size={16} className="text-muted-foreground" />
           </button>
           <button
-            onClick={() => {}}
+            onClick={() => navigate("/privacy-policy")}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
           >
-            <Settings size={20} className="text-primary" />
-            <span className="flex-1 text-left text-sm font-medium text-foreground">Configurações</span>
+            <FileText size={20} className="text-primary" />
+            <span className="flex-1 text-left text-sm font-medium text-foreground">Política de Privacidade</span>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => setShowDeleteAccount(true)}
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
+          >
+            <UserX size={20} className="text-destructive" />
+            <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
             <ChevronRight size={16} className="text-muted-foreground" />
           </button>
           <button
@@ -495,6 +505,15 @@ const ProfileScreen = () => {
           </button>
         </Card>
       </motion.div>
+
+      {user && (
+        <DeleteAccountDialog
+          open={showDeleteAccount}
+          onOpenChange={setShowDeleteAccount}
+          userId={user.id}
+          onDeleted={() => navigate("/login")}
+        />
+      )}
 
       <BottomNav active="profile" role="passenger" />
     </div>
