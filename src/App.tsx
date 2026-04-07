@@ -72,6 +72,7 @@ import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
 import PassengerWallet from "./pages/PassengerWallet";
 import DriverCredits from "./pages/DriverCredits";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import DeleteAccountPage from "./pages/DeleteAccountPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 const queryClient = new QueryClient();
 
