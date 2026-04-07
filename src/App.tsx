@@ -72,6 +72,7 @@ import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
 import PassengerWallet from "./pages/PassengerWallet";
 import DriverCredits from "./pages/DriverCredits";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import DeleteAccountPage from "./pages/DeleteAccountPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/ride-track/:token" element={<RideTrack />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/excluir-conta" element={<DeleteAccountPage />} />
 
             {/* Onboarding */}
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingScreen /></ProtectedRoute>} />
