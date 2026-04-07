@@ -92,6 +92,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/ride-track/:token" element={<RideTrack />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/excluir-conta" element={<DeleteAccountPage />} />
 
             {/* Onboarding */}
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingScreen /></ProtectedRoute>} />
