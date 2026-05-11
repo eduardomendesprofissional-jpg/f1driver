@@ -136,19 +136,7 @@ const RideActive = () => {
           }
           if (updated.status === "finalizada") {
             if (!isDriver) {
-              // If payment is card, redirect to Stripe checkout
-              const valor = Number(updated.valor_final || updated.valor || 0);
-              if (updated.forma_pagamento === "card" && valor > 0) {
-                navigate("/checkout", {
-                  state: {
-                    amount: Math.round(valor * 100),
-                    rideId: rideId,
-                    returnTo: "/rating",
-                  },
-                });
-              } else {
-                navigate("/rating", { state: { rideId } });
-              }
+              navigate("/rating", { state: { rideId } });
             }
           }
           if (updated.status === "cancelada" || updated.status === "no_show") {
