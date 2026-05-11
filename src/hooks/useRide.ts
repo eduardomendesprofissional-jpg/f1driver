@@ -15,9 +15,7 @@ export interface RideEstimate {
 }
 
 export const useRide = () => {
-  const { user } = useAuth();
   const [estimating, setEstimating] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   const estimate = async (
     origem: { endereco: string; lat: number; lng: number },
