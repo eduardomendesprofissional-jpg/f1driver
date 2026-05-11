@@ -61,9 +61,8 @@ const RideConfirm = () => {
           distancia_km: est.distancia_km,
           duracao_min: est.duracao_min,
           valor: est.valor,
-          forma_pagamento: "dinheiro",
+          forma_pagamento: formaPagamento,
           status: "solicitada",
-          payment_status: "paid",
           broadcast_search: true,
           agendada_para: scheduledDate?.toISOString() || null,
         })
