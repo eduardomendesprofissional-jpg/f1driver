@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone, MessageCircle, X, Star, Loader2, Clock, Navigation,
+  Phone, MessageCircle, X, Star, Clock, Navigation,
   ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle,
   StopCircle, Route, DollarSign
 } from "lucide-react";
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { getDirections } from "@/lib/googleMaps";
 import CancelRideDialog from "@/components/CancelRideDialog";
 import TripSummaryPopup from "@/components/TripSummaryPopup";
+import { PassengerSearchingOverlay } from "@/components/PassengerSearchingOverlay";
 
 const DISPATCH_TIMEOUT = 15;
 const WAIT_TIMER_SECONDS = 300; // 5 minutes
@@ -56,6 +57,8 @@ const RideActive = () => {
   const [passengerAvatar, setPassengerAvatar] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [redispatchAttempt, setRedispatchAttempt] = useState(0);
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [noDriversAvailable, setNoDriversAvailable] = useState(false);
   const [eta, setEta] = useState<number | null>(null);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [waitExpired, setWaitExpired] = useState(false);
@@ -156,9 +159,10 @@ const RideActive = () => {
     const timer = setTimeout(async () => {
       const { data } = await supabase.rpc("redispatch_expanded_radius" as any, { p_ride_id: rideId });
       if (data === "redispatched_10km") {
+        setSearchExpanded(true);
         toast.info("Expandindo busca para 10km...");
       } else if (data === "no_drivers_10km") {
-        toast.warning("Nenhum motorista disponível no momento. Aguarde...");
+        setNoDriversAvailable(true);
       }
     }, 30000);
 
@@ -248,7 +252,7 @@ const RideActive = () => {
         setRedispatchAttempt(prev => prev + 1);
         setCountdown(DISPATCH_TIMEOUT);
       } else if (data === "no_drivers") {
-        toast.error("Nenhum motorista disponível no momento.");
+        setNoDriversAvailable(true);
       }
     }, DISPATCH_TIMEOUT * 1000);
     return () => {
@@ -576,19 +580,7 @@ const RideActive = () => {
         </div>
 
         {/* Searching overlay */}
-        {status === "solicitada" && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
-            <Loader2 className="animate-spin text-primary" size={32} />
-            {countdown !== null && countdown > 0 && (
-              <div className="bg-card/90 border border-border rounded-lg px-3 py-1.5">
-                <p className="text-xs text-muted-foreground text-center">Aguardando resposta do motorista</p>
-                <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
-                  <div className="bg-primary h-1.5 rounded-full transition-all duration-1000" style={{ width: `${(countdown / DISPATCH_TIMEOUT) * 100}%` }} />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Searching overlay (passenger only) — handled by PassengerSearchingOverlay below */}
 
         {/* Wait timer overlay (driver) */}
         <AnimatePresence>
@@ -879,6 +871,23 @@ const RideActive = () => {
 
       {/* Emergency FAB */}
       {(status === "aceita" || status === "aguardando" || status === "em_andamento") && <EmergencyFAB />}
+
+      {/* Passenger searching overlay (fullscreen while looking for a driver) */}
+      <PassengerSearchingOverlay
+        open={!isDriver && status === "solicitada" && !!ride}
+        countdown={countdown}
+        attempt={redispatchAttempt}
+        expanded={searchExpanded}
+        noDrivers={noDriversAvailable}
+        origin={ride?.origem_endereco || ""}
+        destination={ride?.destino_endereco || ""}
+        valor={ride?.valor ?? null}
+        onCancel={() => {
+          if (noDriversAvailable) navigate("/passenger");
+          else setShowCancelDialog(true);
+        }}
+        totalSeconds={DISPATCH_TIMEOUT}
+      />
     </div>
   );
 };
