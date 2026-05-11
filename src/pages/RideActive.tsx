@@ -871,6 +871,23 @@ const RideActive = () => {
 
       {/* Emergency FAB */}
       {(status === "aceita" || status === "aguardando" || status === "em_andamento") && <EmergencyFAB />}
+
+      {/* Passenger searching overlay (fullscreen while looking for a driver) */}
+      <PassengerSearchingOverlay
+        open={!isDriver && status === "solicitada" && !!ride}
+        countdown={countdown}
+        attempt={redispatchAttempt}
+        expanded={searchExpanded}
+        noDrivers={noDriversAvailable}
+        origin={ride?.origem_endereco || ""}
+        destination={ride?.destino_endereco || ""}
+        valor={ride?.valor ?? null}
+        onCancel={() => {
+          if (noDriversAvailable) navigate("/passenger");
+          else setShowCancelDialog(true);
+        }}
+        totalSeconds={DISPATCH_TIMEOUT}
+      />
     </div>
   );
 };
