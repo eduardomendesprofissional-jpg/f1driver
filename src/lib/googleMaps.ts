@@ -1,27 +1,28 @@
-import { Loader } from "@googlemaps/js-api-loader";
+/// <reference types="google.maps" />
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
 export const GOOGLE_MAPS_KEY = "AIzaSyDE1pRwXHYINMp6fmtA9JTrvgNzxn5D5MQ";
 
-let loaderInstance: Loader | null = null;
 let loadPromise: Promise<void> | null = null;
+let optionsSet = false;
 
 export const loadGoogleMaps = (): Promise<void> => {
-  if (!loaderInstance) {
-    loaderInstance = new Loader({
-      apiKey: GOOGLE_MAPS_KEY,
-      version: "weekly",
+  if (!optionsSet) {
+    setOptions({
+      key: GOOGLE_MAPS_KEY,
+      v: "weekly",
       language: "pt-BR",
       region: "BR",
     });
+    optionsSet = true;
   }
   if (!loadPromise) {
-    const loader = loaderInstance;
     loadPromise = (async () => {
-      await loader.importLibrary("maps");
-      await loader.importLibrary("places");
-      await loader.importLibrary("visualization");
-      await loader.importLibrary("geometry");
-      await loader.importLibrary("marker");
+      await importLibrary("maps");
+      await importLibrary("places");
+      await importLibrary("visualization");
+      await importLibrary("geometry");
+      await importLibrary("marker");
     })();
   }
   return loadPromise;
