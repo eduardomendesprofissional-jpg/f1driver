@@ -140,23 +140,27 @@ const DriverCredits = () => {
       <div className="p-4 space-y-4">
         {/* Balance */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className={driverBalance < 20 ? "border-destructive/50" : "bg-primary text-primary-foreground"}>
+          <Card className={driverBalance <= -30 ? "border-destructive/50" : "bg-primary text-primary-foreground"}>
             <CardContent className="p-6 text-center">
-              <p className={`text-sm ${driverBalance < 20 ? "text-muted-foreground" : "opacity-80"}`}>
+              <p className={`text-sm ${driverBalance <= -30 ? "text-muted-foreground" : "opacity-80"}`}>
                 Saldo de créditos
               </p>
               {loading ? (
                 <Loader2 className="animate-spin mx-auto mt-2" size={28} />
               ) : (
-                <p className={`text-4xl font-bold mt-1 ${driverBalance < 20 ? "text-destructive" : ""}`}>
+                <p className={`text-4xl font-bold mt-1 ${driverBalance <= -30 ? "text-destructive" : driverBalance < 0 ? "text-amber-500" : ""}`}>
                   R$ {driverBalance.toFixed(2)}
                 </p>
               )}
-              {driverBalance < 20 && (
-                <p className="text-xs text-amber-500 mt-2 font-medium">
-                  ⚠ Saldo mínimo de R$ 20,00 para ficar online.
+              {driverBalance <= -30 ? (
+                <p className="text-xs text-destructive mt-2 font-medium">
+                  ⚠ Saldo bloqueado. Adicione créditos para voltar a ficar online.
                 </p>
-              )}
+              ) : driverBalance < 0 ? (
+                <p className="text-xs text-amber-500 mt-2 font-medium">
+                  Você está no negativo. Limite de operação: R$ -30,00.
+                </p>
+              ) : null}
             </CardContent>
           </Card>
         </motion.div>
