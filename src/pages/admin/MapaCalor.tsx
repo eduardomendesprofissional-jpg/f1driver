@@ -25,7 +25,7 @@ const MapaCalor = () => {
   const [regions, setRegions] = useState<RegionSummary[]>([]);
   const [period, setPeriod] = useState("7d");
   const [loading, setLoading] = useState(true);
-  const [mapInstance, setMapInstance] = useState<any | null>(null);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   const fetchRideData = useCallback(async () => {
     setLoading(true);
