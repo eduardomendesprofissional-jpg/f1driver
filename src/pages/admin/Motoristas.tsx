@@ -77,6 +77,16 @@ const Motoristas = () => {
     }).catch(() => {});
   };
 
+  const seedCredit = async (driverId: string) => {
+    setUpdating(true);
+    const { error } = await supabase
+      .from("extrato_creditos" as any)
+      .insert({ perfil_id: driverId, valor: 50, status: "aprovado" } as any);
+    setUpdating(false);
+    if (error) return toast.error("Erro ao creditar: " + error.message);
+    toast.success("R$ 50,00 creditados ao motorista (teste).");
+  };
+
   const filtered = drivers.filter((d) => {
     const q = searchQuery.toLowerCase();
     return !q || [d.nome, d.cpf, d.veiculo_placa, d.veiculo_modelo].some((v) => v?.toLowerCase().includes(q));
