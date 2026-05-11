@@ -1,15 +1,11 @@
+/// <reference types="google.maps" />
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, MapPin, Phone, Loader2, CheckCircle2, Clock, Truck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
-
-mapboxgl.accessToken = MAPBOX_TOKEN;
+import { loadGoogleMaps, DARK_MAP_STYLE } from "@/lib/googleMaps";
 
 interface EnvioData {
   id: string;
@@ -56,8 +52,8 @@ const EnvioTracking = () => {
   const [loading, setLoading] = useState(true);
 
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const driverMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const driverMarkerRef = useRef<google.maps.Marker | null>(null);
 
   const fetchEnvio = useCallback(async () => {
     if (!id) return;
@@ -109,52 +105,60 @@ const EnvioTracking = () => {
     return () => { supabase.removeChannel(channel); };
   }, [envio?.motorista_id]);
 
-  // Initialize Mapbox map
+  // Initialize Google Maps
   useEffect(() => {
     if (!mapContainer.current || mapRef.current || !envio) return;
+    let cancelled = false;
 
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
-      center: [envio.coleta_lng, envio.coleta_lat],
-      zoom: 13,
-      attributionControl: false,
-    });
+    loadGoogleMaps().then(() => {
+      if (cancelled || !mapContainer.current) return;
+      const map = new google.maps.Map(mapContainer.current, {
+        center: { lat: envio.coleta_lat, lng: envio.coleta_lng },
+        zoom: 13,
+        disableDefaultUI: true,
+        zoomControl: true,
+        gestureHandling: "greedy",
+        styles: DARK_MAP_STYLE,
+        clickableIcons: false,
+      });
 
-    map.on("load", () => {
-      // Coleta marker
-      new mapboxgl.Marker({ color: "#276EF1" })
-        .setLngLat([envio.coleta_lng, envio.coleta_lat])
-        .setPopup(new mapboxgl.Popup().setText("Coleta: " + envio.coleta_endereco))
-        .addTo(map);
+      new google.maps.Marker({
+        position: { lat: envio.coleta_lat, lng: envio.coleta_lng },
+        map,
+        title: "Coleta: " + envio.coleta_endereco,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#276EF1", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+      });
 
-      // Entrega marker
-      new mapboxgl.Marker({ color: "#ef4444" })
-        .setLngLat([envio.entrega_lng, envio.entrega_lat])
-        .setPopup(new mapboxgl.Popup().setText("Entrega: " + envio.entrega_endereco))
-        .addTo(map);
+      new google.maps.Marker({
+        position: { lat: envio.entrega_lat, lng: envio.entrega_lng },
+        map,
+        title: "Entrega: " + envio.entrega_endereco,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#ef4444", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+      });
 
-      // Fit bounds
-      const bounds = new mapboxgl.LngLatBounds();
-      bounds.extend([envio.coleta_lng, envio.coleta_lat]);
-      bounds.extend([envio.entrega_lng, envio.entrega_lat]);
-      map.fitBounds(bounds, { padding: 60 });
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat: envio.coleta_lat, lng: envio.coleta_lng });
+      bounds.extend({ lat: envio.entrega_lat, lng: envio.entrega_lng });
+      map.fitBounds(bounds, 60);
 
       mapRef.current = map;
     });
 
-    return () => { map.remove(); mapRef.current = null; };
+    return () => { cancelled = true; mapRef.current = null; };
   }, [envio]);
 
   // Update driver marker
   useEffect(() => {
     if (!mapRef.current || driverLat === null || driverLng === null) return;
+    const pos = { lat: driverLat, lng: driverLng };
     if (driverMarkerRef.current) {
-      driverMarkerRef.current.setLngLat([driverLng, driverLat]);
+      driverMarkerRef.current.setPosition(pos);
     } else {
-      driverMarkerRef.current = new mapboxgl.Marker({ color: "#22c55e" })
-        .setLngLat([driverLng, driverLat])
-        .addTo(mapRef.current);
+      driverMarkerRef.current = new google.maps.Marker({
+        position: pos,
+        map: mapRef.current,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+      });
     }
   }, [driverLat, driverLng]);
 

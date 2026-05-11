@@ -8,9 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { MAPBOX_TOKEN, MAPBOX_DARK_STYLE } from "@/lib/mapbox";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+/// <reference types="google.maps" />
+import { loadGoogleMaps, DARK_MAP_STYLE, reverseGeocode } from "@/lib/googleMaps";
 
 // CPF mask
 const maskCPF = (v: string) => {
@@ -79,38 +78,44 @@ const StepName = ({ nome, setNome, onNext }: { nome: string; setNome: (v: string
 
 const StepAddress = ({ endereco, setEndereco, onNext }: { endereco: string; setEndereco: (v: string) => void; onNext: () => void }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!mapContainer.current) return;
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAPBOX_DARK_STYLE,
-      center: [-49.27, -25.43],
-      zoom: 14,
-      interactive: false,
+    let cancelled = false;
+
+    loadGoogleMaps().then(() => {
+      if (cancelled || !mapContainer.current) return;
+      const map = new google.maps.Map(mapContainer.current, {
+        center: { lat: -25.43, lng: -49.27 },
+        zoom: 14,
+        disableDefaultUI: true,
+        gestureHandling: "none",
+        styles: DARK_MAP_STYLE,
+        clickableIcons: false,
+      });
+      mapRef.current = map;
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          map.setCenter({ lat: latitude, lng: longitude });
+          new google.maps.Marker({
+            position: { lat: latitude, lng: longitude },
+            map,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#3b82f6", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+          });
+          const addr = await reverseGeocode(latitude, longitude);
+          if (addr) setEndereco(addr);
+          setLoading(false);
+        },
+        () => setLoading(false),
+        { enableHighAccuracy: true }
+      );
     });
-    mapRef.current = map;
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        map.setCenter([longitude, latitude]);
-        new mapboxgl.Marker({ color: "#3b82f6" }).setLngLat([longitude, latitude]).addTo(map);
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
-          const data = await res.json();
-          if (data.display_name) setEndereco(data.display_name);
-        } catch { /* ignore */ }
-        setLoading(false);
-      },
-      () => setLoading(false),
-      { enableHighAccuracy: true }
-    );
-
-    return () => { map.remove(); };
+    return () => { cancelled = true; };
   }, []);
 
   return (

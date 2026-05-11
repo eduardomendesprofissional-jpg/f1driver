@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { reverseGeocode, getDirections } from "@/lib/googleMaps";
 
 const TAMANHOS = [
   { id: "pequeno", label: "Pequeno", desc: "Até 30cm, cabe na mão", icon: "📦", multiplicador: 1 },
@@ -59,12 +59,8 @@ const EnvioNovo = () => {
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         try {
-          const res = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
-          );
-          const data = await res.json();
-          const name = data.features?.[0]?.place_name || "Sua localização";
-          setColeta({ lat: latitude, lng: longitude, endereco: name });
+          const name = await reverseGeocode(latitude, longitude);
+          setColeta({ lat: latitude, lng: longitude, endereco: name || "Sua localização" });
         } catch {
           setColeta({ lat: latitude, lng: longitude, endereco: "Sua localização" });
         }
@@ -98,16 +94,12 @@ const EnvioNovo = () => {
     if (!coleta || !entrega) return;
     setCalculando(true);
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${coleta.lng},${coleta.lat};${entrega.lng},${entrega.lat}?access_token=${MAPBOX_TOKEN}&overview=false`
-      );
-      const data = await res.json();
-      const route = data.routes?.[0];
+      const route = await getDirections(coleta.lat, coleta.lng, entrega.lat, entrega.lng);
       if (!route) {
         toast.error("Não foi possível calcular a rota.");
         return;
       }
-      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
+      const distancia_km = Math.round((route.distance_m / 1000) * 10) / 10;
 
       const pesoNum = parseFloat(peso) || 1;
       const tamInfo = TAMANHOS.find(t => t.id === tamanho) || TAMANHOS[0];

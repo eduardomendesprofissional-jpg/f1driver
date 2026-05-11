@@ -16,7 +16,7 @@ import TurnByTurn from "@/components/TurnByTurn";
 import { useRide } from "@/hooks/useRide";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { getDirections } from "@/lib/googleMaps";
 import CancelRideDialog from "@/components/CancelRideDialog";
 import TripSummaryPopup from "@/components/TripSummaryPopup";
 
@@ -233,11 +233,11 @@ const RideActive = () => {
   const fetchETA = async (rideData: any) => {
     if (!rideData) return;
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${rideData.origem_lng},${rideData.origem_lat};${rideData.destino_lng},${rideData.destino_lat}?access_token=${MAPBOX_TOKEN}&overview=false`
+      const route = await getDirections(
+        rideData.origem_lat, rideData.origem_lng,
+        rideData.destino_lat, rideData.destino_lng,
       );
-      const data = await res.json();
-      if (data.routes?.[0]?.duration) setEta(Math.round(data.routes[0].duration / 60));
+      if (route?.duration_s) setEta(Math.round(route.duration_s / 60));
     } catch {}
   };
 
