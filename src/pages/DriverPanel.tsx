@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 /// <reference types="google.maps" />
 import DestinationMode from "@/components/DestinationMode";
 import SelfieVerification from "@/components/SelfieVerification";
+import { DriverRideRequestOverlay } from "@/components/DriverRideRequestOverlay";
 
 const DriverPanel = () => {
   const navigate = useNavigate();
