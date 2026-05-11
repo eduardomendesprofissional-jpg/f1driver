@@ -355,49 +355,7 @@ const DriverPanel = () => {
           <AnimatePresence mode="wait">
             {online && tab === "corridas" && (
               <motion.div key="corridas" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <AnimatePresence>
-                  {currentRequest && (
-                    <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 200, opacity: 0 }} className="p-4">
-                      <div className="bg-primary/8 border border-primary/25 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Nova corrida</span>
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-9 h-9">
-                              <svg className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--secondary))" strokeWidth="3" />
-                                <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeDasharray={`${(countdown / 15) * 94} 94`} strokeLinecap="round" className="transition-all duration-1000" />
-                              </svg>
-                              <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-primary">{countdown}</span>
-                            </div>
-                            <span className="text-lg font-bold text-primary">R$ {Number(currentRequest.valor || 0).toFixed(2)}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-start gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                            <p className="text-sm truncate">{currentRequest.origem_endereco}</p>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <MapPin size={12} className="text-destructive mt-0.5 shrink-0" />
-                            <p className="text-sm truncate">{currentRequest.destino_endereco}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Navigation size={12} />{currentRequest.distancia_km} km</span>
-                          <span className="flex items-center gap-1"><Clock size={12} />{currentRequest.duracao_min} min</span>
-                          <span className="flex items-center gap-1"><Banknote size={12} />{currentRequest.forma_pagamento}</span>
-                        </div>
-                        <div className="flex gap-2.5">
-                          <Button variant="outline" className="flex-1 h-12 font-bold rounded-xl" onClick={rejectRide}>Recusar</Button>
-                          <Button className="flex-1 h-12 font-bold glow-blue rounded-xl" onClick={handleAccept} disabled={accepting}>
-                            {accepting ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                            Aceitar
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Overlay fullscreen é renderizado fora do tab */}
                 {!currentRequest && (
                   <div className="p-4 space-y-3">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solicitações</p>
