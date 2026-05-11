@@ -57,6 +57,8 @@ const RideActive = () => {
   const [passengerAvatar, setPassengerAvatar] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [redispatchAttempt, setRedispatchAttempt] = useState(0);
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [noDriversAvailable, setNoDriversAvailable] = useState(false);
   const [eta, setEta] = useState<number | null>(null);
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
   const [waitExpired, setWaitExpired] = useState(false);
