@@ -580,19 +580,7 @@ const RideActive = () => {
         </div>
 
         {/* Searching overlay */}
-        {status === "solicitada" && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
-            <Loader2 className="animate-spin text-primary" size={32} />
-            {countdown !== null && countdown > 0 && (
-              <div className="bg-card/90 border border-border rounded-lg px-3 py-1.5">
-                <p className="text-xs text-muted-foreground text-center">Aguardando resposta do motorista</p>
-                <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
-                  <div className="bg-primary h-1.5 rounded-full transition-all duration-1000" style={{ width: `${(countdown / DISPATCH_TIMEOUT) * 100}%` }} />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Searching overlay (passenger only) — handled by PassengerSearchingOverlay below */}
 
         {/* Wait timer overlay (driver) */}
         <AnimatePresence>
