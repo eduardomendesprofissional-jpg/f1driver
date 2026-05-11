@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { getDirections } from "@/lib/googleMaps";
 import CancelRideDialog from "@/components/CancelRideDialog";
 import TripSummaryPopup from "@/components/TripSummaryPopup";
+import { PassengerSearchingOverlay } from "@/components/PassengerSearchingOverlay";
 
 const DISPATCH_TIMEOUT = 15;
 const WAIT_TIMER_SECONDS = 300; // 5 minutes
