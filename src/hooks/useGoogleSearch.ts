@@ -28,7 +28,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function googleToPlace(item: GooglePlaceResult, userLat: number, userLng: number): GooglePlace {
+function googleToPlace(item: GooglePlaceResult, userLat: number, userLng: number, hasUserPos: boolean): GooglePlace {
   const name = item.displayName || item.shortFormattedAddress || item.formattedAddress;
   const address = item.formattedAddress;
   const isPoi = item.types?.some(t => !["street_address", "route", "premise", "geocode", "plus_code"].includes(t));
@@ -40,10 +40,10 @@ function googleToPlace(item: GooglePlaceResult, userLat: number, userLng: number
     text: name,
     place_name: name !== address ? `${name} - ${address}` : address,
     center: [item.lng, item.lat],
-    distance: formatDistance(dist),
+    distance: hasUserPos ? formatDistance(dist) : undefined,
     distanceMeters: dist,
     category,
-    blocked: dist > MAX_DISTANCE_M,
+    blocked: hasUserPos && dist > MAX_DISTANCE_M,
   };
 }
 
