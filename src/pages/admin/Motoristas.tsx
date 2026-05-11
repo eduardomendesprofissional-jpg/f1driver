@@ -287,6 +287,17 @@ const Motoristas = () => {
                     Revogar aprovação
                   </Button>
                 )}
+
+                {/* Seed test balance */}
+                <Button
+                  variant="outline"
+                  className="w-full h-10 font-semibold border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={() => seedCredit(selectedDriver.id)}
+                  disabled={updating}
+                >
+                  <Wallet size={14} className="mr-2" />
+                  Creditar R$ 50,00 (teste)
+                </Button>
               </div>
             );
           })()}
