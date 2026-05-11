@@ -252,7 +252,7 @@ const RideActive = () => {
         setRedispatchAttempt(prev => prev + 1);
         setCountdown(DISPATCH_TIMEOUT);
       } else if (data === "no_drivers") {
-        toast.error("Nenhum motorista disponível no momento.");
+        setNoDriversAvailable(true);
       }
     }, DISPATCH_TIMEOUT * 1000);
     return () => {
