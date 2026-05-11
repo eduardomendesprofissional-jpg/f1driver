@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { MapPin, Info, Flame, TrendingUp, Clock, Store } from "lucide-react";
+/// <reference types="google.maps" />
+import { useState, useEffect, useCallback, useRef } from "react";
+import { MapPin, Info, Flame, TrendingUp, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ const MapaCalor = () => {
   const [regions, setRegions] = useState<RegionSummary[]>([]);
   const [period, setPeriod] = useState("7d");
   const [loading, setLoading] = useState(true);
-  const [mapInstance, setMapInstance] = useState<any | null>(null);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   const fetchRideData = useCallback(async () => {
     setLoading(true);
@@ -81,65 +82,54 @@ const MapaCalor = () => {
     fetchRideData();
   }, [fetchRideData]);
 
-  // Add circle layers as heatmap visualization using Mapbox
+  const heatmapRef = useRef<google.maps.visualization.HeatmapLayer | null>(null);
+
+  // Render Google Maps heatmap layer
   useEffect(() => {
     if (!mapInstance || points.length === 0) return;
 
-    const sourceId = "heatmap-points";
-    
-    // Remove existing source/layer if present
-    if (mapInstance.getSource(sourceId)) {
-      mapInstance.removeLayer("heatmap-circles");
-      mapInstance.removeSource(sourceId);
+    if (heatmapRef.current) {
+      heatmapRef.current.setMap(null);
+      heatmapRef.current = null;
     }
 
-    const geojson = {
-      type: "FeatureCollection" as const,
-      features: points.map((p, i) => ({
-        type: "Feature" as const,
-        properties: { weight: p.weight, id: i },
-        geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
-      })),
-    };
+    const heatmapData = points.map((p) => ({
+      location: new google.maps.LatLng(p.lat, p.lng),
+      weight: p.weight,
+    }));
 
-    mapInstance.addSource(sourceId, { type: "geojson", data: geojson });
-    mapInstance.addLayer({
-      id: "heatmap-circles",
-      type: "circle",
-      source: sourceId,
-      paint: {
-        "circle-radius": 20,
-        "circle-color": [
-          "interpolate", ["linear"], ["get", "weight"],
-          0, "#3b82f6",
-          0.4, "#f59e0b",
-          0.7, "#ef4444",
-        ],
-        "circle-opacity": ["interpolate", ["linear"], ["get", "weight"], 0, 0.3, 1, 0.7],
-      },
+    heatmapRef.current = new google.maps.visualization.HeatmapLayer({
+      data: heatmapData,
+      map: mapInstance,
+      radius: 30,
+      opacity: 0.8,
+      gradient: [
+        "rgba(59, 130, 246, 0)",
+        "rgba(59, 130, 246, 0.6)",
+        "rgba(34, 197, 94, 0.7)",
+        "rgba(245, 158, 11, 0.8)",
+        "rgba(239, 68, 68, 0.9)",
+      ],
     });
 
-    // Fit bounds
     if (points.length > 1) {
-      const lngs = points.map(p => p.lng);
-      const lats = points.map(p => p.lat);
-      mapInstance.fitBounds(
-        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-        { padding: 60 }
-      );
+      const bounds = new google.maps.LatLngBounds();
+      points.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
+      mapInstance.fitBounds(bounds, 60);
     } else {
-      mapInstance.flyTo({ center: [points[0].lng, points[0].lat], zoom: 13 });
+      mapInstance.panTo({ lat: points[0].lat, lng: points[0].lng });
+      mapInstance.setZoom(13);
     }
 
     return () => {
-      if (mapInstance.getSource(sourceId)) {
-        mapInstance.removeLayer("heatmap-circles");
-        mapInstance.removeSource(sourceId);
+      if (heatmapRef.current) {
+        heatmapRef.current.setMap(null);
+        heatmapRef.current = null;
       }
     };
   }, [mapInstance, points]);
 
-  const handleMapReady = useCallback((map: any) => {
+  const handleMapReady = useCallback((map: google.maps.Map) => {
     setMapInstance(map);
   }, []);
 

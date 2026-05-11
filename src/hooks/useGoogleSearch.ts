@@ -1,7 +1,5 @@
 import { useState, useCallback } from "react";
-import { searchTomTom, TomTomResult } from "@/lib/tomtom";
-
-console.log("[useGoogleSearch] Module loaded - TomTom version");
+import { searchGooglePlaces, GooglePlaceResult } from "@/lib/googleMaps";
 
 const MAX_DISTANCE_KM = 100;
 const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
@@ -30,17 +28,18 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function tomtomToPlace(item: TomTomResult, userLat: number, userLng: number): GooglePlace {
-  const name = item.poi?.name || item.address.freeformAddress || "";
-  const address = item.address.freeformAddress || "";
-  const category = item.poi?.categories?.[0] || (item.type === "POI" ? "Estabelecimento" : "Endereço");
-  const dist = item.dist ?? haversineDistance(userLat, userLng, item.position.lat, item.position.lon);
+function googleToPlace(item: GooglePlaceResult, userLat: number, userLng: number): GooglePlace {
+  const name = item.displayName || item.shortFormattedAddress || item.formattedAddress;
+  const address = item.formattedAddress;
+  const isPoi = item.types?.some(t => !["street_address", "route", "premise", "geocode", "plus_code"].includes(t));
+  const category = isPoi ? (item.types?.[0] || "Estabelecimento") : "Endereço";
+  const dist = haversineDistance(userLat, userLng, item.lat, item.lng);
 
   return {
-    id: item.id || `tt-${item.position.lat}-${item.position.lon}`,
+    id: item.id || `g-${item.lat}-${item.lng}`,
     text: name,
     place_name: name !== address ? `${name} - ${address}` : address,
-    center: [item.position.lon, item.position.lat],
+    center: [item.lng, item.lat],
     distance: formatDistance(dist),
     distanceMeters: dist,
     category,
@@ -61,18 +60,14 @@ export const useGoogleSearch = () => {
     try {
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
-      console.log("[useGoogleSearch] Searching TomTom:", query, "lat:", lat, "lng:", lng);
-
-      const ttResults = await searchTomTom(query, lat, lng);
-      console.log("[useGoogleSearch] TomTom results:", ttResults.length);
-      const places = ttResults
-        .map((r) => tomtomToPlace(r, lat, lng))
+      const googleResults = await searchGooglePlaces(query, lat, lng);
+      const places = googleResults
+        .map((r) => googleToPlace(r, lat, lng))
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
-
       setResults(places);
     } catch (err) {
-      console.error("[useGoogleSearch] Search error:", err);
+      console.error("[useGoogleSearch] Error:", err);
       setResults([]);
     } finally {
       setLoading(false);

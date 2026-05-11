@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
         </p>
         <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
           <li><strong className="text-foreground">Entre usuários:</strong> nome e localização são compartilhados entre passageiro e motorista durante uma corrida ativa.</li>
-          <li><strong className="text-foreground">Provedores de serviço:</strong> serviços de mapas (TomTom), armazenamento em nuvem e processamento de notificações.</li>
+          <li><strong className="text-foreground">Provedores de serviço:</strong> serviços de mapas (Google Maps), armazenamento em nuvem e processamento de notificações.</li>
           <li><strong className="text-foreground">Obrigações legais:</strong> quando exigido por lei, ordem judicial ou autoridade competente.</li>
         </ul>
         <p className="text-sm text-muted-foreground leading-relaxed mt-2">

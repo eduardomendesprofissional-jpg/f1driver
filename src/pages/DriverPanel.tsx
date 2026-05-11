@@ -19,7 +19,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import mapboxgl from "mapbox-gl";
+/// <reference types="google.maps" />
 import DestinationMode from "@/components/DestinationMode";
 import SelfieVerification from "@/components/SelfieVerification";
 
@@ -30,8 +30,8 @@ const DriverPanel = () => {
   const [accepting, setAccepting] = useState(false);
   const [tab, setTab] = useState<"corridas" | "envios">("corridas");
   const [searchCenter, setSearchCenter] = useState<[number, number] | undefined>();
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const searchMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const searchMarkerRef = useRef<google.maps.Marker | null>(null);
   const { position, permission, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
 
   const [dailyEarnings, setDailyEarnings] = useState(0);
@@ -113,10 +113,14 @@ const DriverPanel = () => {
   const handleSearchSelect = (lat: number, lng: number, address: string) => {
     setSearchCenter([lng, lat]);
     if (mapRef.current) {
-      mapRef.current.flyTo({ center: [lng, lat], zoom: 16 });
-      if (searchMarkerRef.current) searchMarkerRef.current.remove();
-      searchMarkerRef.current = new mapboxgl.Marker({ color: "#ef4444" })
-        .setLngLat([lng, lat]).setPopup(new mapboxgl.Popup({ offset: 25 }).setText(address)).addTo(mapRef.current);
+      mapRef.current.panTo({ lat, lng });
+      mapRef.current.setZoom(16);
+      if (searchMarkerRef.current) searchMarkerRef.current.setMap(null);
+      searchMarkerRef.current = new google.maps.Marker({
+        position: { lat, lng },
+        map: mapRef.current,
+        title: address,
+      });
     }
   };
 

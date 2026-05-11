@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { TOMTOM_KEY } from "@/lib/tomtom";
+import { reverseGeocode } from "@/lib/googleMaps";
 
 export interface GeoPosition {
   lat: number;
@@ -17,17 +17,9 @@ export const useGeolocation = () => {
   const [showGpsModal, setShowGpsModal] = useState(false);
   const initialRequestDone = useRef(false);
 
-  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+  const doReverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      const res = await fetch(
-        `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_KEY}&language=pt-BR`
-      );
-      const data = await res.json();
-      const addr = data.addresses?.[0]?.address;
-      if (addr) {
-        return addr.freeformAddress || addr.streetName || "Sua localização";
-      }
-      return "Sua localização";
+      return await reverseGeocode(lat, lng);
     } catch {
       return "Sua localização";
     }
@@ -48,7 +40,7 @@ export const useGeolocation = () => {
         setPosition({ lat, lng });
         setPermission("granted");
         setError(null);
-        const addr = await reverseGeocode(lat, lng);
+        const addr = await doReverseGeocode(lat, lng);
         setEndereco(addr);
         setLoading(false);
       },
@@ -66,7 +58,7 @@ export const useGeolocation = () => {
       },
       { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
     );
-  }, [reverseGeocode]);
+  }, [doReverseGeocode]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -119,7 +111,7 @@ export const useGeolocation = () => {
         async (pos) => {
           const { latitude: lat, longitude: lng } = pos.coords;
           setPosition({ lat, lng });
-          const addr = await reverseGeocode(lat, lng);
+          const addr = await doReverseGeocode(lat, lng);
           setEndereco(addr);
         },
         () => {},
@@ -129,7 +121,7 @@ export const useGeolocation = () => {
 
     const intervalId = setInterval(updatePosition, 15000);
     return () => clearInterval(intervalId);
-  }, [permission, reverseGeocode]);
+  }, [permission, doReverseGeocode]);
 
   return { position, endereco, permission, loading, error, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal };
 };

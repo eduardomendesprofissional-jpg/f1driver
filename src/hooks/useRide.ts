@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { getDirections } from "@/lib/googleMaps";
 
 export interface RideEstimate {
   distancia_km: number;
@@ -26,15 +26,11 @@ export const useRide = () => {
   ): Promise<RideEstimate | null> => {
     setEstimating(true);
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?access_token=${MAPBOX_TOKEN}&language=pt-BR&overview=false`
-      );
-      const data = await res.json();
-      const route = data.routes?.[0];
+      const route = await getDirections(origem.lat, origem.lng, destino.lat, destino.lng);
       if (!route) return null;
 
-      const distancia_km = Math.round((route.distance / 1000) * 10) / 10;
-      const duracao_min = Math.round(route.duration / 60);
+      const distancia_km = Math.round((route.distance_m / 1000) * 10) / 10;
+      const duracao_min = Math.round(route.duration_s / 60);
 
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5);

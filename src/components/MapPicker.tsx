@@ -1,12 +1,9 @@
+/// <reference types="google.maps" />
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
-
-mapboxgl.accessToken = MAPBOX_TOKEN;
+import { loadGoogleMaps, DARK_MAP_STYLE, reverseGeocode } from "@/lib/googleMaps";
 
 interface MapPickerProps {
   initialCenter?: [number, number]; // [lng, lat]
@@ -34,28 +31,21 @@ const MapPicker = ({
   userPosition,
 }: MapPickerProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [address, setAddress] = useState("Mova o mapa para selecionar");
   const [loading, setLoading] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [distanceText, setDistanceText] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const reverseGeocode = useCallback(async (lng: number, lat: number) => {
+  const updateFromCenter = useCallback(async (lat: number, lng: number) => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=pt-BR&limit=1`
-      );
-      const data = await res.json();
-      const name = data.features?.[0]?.place_name || "Local selecionado";
+      const name = await reverseGeocode(lat, lng);
       setAddress(name);
-    } catch {
-      setAddress("Local selecionado");
     } finally {
       setLoading(false);
     }
-
     if (userPosition) {
       const dist = haversineKm(userPosition.lat, userPosition.lng, lat, lng);
       setDistanceText(dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`);
@@ -65,36 +55,40 @@ const MapPicker = ({
 
   useEffect(() => {
     if (!mapContainer.current) return;
+    let cancelled = false;
 
-    const center: [number, number] = initialCenter || [-47.9292, -15.7801];
+    const center = initialCenter
+      ? { lat: initialCenter[1], lng: initialCenter[0] }
+      : { lat: -15.7801, lng: -47.9292 };
 
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/navigation-night-v1",
-      center,
-      zoom: initialCenter ? 15 : 4,
-      attributionControl: false,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
-
-    map.on("load", () => {
+    loadGoogleMaps().then(() => {
+      if (cancelled || !mapContainer.current) return;
+      const map = new google.maps.Map(mapContainer.current, {
+        center,
+        zoom: initialCenter ? 15 : 4,
+        disableDefaultUI: true,
+        zoomControl: true,
+        zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
+        gestureHandling: "greedy",
+        styles: DARK_MAP_STYLE,
+        clickableIcons: false,
+      });
       mapRef.current = map;
-      if (initialCenter) {
-        reverseGeocode(initialCenter[0], initialCenter[1]);
-      }
-    });
 
-    map.on("moveend", () => {
-      const c = map.getCenter();
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        reverseGeocode(c.lng, c.lat);
-      }, 400);
+      if (initialCenter) updateFromCenter(initialCenter[1], initialCenter[0]);
+
+      map.addListener("idle", () => {
+        const c = map.getCenter();
+        if (!c) return;
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          updateFromCenter(c.lat(), c.lng());
+        }, 400);
+      });
     });
 
     return () => {
-      map.remove();
+      cancelled = true;
       mapRef.current = null;
     };
   }, []);
@@ -102,7 +96,8 @@ const MapPicker = ({
   const handleConfirm = () => {
     if (!mapRef.current || blocked) return;
     const c = mapRef.current.getCenter();
-    onConfirm(c.lat, c.lng, address);
+    if (!c) return;
+    onConfirm(c.lat(), c.lng(), address);
   };
 
   return (
@@ -133,10 +128,8 @@ const MapPicker = ({
         </div>
       </div>
 
-      {/* Map */}
       <div ref={mapContainer} className="flex-1 w-full h-full" />
 
-      {/* Center pin (always centered on screen) */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <div className="flex flex-col items-center -mt-10">
           <MapPin size={40} className={`drop-shadow-lg ${blocked ? "text-destructive" : "text-primary"}`} />
@@ -144,7 +137,6 @@ const MapPicker = ({
         </div>
       </div>
 
-      {/* Bottom confirm */}
       <div className="absolute bottom-0 left-0 right-0 z-20 p-4 pb-6">
         <div className="bg-card/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-xl space-y-3">
           <div className="flex items-center justify-between">
