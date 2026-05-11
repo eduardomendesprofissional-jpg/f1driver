@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield } from "lucide-react";
+import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,16 @@ const Motoristas = () => {
         data: { type: "approval_status", status },
       },
     }).catch(() => {});
+  };
+
+  const seedCredit = async (driverId: string) => {
+    setUpdating(true);
+    const { error } = await supabase
+      .from("extrato_creditos" as any)
+      .insert({ perfil_id: driverId, valor: 50, status: "aprovado" } as any);
+    setUpdating(false);
+    if (error) return toast.error("Erro ao creditar: " + error.message);
+    toast.success("R$ 50,00 creditados ao motorista (teste).");
   };
 
   const filtered = drivers.filter((d) => {
@@ -277,6 +287,17 @@ const Motoristas = () => {
                     Revogar aprovação
                   </Button>
                 )}
+
+                {/* Seed test balance */}
+                <Button
+                  variant="outline"
+                  className="w-full h-10 font-semibold border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={() => seedCredit(selectedDriver.id)}
+                  disabled={updating}
+                >
+                  <Wallet size={14} className="mr-2" />
+                  Creditar R$ 50,00 (teste)
+                </Button>
               </div>
             );
           })()}
