@@ -1,0 +1,2 @@
+ALTER TABLE public.rides REPLICA IDENTITY FULL;
+ALTER TABLE public.driver_locations REPLICA IDENTITY FULL;
