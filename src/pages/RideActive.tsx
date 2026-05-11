@@ -159,9 +159,10 @@ const RideActive = () => {
     const timer = setTimeout(async () => {
       const { data } = await supabase.rpc("redispatch_expanded_radius" as any, { p_ride_id: rideId });
       if (data === "redispatched_10km") {
+        setSearchExpanded(true);
         toast.info("Expandindo busca para 10km...");
       } else if (data === "no_drivers_10km") {
-        toast.warning("Nenhum motorista disponível no momento. Aguarde...");
+        setNoDriversAvailable(true);
       }
     }, 30000);
 
