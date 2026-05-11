@@ -58,11 +58,12 @@ export const useGoogleSearch = () => {
     }
     setLoading(true);
     try {
+      const hasUserPos = !!proximity;
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
       const googleResults = await searchGooglePlaces(query, lat, lng);
       const places = googleResults
-        .map((r) => googleToPlace(r, lat, lng))
+        .map((r) => googleToPlace(r, lat, lng, hasUserPos))
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
       setResults(places);
