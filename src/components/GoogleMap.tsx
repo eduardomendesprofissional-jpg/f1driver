@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Crosshair } from "lucide-react";
 import { loadGoogleMaps, DARK_MAP_STYLE } from "@/lib/googleMaps";

@@ -40,7 +40,7 @@ export const useGeolocation = () => {
         setPosition({ lat, lng });
         setPermission("granted");
         setError(null);
-        const addr = await reverseGeocode(lat, lng);
+        const addr = await doReverseGeocode(lat, lng);
         setEndereco(addr);
         setLoading(false);
       },
@@ -58,7 +58,7 @@ export const useGeolocation = () => {
       },
       { enableHighAccuracy: true, timeout: 30000, maximumAge: 60000 }
     );
-  }, [reverseGeocode]);
+  }, [doReverseGeocode]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -111,7 +111,7 @@ export const useGeolocation = () => {
         async (pos) => {
           const { latitude: lat, longitude: lng } = pos.coords;
           setPosition({ lat, lng });
-          const addr = await reverseGeocode(lat, lng);
+          const addr = await doReverseGeocode(lat, lng);
           setEndereco(addr);
         },
         () => {},
@@ -121,7 +121,7 @@ export const useGeolocation = () => {
 
     const intervalId = setInterval(updatePosition, 15000);
     return () => clearInterval(intervalId);
-  }, [permission, reverseGeocode]);
+  }, [permission, doReverseGeocode]);
 
   return { position, endereco, permission, loading, error, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal };
 };
