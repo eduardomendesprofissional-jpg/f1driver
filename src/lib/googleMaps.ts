@@ -3,19 +3,27 @@ import { Loader } from "@googlemaps/js-api-loader";
 export const GOOGLE_MAPS_KEY = "AIzaSyDE1pRwXHYINMp6fmtA9JTrvgNzxn5D5MQ";
 
 let loaderInstance: Loader | null = null;
-let loadPromise: Promise<typeof google> | null = null;
+let loadPromise: Promise<void> | null = null;
 
-export const loadGoogleMaps = () => {
+export const loadGoogleMaps = (): Promise<void> => {
   if (!loaderInstance) {
     loaderInstance = new Loader({
       apiKey: GOOGLE_MAPS_KEY,
       version: "weekly",
-      libraries: ["places", "visualization", "geometry"],
       language: "pt-BR",
       region: "BR",
     });
   }
-  if (!loadPromise) loadPromise = loaderInstance.load();
+  if (!loadPromise) {
+    const loader = loaderInstance;
+    loadPromise = (async () => {
+      await loader.importLibrary("maps");
+      await loader.importLibrary("places");
+      await loader.importLibrary("visualization");
+      await loader.importLibrary("geometry");
+      await loader.importLibrary("marker");
+    })();
+  }
   return loadPromise;
 };
 
