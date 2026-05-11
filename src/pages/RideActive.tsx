@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone, MessageCircle, X, Star, Loader2, Clock, Navigation,
+  Phone, MessageCircle, X, Star, Clock, Navigation,
   ExternalLink, MapPin, CheckCircle2, Timer, AlertTriangle,
   StopCircle, Route, DollarSign
 } from "lucide-react";
