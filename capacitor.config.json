@@ -1,0 +1,20 @@
+{
+  "appId": "app.lovable.8a74dc122673433c9de218b1570a78bc",
+  "appName": "F1 Driver",
+  "webDir": "dist",
+  "server": {
+    "url": "https://8a74dc12-2673-433c-9de2-18b1570a78bc.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "android": {
+    "backgroundColor": "#000000"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#000000",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    }
+  }
+}
