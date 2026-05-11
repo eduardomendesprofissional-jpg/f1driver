@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { TOMTOM_KEY } from "@/lib/tomtom";
+import { reverseGeocode } from "@/lib/googleMaps";
 
 export interface GeoPosition {
   lat: number;
@@ -17,17 +17,9 @@ export const useGeolocation = () => {
   const [showGpsModal, setShowGpsModal] = useState(false);
   const initialRequestDone = useRef(false);
 
-  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+  const doReverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      const res = await fetch(
-        `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_KEY}&language=pt-BR`
-      );
-      const data = await res.json();
-      const addr = data.addresses?.[0]?.address;
-      if (addr) {
-        return addr.freeformAddress || addr.streetName || "Sua localização";
-      }
-      return "Sua localização";
+      return await reverseGeocode(lat, lng);
     } catch {
       return "Sua localização";
     }
