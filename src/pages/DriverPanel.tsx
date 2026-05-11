@@ -506,6 +506,15 @@ const DriverPanel = () => {
           />
         </div>
       )}
+
+      <DriverRideRequestOverlay
+        request={currentRequest}
+        countdown={countdown}
+        accepting={accepting}
+        onAccept={handleAccept}
+        onReject={rejectRide}
+        totalSeconds={15}
+      />
     </div>
   );
 };
