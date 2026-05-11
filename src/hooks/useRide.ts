@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { getDirections } from "@/lib/googleMaps";
 
 export interface RideEstimate {
@@ -16,9 +15,7 @@ export interface RideEstimate {
 }
 
 export const useRide = () => {
-  const { user } = useAuth();
   const [estimating, setEstimating] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   const estimate = async (
     origem: { endereco: string; lat: number; lng: number },
@@ -80,40 +77,7 @@ export const useRide = () => {
     }
   };
 
-  // Creates ride WITHOUT dispatching - dispatch happens after payment
-  const createRide = async (est: RideEstimate, forma_pagamento: string) => {
-    if (!user) return null;
-    setCreating(true);
-    try {
-      const { data, error } = await supabase
-        .from("rides")
-        .insert({
-          passageiro_id: user.id,
-          origem_endereco: est.origem_endereco,
-          origem_lat: est.origem_lat,
-          origem_lng: est.origem_lng,
-          destino_endereco: est.destino_endereco,
-          destino_lat: est.destino_lat,
-          destino_lng: est.destino_lng,
-          distancia_km: est.distancia_km,
-          duracao_min: est.duracao_min,
-          valor: est.valor,
-          forma_pagamento,
-          status: "waiting_payment",
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error("Erro ao criar corrida:", err);
-      return null;
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  // Dispatch ride to find a driver - called AFTER payment succeeds
+  // Dispatch ride to find a driver - called immediately after ride creation
   const dispatchRide = async (rideId: string, est: RideEstimate) => {
     try {
       const result = await supabase.rpc("dispatch_ride", { p_ride_id: rideId });
@@ -147,5 +111,5 @@ export const useRide = () => {
     return !error;
   };
 
-  return { estimate, estimating, createRide, creating, dispatchRide, updateRideStatus };
+  return { estimate, estimating, dispatchRide, updateRideStatus };
 };
