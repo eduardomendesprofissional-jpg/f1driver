@@ -147,17 +147,38 @@ const RideConfirm = () => {
           )}
         </motion.div>
 
-        {/* Payment info */}
+        {/* Forma de pagamento (informativo — pago direto ao motorista) */}
         <div className="mt-5">
-          <div className="flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card">
-            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-              <span className="text-lg">💵</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Pagamento direto com o motorista</p>
-              <p className="text-xs text-muted-foreground">Dinheiro, PIX ou cartão no momento da corrida</p>
-            </div>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+            Forma de pagamento
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { id: "dinheiro", label: "Dinheiro", icon: "💵" },
+              { id: "pix", label: "PIX", icon: "📱" },
+              { id: "maquininha", label: "Maquininha", icon: "💳" },
+            ] as const).map((opt) => {
+              const active = formaPagamento === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setFormaPagamento(opt.id)}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition press ${
+                    active
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-card border-border/50 text-foreground"
+                  }`}
+                >
+                  <span className="text-xl">{opt.icon}</span>
+                  <span className="text-xs font-semibold">{opt.label}</span>
+                </button>
+              );
+            })}
           </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            O pagamento é feito direto com o motorista no fim da corrida.
+          </p>
         </div>
 
         {/* Multi-stop */}
