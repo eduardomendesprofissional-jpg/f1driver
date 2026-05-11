@@ -1,14 +1,14 @@
 import { useState, useCallback } from "react";
-import { MapPin, Loader2 } from "lucide-react";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { Loader2 } from "lucide-react";
+import { nearbyGooglePlaces } from "@/lib/googleMaps";
 
 const CATEGORIES = [
-  { value: "restaurant", label: "Restaurantes", icon: "🍽️", mapboxCategory: "restaurant" },
-  { value: "gas_station", label: "Postos", icon: "⛽", mapboxCategory: "fuel" },
-  { value: "pharmacy", label: "Farmácias", icon: "💊", mapboxCategory: "pharmacy" },
-  { value: "shopping_mall", label: "Lojas", icon: "🛒", mapboxCategory: "shop" },
-  { value: "hospital", label: "Hospitais", icon: "🏥", mapboxCategory: "hospital" },
-  { value: "bank", label: "Bancos", icon: "🏦", mapboxCategory: "bank" },
+  { value: "restaurant", label: "Restaurantes", icon: "🍽️", googleType: "restaurant" },
+  { value: "gas_station", label: "Postos", icon: "⛽", googleType: "gas_station" },
+  { value: "pharmacy", label: "Farmácias", icon: "💊", googleType: "pharmacy" },
+  { value: "shopping_mall", label: "Lojas", icon: "🛒", googleType: "shopping_mall" },
+  { value: "hospital", label: "Hospitais", icon: "🏥", googleType: "hospital" },
+  { value: "bank", label: "Bancos", icon: "🏦", googleType: "bank" },
 ];
 
 interface NearbyPlace {
@@ -41,34 +41,26 @@ const NearbyPlaces = ({ userPosition, onSelectPlace }: NearbyPlacesProps) => {
 
   const searchNearby = useCallback(async (category: string) => {
     if (!userPosition) return;
-
     if (activeCategory === category) {
       setActiveCategory(null);
       setPlaces([]);
       return;
     }
-
     setActiveCategory(category);
     setLoading(true);
 
     const cat = CATEGORIES.find(c => c.value === category);
-
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cat?.mapboxCategory || category)}.json?access_token=${MAPBOX_TOKEN}&proximity=${userPosition.lng},${userPosition.lat}&language=pt-BR&limit=8&types=poi&country=BR`
-      );
-      const data = await res.json();
-
-      const results: NearbyPlace[] = (data.features || []).map((f: any) => ({
-        id: f.id,
-        name: f.text || f.place_name,
-        address: f.place_name || "",
+      const results = await nearbyGooglePlaces(cat?.googleType || category, userPosition.lat, userPosition.lng, 5000);
+      const mapped: NearbyPlace[] = results.map((r) => ({
+        id: r.id,
+        name: r.displayName || r.formattedAddress,
+        address: r.formattedAddress,
         category,
-        center: f.center as [number, number],
-        distance: getDistance(userPosition.lat, userPosition.lng, f.center[1], f.center[0]),
+        center: [r.lng, r.lat],
+        distance: getDistance(userPosition.lat, userPosition.lng, r.lat, r.lng),
       }));
-
-      setPlaces(results);
+      setPlaces(mapped);
     } catch {
       setPlaces([]);
     } finally {
@@ -79,7 +71,7 @@ const NearbyPlaces = ({ userPosition, onSelectPlace }: NearbyPlacesProps) => {
   return (
     <div className="space-y-3">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estabelecimentos próximos</p>
-      
+
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {CATEGORIES.map((cat) => (
           <button

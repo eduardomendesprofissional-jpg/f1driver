@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Navigation, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import { ChevronRight, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MAPBOX_TOKEN } from "@/lib/mapbox";
+import { getDirections } from "@/lib/googleMaps";
 
 interface TurnByTurnProps {
   originLat: number;
@@ -14,22 +14,24 @@ interface Step {
   instruction: string;
   distance: number;
   duration: number;
-  maneuver: { type: string; modifier?: string };
+  maneuver?: string;
 }
 
-const maneuverIcon = (type: string, modifier?: string) => {
-  if (type === "turn") {
-    if (modifier === "left") return "↰";
-    if (modifier === "right") return "↱";
-    if (modifier === "sharp left") return "⤺";
-    if (modifier === "sharp right") return "⤻";
-    if (modifier === "slight left") return "↖";
-    if (modifier === "slight right") return "↗";
+const maneuverIcon = (maneuver?: string) => {
+  if (!maneuver) return "→";
+  if (maneuver.includes("left")) {
+    if (maneuver.includes("sharp")) return "⤺";
+    if (maneuver.includes("slight")) return "↖";
+    return "↰";
   }
-  if (type === "merge") return "⤴";
-  if (type === "roundabout") return "↻";
-  if (type === "arrive") return "🏁";
-  if (type === "depart") return "🚗";
+  if (maneuver.includes("right")) {
+    if (maneuver.includes("sharp")) return "⤻";
+    if (maneuver.includes("slight")) return "↗";
+    return "↱";
+  }
+  if (maneuver.includes("merge")) return "⤴";
+  if (maneuver.includes("roundabout")) return "↻";
+  if (maneuver === "straight") return "↑";
   return "→";
 };
 
@@ -41,24 +43,16 @@ const TurnByTurn = ({ originLat, originLng, destLat, destLng }: TurnByTurnProps)
 
   useEffect(() => {
     const fetchDirections = async () => {
-      try {
-        const res = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${originLng},${originLat};${destLng},${destLat}?access_token=${MAPBOX_TOKEN}&steps=true&language=pt-BR&overview=full`
+      const result = await getDirections(originLat, originLng, destLat, destLng, true);
+      if (result?.steps) {
+        setSteps(
+          result.steps.map((s) => ({
+            instruction: s.instruction,
+            distance: s.distance_m,
+            duration: s.duration_s,
+            maneuver: s.maneuver,
+          }))
         );
-        const data = await res.json();
-        const route = data.routes?.[0];
-        if (route?.legs?.[0]?.steps) {
-          setSteps(
-            route.legs[0].steps.map((s: any) => ({
-              instruction: s.maneuver.instruction,
-              distance: s.distance,
-              duration: s.duration,
-              maneuver: { type: s.maneuver.type, modifier: s.maneuver.modifier },
-            }))
-          );
-        }
-      } catch {
-        // silently fail
       }
     };
     fetchDirections();
@@ -80,13 +74,9 @@ const TurnByTurn = ({ originLat, originLng, destLat, destLng }: TurnByTurnProps)
 
   return (
     <div className="space-y-2">
-      {/* Current instruction */}
-      <motion.div
-        layout
-        className="bg-primary text-primary-foreground rounded-2xl p-4 shadow-lg"
-      >
+      <motion.div layout className="bg-primary text-primary-foreground rounded-2xl p-4 shadow-lg">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{maneuverIcon(current.maneuver.type, current.maneuver.modifier)}</span>
+          <span className="text-3xl">{maneuverIcon(current.maneuver)}</span>
           <div className="flex-1">
             <p className="text-sm font-bold leading-tight">{current.instruction}</p>
             <p className="text-xs opacity-75 mt-0.5">
@@ -96,22 +86,16 @@ const TurnByTurn = ({ originLat, originLng, destLat, destLng }: TurnByTurnProps)
             </p>
           </div>
           <div className="flex flex-col gap-1">
-            <button
-              onClick={() => setVoiceOn(!voiceOn)}
-              className="p-1.5 rounded-lg bg-primary-foreground/10"
-            >
+            <button onClick={() => setVoiceOn(!voiceOn)} className="p-1.5 rounded-lg bg-primary-foreground/10">
               {voiceOn ? <Volume2 size={14} /> : <VolumeX size={14} />}
             </button>
           </div>
         </div>
       </motion.div>
 
-      {/* Next instruction preview */}
       {nextStep && (
         <div className="bg-card border border-border rounded-xl px-4 py-2.5 flex items-center gap-3">
-          <span className="text-lg opacity-60">
-            {maneuverIcon(nextStep.maneuver.type, nextStep.maneuver.modifier)}
-          </span>
+          <span className="text-lg opacity-60">{maneuverIcon(nextStep.maneuver)}</span>
           <p className="text-xs text-muted-foreground flex-1 truncate">{nextStep.instruction}</p>
           <span className="text-[10px] text-muted-foreground shrink-0">
             {nextStep.distance >= 1000
@@ -121,7 +105,6 @@ const TurnByTurn = ({ originLat, originLng, destLat, destLng }: TurnByTurnProps)
         </div>
       )}
 
-      {/* All steps (expandable) */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-center gap-1 text-xs text-primary font-semibold py-1"
@@ -147,7 +130,7 @@ const TurnByTurn = ({ originLat, originLng, destLat, destLng }: TurnByTurnProps)
                     i === currentStep ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
                   }`}
                 >
-                  <span className="text-sm">{maneuverIcon(step.maneuver.type, step.maneuver.modifier)}</span>
+                  <span className="text-sm">{maneuverIcon(step.maneuver)}</span>
                   <p className="text-xs flex-1 truncate">{step.instruction}</p>
                   <span className="text-[10px] shrink-0">
                     {step.distance >= 1000
@@ -161,7 +144,6 @@ const TurnByTurn = ({ originLat, originLng, destLat, destLng }: TurnByTurnProps)
         )}
       </AnimatePresence>
 
-      {/* Step navigation */}
       <div className="flex gap-2">
         <button
           onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
