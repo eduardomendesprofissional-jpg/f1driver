@@ -16,12 +16,13 @@ const RideConfirm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { origem, destino } = (location.state as any) || {};
-  const { estimate, estimating, creating, dispatchRide } = useRide();
+  const { estimate, estimating, dispatchRide } = useRide();
   const [est, setEst] = useState<RideEstimate | null>(null);
   const [stops, setStops] = useState<StopPoint[]>([]);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [showScheduler, setShowScheduler] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [formaPagamento, setFormaPagamento] = useState<"dinheiro" | "pix" | "maquininha">("dinheiro");
 
   useEffect(() => {
     if (!origem || !destino) {
