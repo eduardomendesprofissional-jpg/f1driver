@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminPWAInstallPrompt from "@/components/AdminPWAInstallPrompt";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu, Sun, Moon, X } from "lucide-react";
@@ -103,6 +104,7 @@ const AdminLayout = () => {
         </div>
 
         <main className="flex-1 overflow-y-auto p-4">
+          <AdminPWAInstallPrompt />
           <Outlet />
         </main>
       </div>
@@ -123,6 +125,7 @@ const AdminLayout = () => {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">
+          <AdminPWAInstallPrompt />
           <Outlet />
         </main>
       </div>
