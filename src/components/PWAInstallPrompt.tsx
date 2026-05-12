@@ -19,8 +19,9 @@ const PWAInstallPrompt = () => {
     const isPreview =
       window.location.hostname.includes("id-preview--") ||
       window.location.hostname.includes("lovableproject.com");
+    const isAdminRoute = window.location.pathname.startsWith("/admin");
 
-    if (isInIframe || isPreview) return;
+    if (isInIframe || isPreview || isAdminRoute) return;
 
     const dismissed = localStorage.getItem("pwa-install-dismissed");
     if (dismissed && Date.now() - Number(dismissed) < 7 * 24 * 60 * 60 * 1000) return;
