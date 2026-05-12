@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminPWAInstallPrompt from "@/components/AdminPWAInstallPrompt";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu, Sun, Moon, X } from "lucide-react";
