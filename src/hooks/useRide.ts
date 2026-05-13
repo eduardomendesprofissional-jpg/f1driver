@@ -33,17 +33,25 @@ export const useRide = () => {
       const currentTime = now.toTimeString().slice(0, 5);
       const currentDay = now.getDay();
 
+      // Fetch ALL active pricing rules and pick the one matching current day/time
+      // (filtering server-side by time fails when faixas crossing midnight)
       const { data: pricingRows } = await supabase
         .from("precificacao")
         .select("*")
         .eq("categoria", "Carro")
         .eq("ativo", true)
-        .lte("hora_inicio", currentTime)
-        .gte("hora_fim", currentTime)
-        .contains("dias_semana", [currentDay])
-        .limit(1);
+        .order("multiplicador", { ascending: false })
+        .order("updated_at", { ascending: false });
 
-      const pricing = pricingRows?.[0];
+      const pricing = (pricingRows || []).find((p: any) => {
+        const dias: number[] = p.dias_semana ?? [0, 1, 2, 3, 4, 5, 6];
+        if (!dias.includes(currentDay)) return false;
+        const ini = (p.hora_inicio || "00:00").slice(0, 5);
+        const fim = (p.hora_fim || "23:59").slice(0, 5);
+        // Crosses midnight (e.g. 22:00 → 04:00)
+        if (fim < ini) return currentTime >= ini || currentTime <= fim;
+        return currentTime >= ini && currentTime <= fim;
+      });
 
       let valor: number;
       if (pricing) {
