@@ -1,11 +1,17 @@
 {
+  "id": "/?source=pwa",
   "name": "F1 Driver - Mobilidade Urbana",
   "short_name": "F1 Driver",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["travel", "navigation", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
