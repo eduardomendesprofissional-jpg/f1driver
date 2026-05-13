@@ -99,7 +99,12 @@ const Administradores = () => {
     setSaving(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, nome: string) => {
+    const ok = await confirm({
+      title: "Remover administrador",
+      description: `Deseja remover ${nome}? Esta ação não pode ser desfeita.`,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("administradores").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao remover administrador");
