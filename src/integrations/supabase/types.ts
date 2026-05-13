@@ -481,6 +481,8 @@ export type Database = {
           status_aprovacao: string
           stripe_customer_id: string | null
           telefone: string | null
+          tem_perfil_motorista: boolean
+          tem_perfil_passageiro: boolean
           tipo: string
           updated_at: string
           veiculo_cor: string | null
@@ -508,6 +510,8 @@ export type Database = {
           status_aprovacao?: string
           stripe_customer_id?: string | null
           telefone?: string | null
+          tem_perfil_motorista?: boolean
+          tem_perfil_passageiro?: boolean
           tipo?: string
           updated_at?: string
           veiculo_cor?: string | null
@@ -535,6 +539,8 @@ export type Database = {
           status_aprovacao?: string
           stripe_customer_id?: string | null
           telefone?: string | null
+          tem_perfil_motorista?: boolean
+          tem_perfil_passageiro?: boolean
           tipo?: string
           updated_at?: string
           veiculo_cor?: string | null
