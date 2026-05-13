@@ -36,6 +36,24 @@ const Passageiros = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<PassengerProfile | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const confirm = useConfirm();
+
+  const handleDelete = async (p: PassengerProfile) => {
+    const ok = await confirm({
+      title: "Excluir passageiro",
+      description: `Tem certeza que deseja excluir ${p.nome || "este passageiro"}? Todos os dados (corridas, avaliações, pagamentos) serão removidos permanentemente.`,
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
+    setDeletingId(p.id);
+    const { error } = await supabase.functions.invoke("admin-delete-user", { body: { user_id: p.id } });
+    setDeletingId(null);
+    if (error) return toast.error("Erro ao excluir: " + error.message);
+    toast.success("Passageiro excluído");
+    setPassageiros((prev) => prev.filter((x) => x.id !== p.id));
+    setSelected(null);
+  };
 
   useEffect(() => {
     fetchPassageiros();
