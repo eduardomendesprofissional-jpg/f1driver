@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 import DeleteAccountDialog from "@/components/DeleteAccountDialog";
+import ProfileSwitcher from "@/components/ProfileSwitcher";
 
 interface Profile {
   nome: string | null;
