@@ -488,6 +488,7 @@ const ProfileScreen = () => {
             <span className="flex-1 text-left text-sm font-medium text-foreground">Política de Privacidade</span>
             <ChevronRight size={16} className="text-muted-foreground" />
           </button>
+          <ProfileSwitcher current="passageiro" />
           <button
             onClick={() => setShowDeleteAccount(true)}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
