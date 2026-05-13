@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface Banner {
   id: number;
@@ -13,6 +14,7 @@ interface Banner {
 }
 
 const AnunciosBanners = () => {
+  const confirm = useConfirm();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
