@@ -23,8 +23,13 @@ const WhatsPalavrasChave = () => {
     toast.success("Palavra-chave adicionada!");
   };
 
-  const handleRemover = (index: number) => {
+  const handleRemover = async (index: number) => {
     const p = palavras[index];
+    const ok = await confirm({
+      title: "Remover palavra-chave",
+      description: `Deseja remover "${p.palavra}"?`,
+    });
+    if (!ok) return;
     setPalavras(palavras.filter((_, i) => i !== index));
     toast.success(`"${p.palavra}" removida.`);
   };
