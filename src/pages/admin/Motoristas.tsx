@@ -305,6 +305,43 @@ const Motoristas = () => {
                   </div>
                 </div>
 
+                {/* Operação & Recargas */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Activity size={12} /> Operação
+                  </p>
+                  {loadingStats || !stats ? (
+                    <div className="text-xs text-muted-foreground py-2">Carregando estatísticas...</div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase">Saldo atual</p>
+                        <p className={`font-bold ${(selectedDriver.driver_balance ?? 0) < 0 ? "text-destructive" : "text-success"}`}>
+                          R$ {Number(selectedDriver.driver_balance ?? 0).toFixed(2)}
+                        </p>
+                        {selectedDriver.is_blocked && <p className="text-[10px] text-destructive">Bloqueado</p>}
+                      </div>
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase">Recargas</p>
+                        <p className="font-bold">R$ {stats.totalRecargas.toFixed(2)}</p>
+                        <p className="text-[10px] text-muted-foreground">{stats.recargasAprovadas} aprovadas</p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase">Corridas</p>
+                        <p className="font-bold">{stats.totalCorridas}</p>
+                        <p className="text-[10px] text-muted-foreground">{stats.corridasFinalizadas} finalizadas</p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1"><TrendingUp size={10}/> Horário pico</p>
+                        <p className="font-bold">{stats.horaPico || "—"}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {stats.ultimaCorrida ? `Últ.: ${new Date(stats.ultimaCorrida).toLocaleDateString("pt-BR")}` : "Sem corridas"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Actions */}
                 {selectedDriver.status_aprovacao === "em_analise" && (
                   <div className="flex gap-3 pt-2">
