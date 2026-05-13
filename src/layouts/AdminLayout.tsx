@@ -52,6 +52,7 @@ const AdminLayout = () => {
 
   if (isMobile) {
     return (
+      <ConfirmDialogProvider>
       <div className="flex flex-col min-h-screen w-full bg-background">
         {/* Header */}
         <header className="h-14 border-b border-border flex items-center justify-between px-4 shrink-0 sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
