@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet, TrendingUp, Activity } from "lucide-react";
+import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet, TrendingUp, Activity, Trash2, Loader2 } from "lucide-react";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
