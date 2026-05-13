@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
+import ProfileSwitcher from "@/components/ProfileSwitcher";
 
 interface Profile {
   nome: string | null;
@@ -616,6 +617,7 @@ const DriverProfileScreen = () => {
             <span className="flex-1 text-left text-sm font-medium text-foreground">Configurações</span>
             <ChevronRight size={16} className="text-muted-foreground" />
           </button>
+          <ProfileSwitcher current="motorista" />
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors"

@@ -85,7 +85,12 @@ const LoginScreen = () => {
         navigate(tipo === "motorista" ? "/driver" : "/passenger");
       }
     } catch (err: any) {
-      toast.error(err.message || "Erro ao autenticar.");
+      const msg = String(err?.message || "");
+      if (isSignUp && /already|registered|exists/i.test(msg)) {
+        toast.error("Este e-mail já tem conta. Faça login e ative o outro perfil em Conta → Trocar perfil.");
+      } else {
+        toast.error(msg || "Erro ao autenticar.");
+      }
     } finally { setLoading(false); }
   };
 
