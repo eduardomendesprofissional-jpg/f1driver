@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, User, Eye, Loader2, Mail, Phone, Calendar } from "lucide-react";
+import { Search, User, Eye, Loader2, Mail, Phone, Calendar, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV, printTable } from "@/lib/table-utils";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface PassengerProfile {
   id: string;
