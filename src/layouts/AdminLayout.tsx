@@ -134,6 +134,7 @@ const AdminLayout = () => {
         </main>
       </div>
     </div>
+    </ConfirmDialogProvider>
   );
 };
 
