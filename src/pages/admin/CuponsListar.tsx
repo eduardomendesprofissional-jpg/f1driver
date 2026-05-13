@@ -72,7 +72,11 @@ const CuponsListar = () => {
                     <TableCell className="text-sm">{String(c.usos)}</TableCell>
                     <TableCell className="text-sm">{String(c.validade)}</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{String(c.status)}</Badge></TableCell>
-                    <TableCell className="text-right"><Trash2 size={14} className="text-destructive" /></TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(String(c.codigo))}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
