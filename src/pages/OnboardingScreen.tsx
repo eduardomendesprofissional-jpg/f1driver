@@ -294,8 +294,12 @@ const OnboardingScreen = () => {
         }
         return;
       }
+
+      // Sync tipo to user_metadata so login redirects stay consistent
+      await supabase.auth.updateUser({ data: { tipo } });
+
       toast.success("Cadastro concluído!");
-      navigate(tipo === "motorista" ? "/driver" : "/passenger");
+      navigate(tipo === "motorista" ? "/driver" : "/passenger", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar dados.");
     } finally {
