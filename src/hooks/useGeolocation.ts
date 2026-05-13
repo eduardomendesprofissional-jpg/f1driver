@@ -102,25 +102,40 @@ export const useGeolocation = () => {
     setShowGpsModal(false);
   }, []);
 
-  // Poll position every 15 seconds for real-time updates (reduced from 10s)
+  // Real-time position via watchPosition. Re-geocode only when moved > 60m
+  // to avoid spamming the Geocoding API.
   useEffect(() => {
     if (permission !== "granted" || !navigator.geolocation) return;
 
-    const updatePosition = () => {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude: lat, longitude: lng } = pos.coords;
-          setPosition({ lat, lng });
-          const addr = await doReverseGeocode(lat, lng);
-          setEndereco(addr);
-        },
-        () => {},
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 15000 }
-      );
+    let lastGeo: { lat: number; lng: number } | null = null;
+    const distM = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+      const R = 6371000;
+      const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+      const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+      const x = Math.sin(dLat / 2) ** 2 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
     };
 
-    const intervalId = setInterval(updatePosition, 15000);
-    return () => clearInterval(intervalId);
+    const watchId = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        // Ignore very inaccurate fixes (> 200m) to evitar marker pulando
+        if (accuracy && accuracy > 200) return;
+        const next = { lat, lng };
+        setPosition(next);
+        if (!lastGeo || distM(lastGeo, next) > 60) {
+          lastGeo = next;
+          const addr = await doReverseGeocode(lat, lng);
+          setEndereco(addr);
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) setPermission("denied");
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
   }, [permission, doReverseGeocode]);
 
   return { position, endereco, permission, loading, error, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal };
