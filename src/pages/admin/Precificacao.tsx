@@ -412,8 +412,13 @@ const Precificacao = () => {
                                 type="number"
                                 step="0.01"
                                 min="0"
-                                value={row[field]}
-                                onChange={(e) => updateRow(i, field, parseFloat(e.target.value) || 0)}
+                                value={row[field] === 0 ? "" : row[field]}
+                                placeholder="0,00"
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  updateRow(i, field, v === "" ? 0 : parseFloat(v));
+                                }}
+                                onFocus={(e) => e.target.select()}
                                 className="w-24 h-8 text-xs bg-background border-border"
                               />
                             ) : (
@@ -427,8 +432,13 @@ const Precificacao = () => {
                               type="number"
                               step="0.1"
                               min="0.1"
-                              value={row.multiplicador}
-                              onChange={(e) => updateRow(i, "multiplicador", parseFloat(e.target.value) || 1)}
+                              value={row.multiplicador === 0 ? "" : row.multiplicador}
+                              placeholder="1.0"
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                updateRow(i, "multiplicador", v === "" ? 0 : parseFloat(v));
+                              }}
+                              onFocus={(e) => e.target.select()}
                               className="w-20 h-8 text-xs bg-background border-border"
                             />
                           ) : (
