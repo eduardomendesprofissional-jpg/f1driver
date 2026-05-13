@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet, TrendingUp, Activity } from "lucide-react";
+import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet, TrendingUp, Activity, Trash2, Loader2 } from "lucide-react";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,24 @@ const Motoristas = () => {
   const [updating, setUpdating] = useState(false);
   const [stats, setStats] = useState<DriverStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const confirm = useConfirm();
+
+  const handleDelete = async (d: DriverProfile) => {
+    const ok = await confirm({
+      title: "Excluir motorista",
+      description: `Tem certeza que deseja excluir ${d.nome || "este motorista"}? Todos os dados (corridas, recargas, contas bancárias, avaliações) serão removidos permanentemente.`,
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
+    setDeletingId(d.id);
+    const { error } = await supabase.functions.invoke("admin-delete-user", { body: { user_id: d.id } });
+    setDeletingId(null);
+    if (error) return toast.error("Erro ao excluir: " + error.message);
+    toast.success("Motorista excluído");
+    setDrivers((prev) => prev.filter((x) => x.id !== d.id));
+    setSelectedDriver(null);
+  };
 
   useEffect(() => {
     fetchDrivers();
@@ -234,9 +253,20 @@ const Motoristas = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelectedDriver(d)}>
-                          <Eye size={14} /> Ver
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelectedDriver(d)}>
+                            <Eye size={14} /> Ver
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(d)}
+                            disabled={deletingId === d.id}
+                          >
+                            {deletingId === d.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

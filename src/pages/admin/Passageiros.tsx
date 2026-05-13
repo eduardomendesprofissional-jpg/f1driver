@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, User, Eye, Loader2, Mail, Phone, Calendar } from "lucide-react";
+import { Search, User, Eye, Loader2, Mail, Phone, Calendar, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV, printTable } from "@/lib/table-utils";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface PassengerProfile {
   id: string;
@@ -34,6 +36,24 @@ const Passageiros = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<PassengerProfile | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const confirm = useConfirm();
+
+  const handleDelete = async (p: PassengerProfile) => {
+    const ok = await confirm({
+      title: "Excluir passageiro",
+      description: `Tem certeza que deseja excluir ${p.nome || "este passageiro"}? Todos os dados (corridas, avaliações, pagamentos) serão removidos permanentemente.`,
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
+    setDeletingId(p.id);
+    const { error } = await supabase.functions.invoke("admin-delete-user", { body: { user_id: p.id } });
+    setDeletingId(null);
+    if (error) return toast.error("Erro ao excluir: " + error.message);
+    toast.success("Passageiro excluído");
+    setPassageiros((prev) => prev.filter((x) => x.id !== p.id));
+    setSelected(null);
+  };
 
   useEffect(() => {
     fetchPassageiros();
@@ -146,9 +166,20 @@ const Passageiros = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelected(p)}>
-                        <Eye size={14} /> Ver
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelected(p)}>
+                          <Eye size={14} /> Ver
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(p)}
+                          disabled={deletingId === p.id}
+                        >
+                          {deletingId === p.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
