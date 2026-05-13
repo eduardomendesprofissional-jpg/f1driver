@@ -48,19 +48,59 @@ const Motoristas = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<DriverProfile | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [stats, setStats] = useState<DriverStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     fetchDrivers();
   }, []);
 
+  useEffect(() => {
+    if (selectedDriver) fetchStats(selectedDriver.id);
+    else setStats(null);
+  }, [selectedDriver]);
+
   const fetchDrivers = async () => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, nome, telefone, avatar_url, cpf, cnh, veiculo_placa, veiculo_modelo, veiculo_cor, status_aprovacao, created_at")
+      .select("id, nome, telefone, avatar_url, cpf, cnh, veiculo_placa, veiculo_modelo, veiculo_cor, status_aprovacao, created_at, driver_balance, is_blocked")
       .eq("tipo", "motorista")
       .order("created_at", { ascending: false });
     if (!error && data) setDrivers(data as unknown as DriverProfile[]);
     setLoading(false);
+  };
+
+  const fetchStats = async (driverId: string) => {
+    setLoadingStats(true);
+    const [ridesRes, creditsRes] = await Promise.all([
+      supabase.from("rides").select("status, iniciada_em, finalizada_em").eq("motorista_id", driverId),
+      supabase.from("extrato_creditos").select("valor, status").eq("perfil_id", driverId),
+    ]);
+    const rides = (ridesRes.data || []) as any[];
+    const credits = (creditsRes.data || []) as any[];
+
+    const horas: Record<number, number> = {};
+    let ultima: string | null = null;
+    rides.forEach((r) => {
+      const dt = r.iniciada_em || r.finalizada_em;
+      if (dt) {
+        const h = new Date(dt).getHours();
+        horas[h] = (horas[h] || 0) + 1;
+        if (!ultima || dt > ultima) ultima = dt;
+      }
+    });
+    const horaPicoNum = Object.entries(horas).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const horaPico = horaPicoNum != null ? `${String(horaPicoNum).padStart(2, "0")}:00 - ${String((+horaPicoNum + 1) % 24).padStart(2, "0")}:00` : null;
+
+    setStats({
+      totalCorridas: rides.length,
+      corridasFinalizadas: rides.filter((r) => r.status === "finalizada").length,
+      totalRecargas: credits.filter((c) => c.status === "aprovado").reduce((s, c) => s + Number(c.valor || 0), 0),
+      recargasAprovadas: credits.filter((c) => c.status === "aprovado").length,
+      horaPico,
+      ultimaCorrida: ultima,
+    });
+    setLoadingStats(false);
   };
 
   const updateStatus = async (driverId: string, status: string) => {
