@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { UserPlus, Trash2, Pencil, X, Check, Camera } from "lucide-react";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface Admin {
   id: string;
