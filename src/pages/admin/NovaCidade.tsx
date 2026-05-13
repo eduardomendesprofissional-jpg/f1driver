@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
   const allCidades: { nome: string; uf: string }[] = [];
@@ -38,6 +39,7 @@ const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
 };
 
 const NovaCidade = () => {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [showSugestoes, setShowSugestoes] = useState(false);
@@ -234,7 +236,13 @@ const NovaCidade = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeMutation.mutate(c.id)}
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Remover cidade",
+                            description: `Deseja remover ${c.nome} - ${c.uf} da área de cobertura?`,
+                          });
+                          if (ok) removeMutation.mutate(c.id);
+                        }}
                         disabled={removeMutation.isPending}
                         className="text-rose-400 hover:text-rose-500 hover:bg-rose-500/10"
                       >

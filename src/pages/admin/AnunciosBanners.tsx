@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface Banner {
   id: number;
@@ -13,6 +14,7 @@ interface Banner {
 }
 
 const AnunciosBanners = () => {
+  const confirm = useConfirm();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -26,7 +28,12 @@ const AnunciosBanners = () => {
     toast.success("Banner adicionado com sucesso!");
   };
 
-  const handleRemover = (id: number) => {
+  const handleRemover = async (id: number) => {
+    const ok = await confirm({
+      title: "Remover banner",
+      description: "Deseja realmente remover este banner?",
+    });
+    if (!ok) return;
     setBanners(banners.filter((b) => b.id !== id));
     toast.success("Banner removido.");
   };

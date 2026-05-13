@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useState } from "react";
 import { toast } from "sonner";
 import carIcon from "@/assets/car-3d.png";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface Categoria {
   id: number;
@@ -14,6 +15,7 @@ interface Categoria {
 }
 
 const CategoriasVeiculos = () => {
+  const confirm = useConfirm();
   const [nomeCategoria, setNomeCategoria] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(0);
   const [categorias, setCategorias] = useState<Categoria[]>([
@@ -30,8 +32,13 @@ const CategoriasVeiculos = () => {
     toast.success(`Categoria "${nomeCategoria.trim()}" criada!`);
   };
 
-  const handleEliminar = (id: number) => {
+  const handleEliminar = async (id: number) => {
     const cat = categorias.find((c) => c.id === id);
+    const ok = await confirm({
+      title: "Remover categoria",
+      description: `Deseja remover a categoria "${cat?.nome}"?`,
+    });
+    if (!ok) return;
     setCategorias(categorias.filter((c) => c.id !== id));
     toast.success(`"${cat?.nome}" removida.`);
   };

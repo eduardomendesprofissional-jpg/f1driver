@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useState } from "react";
 import { useTable } from "@/hooks/use-table";
 import { exportToCSV, exportToPDF } from "@/lib/table-utils";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
+import { toast } from "sonner";
 
 const headers = [
   { key: "codigo", label: "Código" },
@@ -20,6 +22,16 @@ const headers = [
 const CuponsListar = () => {
   const [cupons] = useState<Record<string, unknown>[]>([]);
   const table = useTable({ data: cupons, searchKeys: ["codigo", "tipo"] });
+  const confirm = useConfirm();
+
+  const handleDelete = async (codigo: string) => {
+    const ok = await confirm({
+      title: "Remover cupom",
+      description: `Deseja remover o cupom "${codigo}"?`,
+    });
+    if (!ok) return;
+    toast.success("Cupom removido");
+  };
 
   return (
     <div className="space-y-6">
@@ -60,7 +72,11 @@ const CuponsListar = () => {
                     <TableCell className="text-sm">{String(c.usos)}</TableCell>
                     <TableCell className="text-sm">{String(c.validade)}</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{String(c.status)}</Badge></TableCell>
-                    <TableCell className="text-right"><Trash2 size={14} className="text-destructive" /></TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(String(c.codigo))}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>

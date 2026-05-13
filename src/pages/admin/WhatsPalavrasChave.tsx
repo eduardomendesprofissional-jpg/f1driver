@@ -6,8 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 const WhatsPalavrasChave = () => {
+  const confirm = useConfirm();
   const [novaPalavra, setNovaPalavra] = useState("#MINHACENTRAL");
   const [palavras, setPalavras] = useState<{ palavra: string; categoria: string }[]>([]);
 
@@ -21,8 +23,13 @@ const WhatsPalavrasChave = () => {
     toast.success("Palavra-chave adicionada!");
   };
 
-  const handleRemover = (index: number) => {
+  const handleRemover = async (index: number) => {
     const p = palavras[index];
+    const ok = await confirm({
+      title: "Remover palavra-chave",
+      description: `Deseja remover "${p.palavra}"?`,
+    });
+    if (!ok) return;
     setPalavras(palavras.filter((_, i) => i !== index));
     toast.success(`"${p.palavra}" removida.`);
   };

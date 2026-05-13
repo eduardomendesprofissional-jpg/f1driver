@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface CidadeCobertura {
   id: string;
@@ -60,6 +61,7 @@ const toggleDay = (dias: number[], day: number) =>
   dias.includes(day) ? dias.filter((d) => d !== day) : [...dias, day].sort();
 
 const Precificacao = () => {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [cidadeSelecionada, setCidadeSelecionada] = useState<string>("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("");
@@ -207,8 +209,13 @@ const Precificacao = () => {
     updateRow(index, "isNew", false);
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
     const row = precos[index];
+    const ok = await confirm({
+      title: "Remover faixa de preço",
+      description: "Deseja realmente excluir esta faixa de preço?",
+    });
+    if (!ok) return;
     if (row.id && !row.isNew) {
       deleteMutation.mutate(row.id);
     } else {

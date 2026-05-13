@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { UserPlus, Trash2, Pencil, X, Check, Camera } from "lucide-react";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
 
 interface Admin {
   id: string;
@@ -21,6 +22,7 @@ interface Admin {
 const funcoes = ["Administrador", "Gerente", "Suporte", "Financeiro", "Operações"];
 
 const Administradores = () => {
+  const confirm = useConfirm();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [nome, setNome] = useState("");
@@ -97,7 +99,12 @@ const Administradores = () => {
     setSaving(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, nome: string) => {
+    const ok = await confirm({
+      title: "Remover administrador",
+      description: `Deseja remover ${nome}? Esta ação não pode ser desfeita.`,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("administradores").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao remover administrador");
@@ -278,7 +285,7 @@ const Administradores = () => {
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(admin)}>
                           <Pencil size={14} />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(admin.id)}>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(admin.id, admin.nome)}>
                           <Trash2 size={14} />
                         </Button>
                       </div>
