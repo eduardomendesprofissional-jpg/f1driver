@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
+import ProfileSwitcher from "@/components/ProfileSwitcher";
 
 interface Profile {
   nome: string | null;
