@@ -22,6 +22,7 @@ interface Admin {
 const funcoes = ["Administrador", "Gerente", "Suporte", "Financeiro", "Operações"];
 
 const Administradores = () => {
+  const confirm = useConfirm();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [nome, setNome] = useState("");
