@@ -253,9 +253,20 @@ const Motoristas = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelectedDriver(d)}>
-                          <Eye size={14} /> Ver
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setSelectedDriver(d)}>
+                            <Eye size={14} /> Ver
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(d)}
+                            disabled={deletingId === d.id}
+                          >
+                            {deletingId === d.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
