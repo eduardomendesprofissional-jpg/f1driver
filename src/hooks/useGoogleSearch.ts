@@ -70,6 +70,10 @@ export const useGoogleSearch = () => {
     } catch (err) {
       console.error("[useGoogleSearch] Error:", err);
       setResults([]);
+      try {
+        const { toast } = await import("sonner");
+        toast.error("Não foi possível buscar endereços. Verifique sua conexão.");
+      } catch {}
     } finally {
       setLoading(false);
     }
