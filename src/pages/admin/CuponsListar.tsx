@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useState } from "react";
 import { useTable } from "@/hooks/use-table";
 import { exportToCSV, exportToPDF } from "@/lib/table-utils";
+import { useConfirm } from "@/components/ConfirmDialogProvider";
+import { toast } from "sonner";
 
 const headers = [
   { key: "codigo", label: "Código" },
