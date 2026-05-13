@@ -110,10 +110,12 @@ const AdminLayout = () => {
           <Outlet />
         </main>
       </div>
+      </ConfirmDialogProvider>
     );
   }
 
   return (
+    <ConfirmDialogProvider>
     <div className="flex min-h-screen w-full bg-background">
       <AdminSidebar />
       <div className="flex-1 flex flex-col min-w-0">
