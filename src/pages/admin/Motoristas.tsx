@@ -51,6 +51,24 @@ const Motoristas = () => {
   const [updating, setUpdating] = useState(false);
   const [stats, setStats] = useState<DriverStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const confirm = useConfirm();
+
+  const handleDelete = async (d: DriverProfile) => {
+    const ok = await confirm({
+      title: "Excluir motorista",
+      description: `Tem certeza que deseja excluir ${d.nome || "este motorista"}? Todos os dados (corridas, recargas, contas bancárias, avaliações) serão removidos permanentemente.`,
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
+    setDeletingId(d.id);
+    const { error } = await supabase.functions.invoke("admin-delete-user", { body: { user_id: d.id } });
+    setDeletingId(null);
+    if (error) return toast.error("Erro ao excluir: " + error.message);
+    toast.success("Motorista excluído");
+    setDrivers((prev) => prev.filter((x) => x.id !== d.id));
+    setSelectedDriver(null);
+  };
 
   useEffect(() => {
     fetchDrivers();
