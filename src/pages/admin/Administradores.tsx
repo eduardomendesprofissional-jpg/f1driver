@@ -285,7 +285,7 @@ const Administradores = () => {
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(admin)}>
                           <Pencil size={14} />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(admin.id)}>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(admin.id, admin.nome)}>
                           <Trash2 size={14} />
                         </Button>
                       </div>
