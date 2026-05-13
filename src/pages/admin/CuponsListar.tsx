@@ -22,6 +22,16 @@ const headers = [
 const CuponsListar = () => {
   const [cupons] = useState<Record<string, unknown>[]>([]);
   const table = useTable({ data: cupons, searchKeys: ["codigo", "tipo"] });
+  const confirm = useConfirm();
+
+  const handleDelete = async (codigo: string) => {
+    const ok = await confirm({
+      title: "Remover cupom",
+      description: `Deseja remover o cupom "${codigo}"?`,
+    });
+    if (!ok) return;
+    toast.success("Cupom removido");
+  };
 
   return (
     <div className="space-y-6">
