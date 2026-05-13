@@ -209,8 +209,13 @@ const Precificacao = () => {
     updateRow(index, "isNew", false);
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
     const row = precos[index];
+    const ok = await confirm({
+      title: "Remover faixa de preço",
+      description: "Deseja realmente excluir esta faixa de preço?",
+    });
+    if (!ok) return;
     if (row.id && !row.isNew) {
       deleteMutation.mutate(row.id);
     } else {
