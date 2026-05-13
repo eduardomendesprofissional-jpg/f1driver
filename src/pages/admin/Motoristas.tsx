@@ -22,6 +22,17 @@ interface DriverProfile {
   veiculo_cor: string | null;
   status_aprovacao: string;
   created_at: string;
+  driver_balance?: number | null;
+  is_blocked?: boolean | null;
+}
+
+interface DriverStats {
+  totalCorridas: number;
+  corridasFinalizadas: number;
+  totalRecargas: number;
+  recargasAprovadas: number;
+  horaPico: string | null;
+  ultimaCorrida: string | null;
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive"; icon: typeof CheckCircle2 }> = {
