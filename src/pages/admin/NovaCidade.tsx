@@ -234,7 +234,13 @@ const NovaCidade = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeMutation.mutate(c.id)}
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Remover cidade",
+                            description: `Deseja remover ${c.nome} - ${c.uf} da área de cobertura?`,
+                          });
+                          if (ok) removeMutation.mutate(c.id);
+                        }}
                         disabled={removeMutation.isPending}
                         className="text-rose-400 hover:text-rose-500 hover:bg-rose-500/10"
                       >
