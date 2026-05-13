@@ -61,6 +61,7 @@ const toggleDay = (dias: number[], day: number) =>
   dias.includes(day) ? dias.filter((d) => d !== day) : [...dias, day].sort();
 
 const Precificacao = () => {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [cidadeSelecionada, setCidadeSelecionada] = useState<string>("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("");
