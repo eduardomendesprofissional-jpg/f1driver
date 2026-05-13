@@ -34,7 +34,7 @@ interface PrecoRow {
   isEditing?: boolean;
 }
 
-const CATEGORIAS = ["Carro", "Carro Black", "Moto", "Van"];
+const CATEGORIAS = ["Carro", "Carro Black", "Moto", "Van", "Carro Banhista", "Carro Pet", "Delivery Carro", "Delivery Moto"];
 
 const DIAS = [
   { value: 0, label: "Dom", short: "D" },
