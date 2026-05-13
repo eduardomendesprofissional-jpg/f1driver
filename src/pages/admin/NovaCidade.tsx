@@ -39,6 +39,7 @@ const fetchCidadesBR = async (): Promise<{ nome: string; uf: string }[]> => {
 };
 
 const NovaCidade = () => {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [showSugestoes, setShowSugestoes] = useState(false);
