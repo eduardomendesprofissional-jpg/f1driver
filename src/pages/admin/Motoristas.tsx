@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet } from "lucide-react";
+import { Search, User, CheckCircle2, Clock, XCircle, Eye, Car, FileText, Shield, Wallet, TrendingUp, Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,17 @@ interface DriverProfile {
   veiculo_cor: string | null;
   status_aprovacao: string;
   created_at: string;
+  driver_balance?: number | null;
+  is_blocked?: boolean | null;
+}
+
+interface DriverStats {
+  totalCorridas: number;
+  corridasFinalizadas: number;
+  totalRecargas: number;
+  recargasAprovadas: number;
+  horaPico: string | null;
+  ultimaCorrida: string | null;
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive"; icon: typeof CheckCircle2 }> = {
@@ -37,19 +48,59 @@ const Motoristas = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<DriverProfile | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [stats, setStats] = useState<DriverStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     fetchDrivers();
   }, []);
 
+  useEffect(() => {
+    if (selectedDriver) fetchStats(selectedDriver.id);
+    else setStats(null);
+  }, [selectedDriver]);
+
   const fetchDrivers = async () => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, nome, telefone, avatar_url, cpf, cnh, veiculo_placa, veiculo_modelo, veiculo_cor, status_aprovacao, created_at")
+      .select("id, nome, telefone, avatar_url, cpf, cnh, veiculo_placa, veiculo_modelo, veiculo_cor, status_aprovacao, created_at, driver_balance, is_blocked")
       .eq("tipo", "motorista")
       .order("created_at", { ascending: false });
     if (!error && data) setDrivers(data as unknown as DriverProfile[]);
     setLoading(false);
+  };
+
+  const fetchStats = async (driverId: string) => {
+    setLoadingStats(true);
+    const [ridesRes, creditsRes] = await Promise.all([
+      supabase.from("rides").select("status, iniciada_em, finalizada_em").eq("motorista_id", driverId),
+      supabase.from("extrato_creditos").select("valor, status").eq("perfil_id", driverId),
+    ]);
+    const rides = (ridesRes.data || []) as any[];
+    const credits = (creditsRes.data || []) as any[];
+
+    const horas: Record<number, number> = {};
+    let ultima: string | null = null;
+    rides.forEach((r) => {
+      const dt = r.iniciada_em || r.finalizada_em;
+      if (dt) {
+        const h = new Date(dt).getHours();
+        horas[h] = (horas[h] || 0) + 1;
+        if (!ultima || dt > ultima) ultima = dt;
+      }
+    });
+    const horaPicoNum = Object.entries(horas).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const horaPico = horaPicoNum != null ? `${String(horaPicoNum).padStart(2, "0")}:00 - ${String((+horaPicoNum + 1) % 24).padStart(2, "0")}:00` : null;
+
+    setStats({
+      totalCorridas: rides.length,
+      corridasFinalizadas: rides.filter((r) => r.status === "finalizada").length,
+      totalRecargas: credits.filter((c) => c.status === "aprovado").reduce((s, c) => s + Number(c.valor || 0), 0),
+      recargasAprovadas: credits.filter((c) => c.status === "aprovado").length,
+      horaPico,
+      ultimaCorrida: ultima,
+    });
+    setLoadingStats(false);
   };
 
   const updateStatus = async (driverId: string, status: string) => {
@@ -198,7 +249,7 @@ const Motoristas = () => {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedDriver} onOpenChange={() => setSelectedDriver(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User size={18} />
@@ -252,6 +303,43 @@ const Motoristas = () => {
                     <div><span className="text-muted-foreground">Cor:</span> <span className="font-medium">{selectedDriver.veiculo_cor || "—"}</span></div>
                     <div><span className="text-muted-foreground">Placa:</span> <span className="font-medium">{selectedDriver.veiculo_placa || "—"}</span></div>
                   </div>
+                </div>
+
+                {/* Operação & Recargas */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Activity size={12} /> Operação
+                  </p>
+                  {loadingStats || !stats ? (
+                    <div className="text-xs text-muted-foreground py-2">Carregando estatísticas...</div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase">Saldo atual</p>
+                        <p className={`font-bold ${(selectedDriver.driver_balance ?? 0) < 0 ? "text-destructive" : "text-success"}`}>
+                          R$ {Number(selectedDriver.driver_balance ?? 0).toFixed(2)}
+                        </p>
+                        {selectedDriver.is_blocked && <p className="text-[10px] text-destructive">Bloqueado</p>}
+                      </div>
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase">Recargas</p>
+                        <p className="font-bold">R$ {stats.totalRecargas.toFixed(2)}</p>
+                        <p className="text-[10px] text-muted-foreground">{stats.recargasAprovadas} aprovadas</p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase">Corridas</p>
+                        <p className="font-bold">{stats.totalCorridas}</p>
+                        <p className="text-[10px] text-muted-foreground">{stats.corridasFinalizadas} finalizadas</p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2">
+                        <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1"><TrendingUp size={10}/> Horário pico</p>
+                        <p className="font-bold">{stats.horaPico || "—"}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {stats.ultimaCorrida ? `Últ.: ${new Date(stats.ultimaCorrida).toLocaleDateString("pt-BR")}` : "Sem corridas"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
