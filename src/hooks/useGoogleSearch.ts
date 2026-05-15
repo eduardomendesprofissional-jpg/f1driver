@@ -52,8 +52,10 @@ export const useGoogleSearch = () => {
   const [loading, setLoading] = useState(false);
 
   const search = useCallback(async (query: string, proximity?: [number, number]) => {
-    if (query.length < 3) {
+    const q = query.trim();
+    if (q.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -61,18 +63,20 @@ export const useGoogleSearch = () => {
       const hasUserPos = !!proximity;
       const lat = proximity ? proximity[1] : -15.7801;
       const lng = proximity ? proximity[0] : -47.9292;
-      const googleResults = await searchGooglePlaces(query, lat, lng);
+      console.log("[useGoogleSearch] searching:", q, { lat, lng });
+      const googleResults = await searchGooglePlaces(q, lat, lng);
+      console.log("[useGoogleSearch] got", googleResults.length, "results");
       const places = googleResults
         .map((r) => googleToPlace(r, lat, lng, hasUserPos))
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
       setResults(places);
-    } catch (err) {
-      console.error("[useGoogleSearch] Error:", err);
+    } catch (err: any) {
+      console.error("[useGoogleSearch] Error:", err?.message || err);
       setResults([]);
       try {
         const { toast } = await import("sonner");
-        toast.error("Não foi possível buscar endereços. Verifique sua conexão.");
+        toast.error(`Erro na busca: ${err?.message || "verifique sua conexão"}`);
       } catch {}
     } finally {
       setLoading(false);
