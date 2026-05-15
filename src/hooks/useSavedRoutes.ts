@@ -99,12 +99,31 @@ export const useSavedRoutes = () => {
         .update({ favorito: !existing.favorito })
         .eq("id", existing.id);
     } else {
-      await supabase.from("rotas_salvas").insert({
-        user_id: user.id,
-        ...route,
-        favorito: true,
-        vezes_usado: 0,
-      });
+      // Fallback: check for an existing route by nearby coordinates
+      // 0.0005 degrees ≈ 55m — close enough to be the same place
+      const { data: nearby } = await supabase
+        .from("rotas_salvas")
+        .select("id, favorito")
+        .eq("user_id", user.id)
+        .gte("destino_lat", route.destino_lat - 0.0005)
+        .lte("destino_lat", route.destino_lat + 0.0005)
+        .gte("destino_lng", route.destino_lng - 0.0005)
+        .lte("destino_lng", route.destino_lng + 0.0005)
+        .maybeSingle();
+
+      if (nearby) {
+        await supabase
+          .from("rotas_salvas")
+          .update({ favorito: !nearby.favorito })
+          .eq("id", nearby.id);
+      } else {
+        await supabase.from("rotas_salvas").insert({
+          user_id: user.id,
+          ...route,
+          favorito: true,
+          vezes_usado: 0,
+        });
+      }
     }
     fetchRoutes();
   };
