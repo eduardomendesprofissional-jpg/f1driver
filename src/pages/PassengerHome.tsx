@@ -22,7 +22,7 @@ const PassengerHome = () => {
   const [destination, setDestination] = useState("");
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
   const { results, loading, search, clear } = useGoogleSearch();
-  const { routes: savedRoutes, saveRoute } = useSavedRoutes();
+  const { routes: savedRoutes, saveRoute, toggleFavorite, isFavorite } = useSavedRoutes();
   const { places: suggested } = useSuggestedPlaces(position);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
