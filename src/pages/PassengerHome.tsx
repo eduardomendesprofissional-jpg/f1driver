@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigation, X } from "lucide-react";
+import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigation, X, Plane, Bus, ShoppingBag, Hospital, Star } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
@@ -10,7 +10,10 @@ import GpsJustificationModal from "@/components/GpsJustificationModal";
 import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
+import { useSuggestedPlaces, SuggestedPlace } from "@/hooks/useSuggestedPlaces";
 import { useGeolocation } from "@/hooks/useGeolocation";
+
+const ICON_MAP = { plane: Plane, bus: Bus, shopping: ShoppingBag, hospital: Hospital } as const;
 
 const PassengerHome = () => {
   const navigate = useNavigate();
