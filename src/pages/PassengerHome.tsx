@@ -22,7 +22,7 @@ const PassengerHome = () => {
   const [destination, setDestination] = useState("");
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
   const { results, loading, search, clear } = useGoogleSearch();
-  const { routes: savedRoutes, saveRoute } = useSavedRoutes();
+  const { routes: savedRoutes, saveRoute, toggleFavorite, isFavorite } = useSavedRoutes();
   const { places: suggested } = useSuggestedPlaces(position);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -179,18 +179,20 @@ const PassengerHome = () => {
               <div className="mt-5">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Recentes</p>
                 <div className="space-y-0.5">
-                  {savedRoutes.slice(0, 3).map((route) => (
+                  {savedRoutes.slice(0, 4).map((route) => (
                     <button
                       key={route.id}
                       onClick={() => handleSelectSavedRoute(route)}
                       className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/60 press-sm text-left"
                     >
-                      <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                        <RotateCcw size={14} className="text-primary" />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${route.favorito ? "bg-primary/15" : "bg-secondary"}`}>
+                        {route.favorito ? <Star size={14} className="fill-primary text-primary" /> : <RotateCcw size={14} className="text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground truncate font-medium">{route.destino_endereco}</p>
-                        <p className="text-[10px] text-muted-foreground">{route.vezes_usado}x utilizada</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {route.favorito ? "Favorito" : `${route.vezes_usado}x utilizada`}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -205,20 +207,43 @@ const PassengerHome = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {suggested.map((sp) => {
                     const Icon = ICON_MAP[sp.icon];
+                    const fav = isFavorite(sp.address || sp.name);
                     return (
-                      <button
+                      <div
                         key={sp.id}
-                        onClick={() => handleSelectSuggested(sp)}
-                        className="flex items-center gap-2.5 p-3 rounded-xl bg-secondary/60 hover:bg-secondary press-sm text-left border border-border/20"
+                        className="relative flex items-center gap-2.5 p-3 rounded-xl bg-secondary/60 hover:bg-secondary text-left border border-border/20"
                       >
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <Icon size={16} className="text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{sp.categoryLabel}</p>
-                          <p className="text-xs text-foreground truncate font-medium">{sp.name}</p>
-                        </div>
-                      </button>
+                        <button
+                          onClick={() => handleSelectSuggested(sp)}
+                          className="flex items-center gap-2.5 flex-1 min-w-0 press-sm"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <Icon size={16} className="text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{sp.categoryLabel}</p>
+                            <p className="text-xs text-foreground truncate font-medium">{sp.name}</p>
+                          </div>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!position || !endereco) return;
+                            toggleFavorite({
+                              origem_endereco: endereco,
+                              origem_lat: position.lat,
+                              origem_lng: position.lng,
+                              destino_endereco: sp.address || sp.name,
+                              destino_lat: sp.lat,
+                              destino_lng: sp.lng,
+                            });
+                          }}
+                          aria-label={fav ? "Remover dos favoritos" : "Favoritar"}
+                          className="shrink-0 p-1.5 rounded-full hover:bg-background/60 press-sm"
+                        >
+                          <Star size={16} className={fav ? "fill-primary text-primary" : "text-muted-foreground"} />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -288,22 +313,38 @@ const PassengerHome = () => {
               <div className="flex-1 px-4 pb-4 overflow-y-auto">
                 {destination.length < 3 && savedRoutes.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Rotas recentes</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Rotas salvas</p>
                     <div className="space-y-0.5">
                       {savedRoutes.map((route) => (
-                        <button
+                        <div
                           key={route.id}
-                          onClick={() => handleSelectSavedRoute(route)}
-                          className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary/60 press-sm text-left"
+                          className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary/60 text-left"
                         >
-                          <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0 mt-0.5">
-                            <Clock size={14} className="text-primary" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm text-foreground truncate font-medium">{route.destino_endereco}</p>
-                            <p className="text-[10px] text-muted-foreground">{route.vezes_usado}x utilizada</p>
-                          </div>
-                        </button>
+                          <button
+                            onClick={() => handleSelectSavedRoute(route)}
+                            className="flex items-start gap-3 flex-1 min-w-0 press-sm"
+                          >
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${route.favorito ? "bg-primary/15" : "bg-secondary"}`}>
+                              {route.favorito ? <Star size={14} className="fill-primary text-primary" /> : <Clock size={14} className="text-primary" />}
+                            </div>
+                            <div className="min-w-0 flex-1 text-left">
+                              <p className="text-sm text-foreground truncate font-medium">{route.destino_endereco}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {route.favorito ? "Favorito" : `${route.vezes_usado}x utilizada`}
+                              </p>
+                            </div>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(route);
+                            }}
+                            aria-label={route.favorito ? "Remover dos favoritos" : "Favoritar"}
+                            className="shrink-0 p-1.5 rounded-full hover:bg-background/60 press-sm"
+                          >
+                            <Star size={16} className={route.favorito ? "fill-primary text-primary" : "text-muted-foreground"} />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -315,20 +356,43 @@ const PassengerHome = () => {
                     <div className="space-y-0.5">
                       {suggested.map((sp) => {
                         const Icon = ICON_MAP[sp.icon];
+                        const fav = isFavorite(sp.address || sp.name);
                         return (
-                          <button
+                          <div
                             key={sp.id}
-                            onClick={() => handleSelectSuggested(sp)}
-                            className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary/60 press-sm text-left"
+                            className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary/60 text-left"
                           >
-                            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                              <Icon size={14} className="text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm text-foreground truncate font-medium">{sp.name}</p>
-                              <p className="text-[10px] text-muted-foreground truncate">{sp.categoryLabel} · {sp.address}</p>
-                            </div>
-                          </button>
+                            <button
+                              onClick={() => handleSelectSuggested(sp)}
+                              className="flex items-start gap-3 flex-1 min-w-0 press-sm"
+                            >
+                              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <Icon size={14} className="text-primary" />
+                              </div>
+                              <div className="min-w-0 flex-1 text-left">
+                                <p className="text-sm text-foreground truncate font-medium">{sp.name}</p>
+                                <p className="text-[10px] text-muted-foreground truncate">{sp.categoryLabel} · {sp.address}</p>
+                              </div>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!position || !endereco) return;
+                                toggleFavorite({
+                                  origem_endereco: endereco,
+                                  origem_lat: position.lat,
+                                  origem_lng: position.lng,
+                                  destino_endereco: sp.address || sp.name,
+                                  destino_lat: sp.lat,
+                                  destino_lng: sp.lng,
+                                });
+                              }}
+                              aria-label={fav ? "Remover dos favoritos" : "Favoritar"}
+                              className="shrink-0 p-1.5 rounded-full hover:bg-background/60 press-sm"
+                            >
+                              <Star size={16} className={fav ? "fill-primary text-primary" : "text-muted-foreground"} />
+                            </button>
+                          </div>
                         );
                       })}
                     </div>
