@@ -309,6 +309,32 @@ const PassengerHome = () => {
                   </div>
                 )}
 
+                {destination.length < 3 && suggested.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Sugeridos perto de você</p>
+                    <div className="space-y-0.5">
+                      {suggested.map((sp) => {
+                        const Icon = ICON_MAP[sp.icon];
+                        return (
+                          <button
+                            key={sp.id}
+                            onClick={() => handleSelectSuggested(sp)}
+                            className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary/60 press-sm text-left"
+                          >
+                            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                              <Icon size={14} className="text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-foreground truncate font-medium">{sp.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{sp.categoryLabel} · {sp.address}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {loading && destination.length >= 2 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <Loader2 size={28} className="animate-spin text-primary mb-2" />
