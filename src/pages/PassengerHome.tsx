@@ -83,7 +83,19 @@ const PassengerHome = () => {
     });
   };
 
-  const showPermissionBanner = permission !== "granted" || (permission === "granted" && !!geoError && !position);
+  const handleSelectSuggested = (sp: SuggestedPlace) => {
+    if (!position || !endereco) return;
+    saveRoute({
+      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      destino_endereco: sp.address || sp.name, destino_lat: sp.lat, destino_lng: sp.lng,
+    });
+    navigate("/ride-confirm", {
+      state: {
+        origem: { endereco, lat: position.lat, lng: position.lng },
+        destino: { endereco: sp.address || sp.name, lat: sp.lat, lng: sp.lng },
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
