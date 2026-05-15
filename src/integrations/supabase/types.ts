@@ -821,6 +821,7 @@ export type Database = {
           destino_endereco: string
           destino_lat: number
           destino_lng: number
+          favorito: boolean
           id: string
           origem_endereco: string
           origem_lat: number
@@ -833,6 +834,7 @@ export type Database = {
           destino_endereco: string
           destino_lat: number
           destino_lng: number
+          favorito?: boolean
           id?: string
           origem_endereco: string
           origem_lat: number
@@ -845,6 +847,7 @@ export type Database = {
           destino_endereco?: string
           destino_lat?: number
           destino_lng?: number
+          favorito?: boolean
           id?: string
           origem_endereco?: string
           origem_lat?: number
