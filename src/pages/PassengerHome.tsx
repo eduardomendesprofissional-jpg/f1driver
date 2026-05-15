@@ -264,7 +264,12 @@ const PassengerHome = () => {
                   </div>
                 )}
 
-                {results.length > 0 ? (
+                {loading && destination.length >= 2 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <Loader2 size={28} className="animate-spin text-primary mb-2" />
+                    <p className="text-sm text-muted-foreground">Buscando endereços...</p>
+                  </div>
+                ) : results.length > 0 ? (
                   <div className="space-y-0.5">
                     {results.map((place) => (
                       <button
@@ -294,7 +299,7 @@ const PassengerHome = () => {
                       </button>
                     ))}
                   </div>
-                ) : destination.length >= 3 ? (
+                ) : destination.length >= 2 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-3">
                       <Search size={24} className="text-muted-foreground" />
