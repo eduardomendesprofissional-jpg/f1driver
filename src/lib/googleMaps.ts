@@ -189,14 +189,23 @@ export async function nearbyGooglePlaces(
   }));
 }
 
-/** Geocoding API — reverse */
+/** Geocoding API — reverse com fallback Nominatim */
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_KEY}&language=pt-BR&region=BR`,
     );
     const data = await res.json();
-    return data.results?.[0]?.formatted_address || "Local selecionado";
+    const addr = data.results?.[0]?.formatted_address;
+    if (addr) return addr;
+  } catch {}
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR`,
+      { headers: { "Accept-Language": "pt-BR" } },
+    );
+    const data = await res.json();
+    return data?.display_name || "Local selecionado";
   } catch {
     return "Local selecionado";
   }
