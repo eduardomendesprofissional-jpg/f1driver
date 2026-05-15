@@ -197,6 +197,33 @@ const PassengerHome = () => {
                 </div>
               </div>
             )}
+
+            {/* Sugeridos perto */}
+            {suggested.length > 0 && (
+              <div className="mt-5">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Sugeridos perto</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {suggested.map((sp) => {
+                    const Icon = ICON_MAP[sp.icon];
+                    return (
+                      <button
+                        key={sp.id}
+                        onClick={() => handleSelectSuggested(sp)}
+                        className="flex items-center gap-2.5 p-3 rounded-xl bg-secondary/60 hover:bg-secondary press-sm text-left border border-border/20"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Icon size={16} className="text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{sp.categoryLabel}</p>
+                          <p className="text-xs text-foreground truncate font-medium">{sp.name}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
