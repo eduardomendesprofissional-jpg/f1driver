@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigation, X } from "lucide-react";
+import { MapPin, Search, Loader2, Clock, RotateCcw, Map, Car, Package, Navigation, X, Plane, Bus, ShoppingBag, Hospital, Star } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GoogleMap from "@/components/GoogleMap";
 import LocationPermissionBanner from "@/components/LocationPermissionBanner";
@@ -10,7 +10,10 @@ import GpsJustificationModal from "@/components/GpsJustificationModal";
 import MapPicker from "@/components/MapPicker";
 import { useGoogleSearch, GooglePlace } from "@/hooks/useGoogleSearch";
 import { useSavedRoutes, SavedRoute } from "@/hooks/useSavedRoutes";
+import { useSuggestedPlaces, SuggestedPlace } from "@/hooks/useSuggestedPlaces";
 import { useGeolocation } from "@/hooks/useGeolocation";
+
+const ICON_MAP = { plane: Plane, bus: Bus, shopping: ShoppingBag, hospital: Hospital } as const;
 
 const PassengerHome = () => {
   const navigate = useNavigate();
@@ -20,6 +23,7 @@ const PassengerHome = () => {
   const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
   const { results, loading, search, clear } = useGoogleSearch();
   const { routes: savedRoutes, saveRoute } = useSavedRoutes();
+  const { places: suggested } = useSuggestedPlaces(position);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleSearch = (q: string) => {
@@ -75,6 +79,20 @@ const PassengerHome = () => {
       state: {
         origem: { endereco, lat: position.lat, lng: position.lng },
         destino: { endereco: route.destino_endereco, lat: route.destino_lat, lng: route.destino_lng },
+      },
+    });
+  };
+
+  const handleSelectSuggested = (sp: SuggestedPlace) => {
+    if (!position || !endereco) return;
+    saveRoute({
+      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      destino_endereco: sp.address || sp.name, destino_lat: sp.lat, destino_lng: sp.lng,
+    });
+    navigate("/ride-confirm", {
+      state: {
+        origem: { endereco, lat: position.lat, lng: position.lng },
+        destino: { endereco: sp.address || sp.name, lat: sp.lat, lng: sp.lng },
       },
     });
   };
@@ -179,6 +197,33 @@ const PassengerHome = () => {
                 </div>
               </div>
             )}
+
+            {/* Sugeridos perto */}
+            {suggested.length > 0 && (
+              <div className="mt-5">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Sugeridos perto</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {suggested.map((sp) => {
+                    const Icon = ICON_MAP[sp.icon];
+                    return (
+                      <button
+                        key={sp.id}
+                        onClick={() => handleSelectSuggested(sp)}
+                        className="flex items-center gap-2.5 p-3 rounded-xl bg-secondary/60 hover:bg-secondary press-sm text-left border border-border/20"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Icon size={16} className="text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{sp.categoryLabel}</p>
+                          <p className="text-xs text-foreground truncate font-medium">{sp.name}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -260,6 +305,32 @@ const PassengerHome = () => {
                           </div>
                         </button>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {destination.length < 3 && suggested.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Sugeridos perto de você</p>
+                    <div className="space-y-0.5">
+                      {suggested.map((sp) => {
+                        const Icon = ICON_MAP[sp.icon];
+                        return (
+                          <button
+                            key={sp.id}
+                            onClick={() => handleSelectSuggested(sp)}
+                            className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-secondary/60 press-sm text-left"
+                          >
+                            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                              <Icon size={14} className="text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-foreground truncate font-medium">{sp.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{sp.categoryLabel} · {sp.address}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
