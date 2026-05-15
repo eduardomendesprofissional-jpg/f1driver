@@ -179,18 +179,20 @@ const PassengerHome = () => {
               <div className="mt-5">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Recentes</p>
                 <div className="space-y-0.5">
-                  {savedRoutes.slice(0, 3).map((route) => (
+                  {savedRoutes.slice(0, 4).map((route) => (
                     <button
                       key={route.id}
                       onClick={() => handleSelectSavedRoute(route)}
                       className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/60 press-sm text-left"
                     >
-                      <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                        <RotateCcw size={14} className="text-primary" />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${route.favorito ? "bg-primary/15" : "bg-secondary"}`}>
+                        {route.favorito ? <Star size={14} className="fill-primary text-primary" /> : <RotateCcw size={14} className="text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground truncate font-medium">{route.destino_endereco}</p>
-                        <p className="text-[10px] text-muted-foreground">{route.vezes_usado}x utilizada</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {route.favorito ? "Favorito" : `${route.vezes_usado}x utilizada`}
+                        </p>
                       </div>
                     </button>
                   ))}
