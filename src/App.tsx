@@ -87,7 +87,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<HomePage />} />
-            <Route path="/login" element={<LoginScreen />} />
+            <Route path="/login" element={<LoginScreen forcedRole="passageiro" />} />
+            <Route path="/login/motorista" element={<LoginScreen forcedRole="motorista" />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/ride-track/:token" element={<RideTrack />} />
