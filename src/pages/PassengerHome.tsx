@@ -43,58 +43,63 @@ const PassengerHome = () => {
   };
 
   const handleSelectPlace = async (place: GooglePlace) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     if (place.blocked) {
       const { toast } = await import("sonner");
       toast.error("Destino acima de 100 km. Escolha um destino mais próximo.");
       return;
     }
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: place.place_name, destino_lat: place.center[1], destino_lng: place.center[0],
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: place.place_name, lat: place.center[1], lng: place.center[0] },
       },
     });
   };
 
   const handleMapPickerConfirm = (lat: number, lng: number, addr: string) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     setMapPickerOpen(false);
     setSearchOpen(false);
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: addr, destino_lat: lat, destino_lng: lng,
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: addr, lat, lng },
       },
     });
   };
 
+  const handleOriginPickerConfirm = (lat: number, lng: number, addr: string) => {
+    setCustomOrigin({ lat, lng, endereco: addr });
+    setOriginPickerOpen(false);
+  };
+
   const handleSelectSavedRoute = (route: SavedRoute) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: route.destino_endereco, destino_lat: route.destino_lat, destino_lng: route.destino_lng,
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: route.destino_endereco, lat: route.destino_lat, lng: route.destino_lng },
       },
     });
   };
 
   const handleSelectSuggested = (sp: SuggestedPlace) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: sp.address || sp.name, destino_lat: sp.lat, destino_lng: sp.lng,
     });
     navigate("/ride-confirm", {
