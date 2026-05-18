@@ -11,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISS_KEY = "admin-pwa-install-dismissed";
 
 const AdminPWAInstallPrompt = () => {
+  const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
