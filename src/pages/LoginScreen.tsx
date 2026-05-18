@@ -217,6 +217,29 @@ const LoginScreen = ({ forcedRole }: Props) => {
           </Button>
 
           {!isSignUp && <ForgotPassword />}
+          {!isSignUp && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!email) { toast.error("Digite seu e-mail primeiro."); return; }
+                setLoading(true);
+                try {
+                  const { error } = await supabase.auth.resend({
+                    type: "signup",
+                    email,
+                    options: { emailRedirectTo: `${window.location.origin}/` },
+                  });
+                  if (error) throw error;
+                  toast.success("E-mail de confirmação reenviado! Cheque sua caixa de entrada e spam.");
+                } catch (err: any) {
+                  toast.error(err.message || "Erro ao reenviar e-mail.");
+                } finally { setLoading(false); }
+              }}
+              className="text-sm text-primary hover:underline self-end"
+            >
+              Reenviar e-mail de confirmação
+            </button>
+          )}
         </form>
 
         <p className="text-sm text-muted-foreground">
