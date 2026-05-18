@@ -1,5 +1,6 @@
 /// <reference types="google.maps" />
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Maximize2, X } from "lucide-react";
 import { loadGoogleMaps, DARK_MAP_STYLE } from "@/lib/googleMaps";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,9 +8,12 @@ interface RoutePreviewMapProps {
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
   className?: string;
+  expandable?: boolean;
 }
 
-const RoutePreviewMap = ({ origin, destination, className = "w-full h-56" }: RoutePreviewMapProps) => {
+const RoutePreviewMap = ({ origin, destination, className = "w-full h-56", expandable = true }: RoutePreviewMapProps) => {
+  const [fullscreen, setFullscreen] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
@@ -131,9 +135,42 @@ const RoutePreviewMap = ({ origin, destination, className = "w-full h-56" }: Rou
       destMarkerRef.current = null;
       mapRef.current = null;
     };
-  }, [origin.lat, origin.lng, destination.lat, destination.lng]);
+  }, [origin.lat, origin.lng, destination.lat, destination.lng, fullscreen]);
 
-  return <div ref={containerRef} className={className} />;
+  const ExpandBtn = expandable ? (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setFullscreen(true); }}
+      className="absolute top-2 right-2 z-10 bg-background/90 backdrop-blur border border-border/60 rounded-lg p-2 shadow-lg press hover:bg-background"
+      aria-label="Ampliar mapa"
+    >
+      <Maximize2 size={16} className="text-foreground" />
+    </button>
+  ) : null;
+
+  if (fullscreen) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background">
+        <div ref={containerRef} className="w-full h-full" />
+        <button
+          type="button"
+          onClick={() => setFullscreen(false)}
+          className="absolute right-4 z-10 bg-background/90 backdrop-blur border border-border/60 rounded-full p-3 shadow-lg press"
+          aria-label="Fechar mapa"
+          style={{ top: "calc(1rem + env(safe-area-inset-top))" }}
+        >
+          <X size={20} className="text-foreground" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative ${className}`}>
+      <div ref={containerRef} className="w-full h-full" />
+      {ExpandBtn}
+    </div>
+  );
 };
 
 export default RoutePreviewMap;

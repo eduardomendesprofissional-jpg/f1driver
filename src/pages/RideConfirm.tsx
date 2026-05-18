@@ -112,7 +112,7 @@ const RideConfirm = () => {
             <RoutePreviewMap
               origin={{ lat: origem.lat, lng: origem.lng }}
               destination={{ lat: destino.lat, lng: destino.lng }}
-              className="w-full h-52"
+              className="w-full h-[55vh] min-h-[320px] sm:h-[420px]"
             />
           </motion.div>
         )}
