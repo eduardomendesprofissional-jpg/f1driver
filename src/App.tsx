@@ -90,6 +90,7 @@ const App = () => (
             <Route path="/login" element={<LoginScreen forcedRole="passageiro" />} />
             <Route path="/login/motorista" element={<LoginScreen forcedRole="motorista" />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/instalar" element={<AdminInstallGuide />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/ride-track/:token" element={<RideTrack />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
