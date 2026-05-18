@@ -29,6 +29,7 @@ import CaixaCartao from "./pages/admin/CaixaCartao";
 import ViagensEncerradas from "./pages/admin/ViagensEncerradas";
 import ViagensAndamento from "./pages/admin/ViagensAndamento";
 import AcompanhamentoTempoReal from "./pages/admin/AcompanhamentoTempoReal";
+import AdminInstallGuide from "./pages/admin/AdminInstallGuide";
 import ViagensRegistroChamadas from "./pages/admin/ViagensRegistroChamadas";
 import ViagensTodas from "./pages/admin/ViagensTodas";
 import Motoristas from "./pages/admin/Motoristas";
