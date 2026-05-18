@@ -19,8 +19,16 @@ const PassengerHome = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [originPickerOpen, setOriginPickerOpen] = useState(false);
+  const [customOrigin, setCustomOrigin] = useState<{ lat: number; lng: number; endereco: string } | null>(null);
   const [destination, setDestination] = useState("");
-  const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
+  const { position, endereco: geoEndereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
+  const effectiveOrigin = customOrigin
+    ? { lat: customOrigin.lat, lng: customOrigin.lng, endereco: customOrigin.endereco }
+    : position && geoEndereco
+      ? { lat: position.lat, lng: position.lng, endereco: geoEndereco }
+      : null;
+  const endereco = effectiveOrigin?.endereco ?? geoEndereco;
   const { results, loading, search, clear } = useGoogleSearch();
   const { routes: savedRoutes, saveRoute, toggleFavorite, isFavorite } = useSavedRoutes();
   const { places: suggested } = useSuggestedPlaces(position);
@@ -35,63 +43,68 @@ const PassengerHome = () => {
   };
 
   const handleSelectPlace = async (place: GooglePlace) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     if (place.blocked) {
       const { toast } = await import("sonner");
       toast.error("Destino acima de 100 km. Escolha um destino mais próximo.");
       return;
     }
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: place.place_name, destino_lat: place.center[1], destino_lng: place.center[0],
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: place.place_name, lat: place.center[1], lng: place.center[0] },
       },
     });
   };
 
   const handleMapPickerConfirm = (lat: number, lng: number, addr: string) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     setMapPickerOpen(false);
     setSearchOpen(false);
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: addr, destino_lat: lat, destino_lng: lng,
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: addr, lat, lng },
       },
     });
   };
 
+  const handleOriginPickerConfirm = (lat: number, lng: number, addr: string) => {
+    setCustomOrigin({ lat, lng, endereco: addr });
+    setOriginPickerOpen(false);
+  };
+
   const handleSelectSavedRoute = (route: SavedRoute) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: route.destino_endereco, destino_lat: route.destino_lat, destino_lng: route.destino_lng,
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: route.destino_endereco, lat: route.destino_lat, lng: route.destino_lng },
       },
     });
   };
 
   const handleSelectSuggested = (sp: SuggestedPlace) => {
-    if (!position || !endereco) return;
+    if (!effectiveOrigin) return;
     saveRoute({
-      origem_endereco: endereco, origem_lat: position.lat, origem_lng: position.lng,
+      origem_endereco: effectiveOrigin.endereco, origem_lat: effectiveOrigin.lat, origem_lng: effectiveOrigin.lng,
       destino_endereco: sp.address || sp.name, destino_lat: sp.lat, destino_lng: sp.lng,
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: sp.address || sp.name, lat: sp.lat, lng: sp.lng },
       },
     });
@@ -279,9 +292,26 @@ const PassengerHome = () => {
                 {/* Origin */}
                 <div className="flex items-center gap-3 bg-secondary/60 rounded-2xl px-4 py-3 border border-border/20">
                   <div className="w-2.5 h-2.5 rounded-full bg-primary ring-3 ring-primary/20" />
-                  <span className="text-sm text-muted-foreground truncate">
+                  <span className="flex-1 text-sm text-muted-foreground truncate">
                     {endereco || "Localização não disponível"}
                   </span>
+                  <button
+                    onClick={() => setOriginPickerOpen(true)}
+                    className="text-[11px] font-semibold text-primary press-sm shrink-0 flex items-center gap-1"
+                    aria-label="Selecionar embarque no mapa"
+                  >
+                    <Map size={13} />
+                    {customOrigin ? "Alterar" : "Mapa"}
+                  </button>
+                  {customOrigin && (
+                    <button
+                      onClick={() => setCustomOrigin(null)}
+                      className="text-[11px] font-semibold text-muted-foreground press-sm shrink-0"
+                      aria-label="Usar localização atual"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Destination */}
@@ -297,16 +327,27 @@ const PassengerHome = () => {
                   {loading && <Loader2 size={16} className="animate-spin text-primary" />}
                 </div>
 
-                {/* Map picker */}
-                <button
-                  onClick={() => setMapPickerOpen(true)}
-                  className="w-full flex items-center gap-3 bg-primary/8 border border-primary/15 rounded-2xl px-4 py-3 press"
-                >
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Map size={16} className="text-primary" />
-                  </div>
-                  <span className="text-sm text-primary font-semibold">Selecionar no mapa</span>
-                </button>
+                {/* Map pickers */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setOriginPickerOpen(true)}
+                    className="flex items-center gap-2 bg-primary/8 border border-primary/15 rounded-2xl px-3 py-3 press"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Navigation size={14} className="text-primary" />
+                    </div>
+                    <span className="text-xs text-primary font-semibold text-left">Embarque no mapa</span>
+                  </button>
+                  <button
+                    onClick={() => setMapPickerOpen(true)}
+                    className="flex items-center gap-2 bg-primary/8 border border-primary/15 rounded-2xl px-3 py-3 press"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Map size={14} className="text-primary" />
+                    </div>
+                    <span className="text-xs text-primary font-semibold text-left">Destino no mapa</span>
+                  </button>
+                </div>
               </div>
 
               {/* Results */}
@@ -456,6 +497,25 @@ const PassengerHome = () => {
             userPosition={position}
             onConfirm={handleMapPickerConfirm}
             onClose={() => setMapPickerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Origin Picker */}
+      <AnimatePresence>
+        {originPickerOpen && (
+          <MapPicker
+            mode="origem"
+            initialCenter={
+              customOrigin
+                ? [customOrigin.lng, customOrigin.lat]
+                : position
+                  ? [position.lng, position.lat]
+                  : undefined
+            }
+            userPosition={position}
+            onConfirm={handleOriginPickerConfirm}
+            onClose={() => setOriginPickerOpen(false)}
           />
         )}
       </AnimatePresence>

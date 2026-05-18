@@ -11,6 +11,7 @@ interface MapPickerProps {
   onClose: () => void;
   maxDistanceKm?: number;
   userPosition?: { lat: number; lng: number } | null;
+  mode?: "origem" | "destino";
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -29,7 +30,9 @@ const MapPicker = ({
   onClose,
   maxDistanceKm = 25,
   userPosition,
+  mode = "destino",
 }: MapPickerProps) => {
+  const isOrigem = mode === "origem";
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [address, setAddress] = useState("Mova o mapa para selecionar");
@@ -46,12 +49,12 @@ const MapPicker = ({
     } finally {
       setLoading(false);
     }
-    if (userPosition) {
+    if (userPosition && !isOrigem) {
       const dist = haversineKm(userPosition.lat, userPosition.lng, lat, lng);
       setDistanceText(dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`);
       setBlocked(dist > maxDistanceKm);
     }
-  }, [userPosition, maxDistanceKm]);
+  }, [userPosition, maxDistanceKm, isOrigem]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -116,7 +119,7 @@ const MapPicker = ({
           <ArrowLeft size={20} className="text-foreground" />
         </button>
         <div className="flex-1 bg-card/90 backdrop-blur-md border border-border rounded-xl px-4 py-2.5 shadow-lg">
-          <p className="text-xs text-muted-foreground">Destino selecionado</p>
+          <p className="text-xs text-muted-foreground">{isOrigem ? "Local de embarque" : "Destino selecionado"}</p>
           <p className="text-sm text-foreground truncate flex items-center gap-1.5">
             {loading ? (
               <Loader2 size={14} className="animate-spin text-primary" />
@@ -158,7 +161,7 @@ const MapPicker = ({
             className="w-full h-12 font-bold text-base"
           >
             <Check size={18} className="mr-2" />
-            Confirmar destino
+            {isOrigem ? "Confirmar embarque" : "Confirmar destino"}
           </Button>
         </div>
       </div>
