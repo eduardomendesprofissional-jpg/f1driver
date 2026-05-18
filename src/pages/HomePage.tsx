@@ -215,7 +215,7 @@ const HomePage = () => {
               ))}
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={5} className="mt-8">
-              <Button size="lg" variant="outline" onClick={() => navigate("/login")} className="font-bold h-12 px-8 border-success/30 text-success hover:bg-success/10">
+              <Button size="lg" variant="outline" onClick={() => navigate("/login/motorista")} className="font-bold h-12 px-8 border-success/30 text-success hover:bg-success/10">
                 Cadastre-se como motorista <ChevronRight size={16} />
               </Button>
             </motion.div>
