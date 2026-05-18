@@ -29,9 +29,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const checkProfile = async () => {
       setCheckingOnboarding(true);
 
+      // Hard rule: onboarding ONLY shows on the user's very first access.
+      // Once we've seen this user complete it (or any successful load), never show again.
+      const seenKey = `f1_seen_${user.id}`;
+      if (localStorage.getItem(seenKey) === "1") {
+        if (!cancelled) {
+          setOnboardingDone(true);
+          lastUserId.current = user.id;
+          setCheckingOnboarding(false);
+        }
+        return;
+      }
+
+      // Also consider: account created more than 1h ago = old user, never onboard.
+      const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+      const isFreshAccount = createdAt && Date.now() - createdAt < 60 * 60 * 1000;
+
       let finalDecision: boolean | null = null;
 
-      // Retry up to 3 times with delay to handle profile trigger race
       for (let attempt = 0; attempt < 3; attempt++) {
         const { data, error } = await supabase
           .from("profiles")
@@ -42,30 +57,30 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         if (cancelled) return;
 
         if (error) {
-          // Transient error (RLS/network/etc.) — wait and retry
           if (attempt < 2) {
             await new Promise(r => setTimeout(r, 800));
             continue;
           }
-          // After 3 failed attempts: assume existing user, DO NOT kick to onboarding.
-          finalDecision = true;
+          finalDecision = true; // transient error → never kick existing user
           break;
         }
 
         if (!data) {
-          // Profile row really not there yet — wait once, then on final attempt treat as new
           if (attempt < 2) {
             await new Promise(r => setTimeout(r, 800));
             continue;
           }
-          finalDecision = false;
+          // No profile + brand new account = first access → onboarding
+          // No profile + old account = treat as done (don't kick out)
+          finalDecision = !isFreshAccount;
           break;
         }
 
-        const done = data.onboarding_completo === true ||
-          (!!data.nome && data.nome.trim() !== "" && !!data.cpf && data.cpf.trim() !== "");
+        const hasData = !!data.nome && data.nome.trim() !== "" && !!data.cpf && data.cpf.trim() !== "";
+        // Only consider "not done" if account is brand new AND no data filled yet
+        const done = data.onboarding_completo === true || hasData || !isFreshAccount;
 
-        if (done && !data.onboarding_completo) {
+        if (done && !data.onboarding_completo && hasData) {
           supabase.from("profiles").update({ onboarding_completo: true }).eq("id", user.id).then();
         }
 
@@ -74,7 +89,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (!cancelled) {
-        setOnboardingDone(finalDecision ?? true);
+        const result = finalDecision ?? true;
+        if (result) localStorage.setItem(seenKey, "1");
+        setOnboardingDone(result);
         lastUserId.current = user.id;
         setCheckingOnboarding(false);
       }
