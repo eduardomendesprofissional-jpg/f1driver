@@ -28,7 +28,7 @@ const BottomNav = ({ active, role }: BottomNavProps) => {
   const menuItems = [
     { icon: User, label: "Meu Perfil", path: "/profile", color: "text-primary" },
     { icon: Wallet, label: "Minha Carteira", path: "/wallet", color: "text-emerald-500" },
-    { icon: CreditCard, label: "Pagamento", path: "/payment-methods", color: "text-emerald-500" },
+    
     { icon: Clock, label: "Minhas Viagens", path: "/history", color: "text-blue-500" },
     { icon: Package, label: "Meus Envios", path: "/envios", color: "text-orange-500" },
     { icon: Gift, label: "Indicar Amigos", path: "/passenger/referral", color: "text-pink-500" },

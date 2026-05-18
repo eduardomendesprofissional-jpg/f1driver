@@ -67,8 +67,6 @@ import DriverEarnings from "./pages/DriverEarnings";
 import PassengerInbox from "./pages/PassengerInbox";
 import PassengerReferral from "./pages/PassengerReferral";
 import RideTrack from "./pages/RideTrack";
-import StripeCheckout from "./pages/StripeCheckout";
-import PaymentMethodsScreen from "./pages/PaymentMethodsScreen";
 import PassengerWallet from "./pages/PassengerWallet";
 import DriverCredits from "./pages/DriverCredits";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -102,7 +100,7 @@ const App = () => (
             <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
             <Route path="/ride-confirm" element={<ProtectedRoute><RideConfirm /></ProtectedRoute>} />
             <Route path="/ride-active" element={<ProtectedRoute><RideActive /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><StripeCheckout /></ProtectedRoute>} />
+            
             <Route path="/rating" element={<ProtectedRoute><RatingScreen /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryScreen /></ProtectedRoute>} />
             <Route path="/envios" element={<ProtectedRoute><EnviosScreen /></ProtectedRoute>} />
@@ -110,7 +108,7 @@ const App = () => (
             <Route path="/envios/:id" element={<ProtectedRoute><EnvioTracking /></ProtectedRoute>} />
             <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
-            <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsScreen /></ProtectedRoute>} />
+            
             <Route path="/wallet" element={<ProtectedRoute><PassengerWallet /></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute><PassengerInbox /></ProtectedRoute>} />
             <Route path="/referral" element={<ProtectedRoute><PassengerReferral /></ProtectedRoute>} />

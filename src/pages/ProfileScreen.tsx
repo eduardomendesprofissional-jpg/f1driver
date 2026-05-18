@@ -414,7 +414,7 @@ const ProfileScreen = () => {
               {addingPayment && (
                 <div className="space-y-3 pt-2 border-t border-border">
                   <div className="flex gap-2">
-                    {["pix", "cartão", "dinheiro"].map((t) => (
+                    {["pix", "dinheiro"].map((t) => (
                       <button
                         key={t}
                         onClick={() => setNewPaymentType(t)}
@@ -436,7 +436,7 @@ const ProfileScreen = () => {
                   <Input
                     value={newPaymentKey}
                     onChange={(e) => setNewPaymentKey(e.target.value)}
-                    placeholder={newPaymentType === "cartão" ? "Final do cartão (ex: **** 1234)" : "Chave PIX ou descrição"}
+                    placeholder="Chave PIX ou descrição"
                   />
                   <div className="flex gap-2">
                     <Button onClick={addPaymentMethod} size="sm" className="flex-1">Salvar</Button>
@@ -456,14 +456,6 @@ const ProfileScreen = () => {
 
         {/* Quick Links */}
         <Card className="bg-card border-border overflow-hidden">
-          <button
-            onClick={() => navigate("/payment-methods")}
-            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
-          >
-            <CreditCard size={20} className="text-primary" />
-            <span className="flex-1 text-left text-sm font-medium text-foreground">Formas de Pagamento</span>
-            <ChevronRight size={16} className="text-muted-foreground" />
-          </button>
           <button
             onClick={() => navigate("/inbox")}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"

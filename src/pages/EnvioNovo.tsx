@@ -22,7 +22,7 @@ const TAMANHOS = [
 
 const PAGAMENTOS = [
   { id: "pix", label: "Pix", icon: QrCode },
-  { id: "card", label: "Cartão", icon: CreditCard },
+  { id: "maquininha", label: "Maquininha", icon: CreditCard },
   { id: "cash", label: "Dinheiro", icon: Banknote },
 ];
 
