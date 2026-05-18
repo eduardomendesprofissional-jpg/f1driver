@@ -81,15 +81,23 @@ const LoginScreen = ({ forcedRole }: Props) => {
     setLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email, password,
           options: {
             data: { nome, tipo: role },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/`,
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+
+        // Supabase retorna identities vazio quando o e-mail já existe (anti-enumeração)
+        const identities = (signUpData.user as any)?.identities;
+        if (Array.isArray(identities) && identities.length === 0) {
+          toast.error("Este e-mail já está cadastrado. Faça login ou use 'Reenviar confirmação' abaixo.");
+          setIsSignUp(false);
+          return;
+        }
+        toast.success("Conta criada! Verifique seu e-mail para confirmar (cheque também a caixa de spam).");
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
