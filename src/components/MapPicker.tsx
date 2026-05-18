@@ -11,6 +11,7 @@ interface MapPickerProps {
   onClose: () => void;
   maxDistanceKm?: number;
   userPosition?: { lat: number; lng: number } | null;
+  mode?: "origem" | "destino";
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
