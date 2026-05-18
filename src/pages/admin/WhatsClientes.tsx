@@ -3,20 +3,59 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTable } from "@/hooks/use-table";
 import { exportToCSV, printTable } from "@/lib/table-utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 const headers = [
-  { key: "status", label: "Status" },
+  { key: "tipo", label: "Tipo" },
   { key: "nome", label: "Nome do Cliente" },
-  { key: "whatsapp", label: "WhatsApp" },
-  { key: "categoria", label: "Categoria Padrão" },
+  { key: "telefone", label: "WhatsApp" },
+  { key: "status_aprovacao", label: "Status" },
+  { key: "created_at", label: "Cadastro" },
 ];
 
+interface Cliente {
+  id: string;
+  nome: string | null;
+  telefone: string | null;
+  tipo: string;
+  status_aprovacao: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+
 const WhatsClientes = () => {
-  const [clientes] = useState<Record<string, unknown>[]>([]);
-  const table = useTable({ data: clientes, searchKeys: ["nome", "whatsapp"] });
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const table = useTable({ data: clientes, searchKeys: ["nome", "telefone", "tipo"] });
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nome, telefone, tipo, status_aprovacao, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (!error && data) setClientes(data as Cliente[]);
+      setLoading(false);
+    };
+    load();
+
+    const channel = supabase
+      .channel("profiles-clientes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => load())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const fmtDate = (v: string) => {
+    try { return new Date(v).toLocaleDateString("pt-BR"); } catch { return v; }
+  };
 
   return (
     <div className="space-y-6">
@@ -25,7 +64,7 @@ const WhatsClientes = () => {
           <Users size={24} />
           <div>
             <h1 className="text-lg font-bold">Meus Clientes</h1>
-            <p className="text-xs text-white/80">Gerencie os usuários vinculados ao seu WhatsApp</p>
+            <p className="text-xs text-white/80">Todos os usuários cadastrados (passageiros e motoristas)</p>
           </div>
         </div>
         <span className="bg-white text-rose-500 text-sm font-bold px-3 py-1 rounded-full">{clientes.length} Total</span>
@@ -45,21 +84,25 @@ const WhatsClientes = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                  <TableHead className="text-xs font-semibold">Tipo</TableHead>
                   <TableHead className="text-xs font-semibold">Nome do Cliente</TableHead>
                   <TableHead className="text-xs font-semibold">WhatsApp</TableHead>
-                  <TableHead className="text-xs font-semibold">Categoria Padrão</TableHead>
-                  <TableHead className="text-xs font-semibold text-right">Ações</TableHead>
+                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                  <TableHead className="text-xs font-semibold">Cadastro</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {table.paginatedData.length > 0 ? table.paginatedData.map((c, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="text-sm">{String(c.status)}</TableCell>
-                    <TableCell className="text-sm">{String(c.nome)}</TableCell>
-                    <TableCell className="text-sm">{String(c.whatsapp)}</TableCell>
-                    <TableCell className="text-sm">{String(c.categoria)}</TableCell>
-                    <TableCell className="text-right text-sm">—</TableCell>
+                {loading ? (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8 text-sm">Carregando...</TableCell></TableRow>
+                ) : table.paginatedData.length > 0 ? table.paginatedData.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="text-sm">
+                      <Badge variant={c.tipo === "motorista" ? "default" : "secondary"} className="capitalize">{c.tipo}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{c.nome || "—"}</TableCell>
+                    <TableCell className="text-sm">{c.telefone || "—"}</TableCell>
+                    <TableCell className="text-sm capitalize">{c.status_aprovacao}</TableCell>
+                    <TableCell className="text-sm">{fmtDate(c.created_at)}</TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
