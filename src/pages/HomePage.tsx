@@ -79,7 +79,7 @@ const HomePage = () => {
               <Button size="lg" onClick={() => navigate("/login")} className="glow-blue text-base font-bold px-8 h-14">
                 <Users size={18} /> Quero ser passageiro
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/login")} className="text-base font-bold px-8 h-14 border-primary/30 hover:bg-primary/10">
+              <Button size="lg" variant="outline" onClick={() => navigate("/login/motorista")} className="text-base font-bold px-8 h-14 border-primary/30 hover:bg-primary/10">
                 <Car size={18} /> Quero ser motorista
               </Button>
             </motion.div>
