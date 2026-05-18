@@ -91,7 +91,7 @@ export async function searchGooglePlaces(
   query: string,
   lat: number,
   lng: number,
-  radiusMeters = 100000,
+  radiusMeters = 35000,
 ): Promise<GooglePlaceResult[]> {
   try {
     const data = await callProxy({ op: "google_text", query, lat, lng, radiusMeters });
