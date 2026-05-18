@@ -298,6 +298,9 @@ const OnboardingScreen = () => {
       // Sync tipo to user_metadata so login redirects stay consistent
       await supabase.auth.updateUser({ data: { tipo } });
 
+      // Mark this user as "seen" on this device — never open onboarding again
+      localStorage.setItem(`f1_seen_${user.id}`, "1");
+
       toast.success("Cadastro concluído!");
       navigate(tipo === "motorista" ? "/driver" : "/passenger", { replace: true });
     } catch (err: any) {
