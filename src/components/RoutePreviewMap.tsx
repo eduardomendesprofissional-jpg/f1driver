@@ -1,5 +1,6 @@
 /// <reference types="google.maps" />
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Maximize2, X } from "lucide-react";
 import { loadGoogleMaps, DARK_MAP_STYLE } from "@/lib/googleMaps";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,9 +8,12 @@ interface RoutePreviewMapProps {
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
   className?: string;
+  expandable?: boolean;
 }
 
-const RoutePreviewMap = ({ origin, destination, className = "w-full h-56" }: RoutePreviewMapProps) => {
+const RoutePreviewMap = ({ origin, destination, className = "w-full h-56", expandable = true }: RoutePreviewMapProps) => {
+  const [fullscreen, setFullscreen] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
