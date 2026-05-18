@@ -161,7 +161,7 @@ const MapPicker = ({
             className="w-full h-12 font-bold text-base"
           >
             <Check size={18} className="mr-2" />
-            Confirmar destino
+            {isOrigem ? "Confirmar embarque" : "Confirmar destino"}
           </Button>
         </div>
       </div>
