@@ -28,26 +28,37 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     let cancelled = false;
     const checkProfile = async () => {
       setCheckingOnboarding(true);
-      
+
+      let finalDecision: boolean | null = null;
+
       // Retry up to 3 times with delay to handle profile trigger race
       for (let attempt = 0; attempt < 3; attempt++) {
         const { data, error } = await supabase
           .from("profiles")
           .select("onboarding_completo, nome, cpf, tipo")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (cancelled) return;
 
-        if (error && error.code === "PGRST116" && attempt < 2) {
-          // Profile not found yet — trigger may not have fired. Wait and retry.
-          await new Promise(r => setTimeout(r, 1000));
-          continue;
+        if (error) {
+          // Transient error (RLS/network/etc.) — wait and retry
+          if (attempt < 2) {
+            await new Promise(r => setTimeout(r, 800));
+            continue;
+          }
+          // After 3 failed attempts: assume existing user, DO NOT kick to onboarding.
+          finalDecision = true;
+          break;
         }
 
         if (!data) {
-          // No profile at all — treat as new user, send to onboarding
-          setOnboardingDone(false);
+          // Profile row really not there yet — wait once, then on final attempt treat as new
+          if (attempt < 2) {
+            await new Promise(r => setTimeout(r, 800));
+            continue;
+          }
+          finalDecision = false;
           break;
         }
 
@@ -58,11 +69,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           supabase.from("profiles").update({ onboarding_completo: true }).eq("id", user.id).then();
         }
 
-        setOnboardingDone(done);
+        finalDecision = done;
         break;
       }
 
       if (!cancelled) {
+        setOnboardingDone(finalDecision ?? true);
         lastUserId.current = user.id;
         setCheckingOnboarding(false);
       }
