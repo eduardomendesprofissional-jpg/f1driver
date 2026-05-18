@@ -68,6 +68,7 @@ export const useGoogleSearch = () => {
       console.log("[useGoogleSearch] got", googleResults.length, "results");
       const places = googleResults
         .map((r) => googleToPlace(r, lat, lng, hasUserPos))
+        .filter((p) => !hasUserPos || (p.distanceMeters ?? 0) <= MAX_DISTANCE_M)
         .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
         .slice(0, 10);
       setResults(places);
