@@ -292,9 +292,26 @@ const PassengerHome = () => {
                 {/* Origin */}
                 <div className="flex items-center gap-3 bg-secondary/60 rounded-2xl px-4 py-3 border border-border/20">
                   <div className="w-2.5 h-2.5 rounded-full bg-primary ring-3 ring-primary/20" />
-                  <span className="text-sm text-muted-foreground truncate">
+                  <span className="flex-1 text-sm text-muted-foreground truncate">
                     {endereco || "Localização não disponível"}
                   </span>
+                  <button
+                    onClick={() => setOriginPickerOpen(true)}
+                    className="text-[11px] font-semibold text-primary press-sm shrink-0 flex items-center gap-1"
+                    aria-label="Selecionar embarque no mapa"
+                  >
+                    <Map size={13} />
+                    {customOrigin ? "Alterar" : "Mapa"}
+                  </button>
+                  {customOrigin && (
+                    <button
+                      onClick={() => setCustomOrigin(null)}
+                      className="text-[11px] font-semibold text-muted-foreground press-sm shrink-0"
+                      aria-label="Usar localização atual"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Destination */}
@@ -310,16 +327,27 @@ const PassengerHome = () => {
                   {loading && <Loader2 size={16} className="animate-spin text-primary" />}
                 </div>
 
-                {/* Map picker */}
-                <button
-                  onClick={() => setMapPickerOpen(true)}
-                  className="w-full flex items-center gap-3 bg-primary/8 border border-primary/15 rounded-2xl px-4 py-3 press"
-                >
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Map size={16} className="text-primary" />
-                  </div>
-                  <span className="text-sm text-primary font-semibold">Selecionar no mapa</span>
-                </button>
+                {/* Map pickers */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setOriginPickerOpen(true)}
+                    className="flex items-center gap-2 bg-primary/8 border border-primary/15 rounded-2xl px-3 py-3 press"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Navigation size={14} className="text-primary" />
+                    </div>
+                    <span className="text-xs text-primary font-semibold text-left">Embarque no mapa</span>
+                  </button>
+                  <button
+                    onClick={() => setMapPickerOpen(true)}
+                    className="flex items-center gap-2 bg-primary/8 border border-primary/15 rounded-2xl px-3 py-3 press"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Map size={14} className="text-primary" />
+                    </div>
+                    <span className="text-xs text-primary font-semibold text-left">Destino no mapa</span>
+                  </button>
+                </div>
               </div>
 
               {/* Results */}
