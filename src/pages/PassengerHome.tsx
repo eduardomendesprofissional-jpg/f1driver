@@ -501,6 +501,25 @@ const PassengerHome = () => {
         )}
       </AnimatePresence>
 
+      {/* Origin Picker */}
+      <AnimatePresence>
+        {originPickerOpen && (
+          <MapPicker
+            mode="origem"
+            initialCenter={
+              customOrigin
+                ? [customOrigin.lng, customOrigin.lat]
+                : position
+                  ? [position.lng, position.lat]
+                  : undefined
+            }
+            userPosition={position}
+            onConfirm={handleOriginPickerConfirm}
+            onClose={() => setOriginPickerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <GpsJustificationModal open={showGpsModal} onAccept={acceptGpsModal} onCancel={dismissGpsModal} />
       <BottomNav active="home" role="passenger" />
     </div>
