@@ -30,7 +30,9 @@ const MapPicker = ({
   onClose,
   maxDistanceKm = 25,
   userPosition,
+  mode = "destino",
 }: MapPickerProps) => {
+  const isOrigem = mode === "origem";
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [address, setAddress] = useState("Mova o mapa para selecionar");
