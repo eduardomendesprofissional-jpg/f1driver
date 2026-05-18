@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
 import { toast } from "sonner";
 import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
+import RoutePreviewMap from "@/components/RoutePreviewMap";
 import ScheduleRidePicker from "@/components/ScheduleRidePicker";
 import VoucherInput from "@/components/VoucherInput";
 import { format } from "date-fns";
@@ -101,6 +102,21 @@ const RideConfirm = () => {
       </div>
 
       <div className="px-4 flex-1 overflow-y-auto pb-24">
+        {/* Map with route */}
+        {origem && destino && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl overflow-hidden border border-border/50 mb-4"
+          >
+            <RoutePreviewMap
+              origin={{ lat: origem.lat, lng: origem.lng }}
+              destination={{ lat: destino.lat, lng: destino.lng }}
+              className="w-full h-52"
+            />
+          </motion.div>
+        )}
+
         {/* Route card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
