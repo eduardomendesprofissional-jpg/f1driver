@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { useEffect, useRef } from "react";
 import { loadGoogleMaps, DARK_MAP_STYLE } from "@/lib/googleMaps";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RoutePreviewMapProps {
   origin: { lat: number; lng: number };
@@ -11,8 +12,7 @@ interface RoutePreviewMapProps {
 const RoutePreviewMap = ({ origin, destination, className = "w-full h-56" }: RoutePreviewMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const rendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
-  const fallbackLineRef = useRef<google.maps.Polyline | null>(null);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
   const originMarkerRef = useRef<google.maps.Marker | null>(null);
   const destMarkerRef = useRef<google.maps.Marker | null>(null);
 
@@ -20,7 +20,7 @@ const RoutePreviewMap = ({ origin, destination, className = "w-full h-56" }: Rou
     if (!containerRef.current) return;
     let cancelled = false;
 
-    loadGoogleMaps().then(() => {
+    loadGoogleMaps().then(async () => {
       if (cancelled || !containerRef.current) return;
 
       const map = new google.maps.Map(containerRef.current, {
@@ -63,55 +63,70 @@ const RoutePreviewMap = ({ origin, destination, className = "w-full h-56" }: Rou
         },
       });
 
-      const renderer = new google.maps.DirectionsRenderer({
-        map,
-        suppressMarkers: true,
-        preserveViewport: false,
-        polylineOptions: {
+      // Helper to draw a path
+      const drawPath = (path: google.maps.LatLngLiteral[] | google.maps.LatLng[]) => {
+        polylineRef.current = new google.maps.Polyline({
+          path,
+          map,
           strokeColor: "#1E90FF",
           strokeOpacity: 0.95,
           strokeWeight: 5,
-        },
-      });
-      rendererRef.current = renderer;
+          geodesic: true,
+        });
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach((p) => bounds.extend(p as any));
+        map.fitBounds(bounds, 60);
+      };
 
-      const service = new google.maps.DirectionsService();
-      service.route(
-        {
-          origin,
-          destination,
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (cancelled) return;
-          if (status === google.maps.DirectionsStatus.OK && result) {
-            renderer.setDirections(result);
-          } else {
-            // Fallback: straight line + fit bounds
-            fallbackLineRef.current = new google.maps.Polyline({
-              path: [origin, destination],
-              map,
-              strokeColor: "#1E90FF",
-              strokeOpacity: 0.9,
-              strokeWeight: 4,
-            });
-            const bounds = new google.maps.LatLngBounds();
-            bounds.extend(origin);
-            bounds.extend(destination);
-            map.fitBounds(bounds, 60);
-          }
+      // Fetch driving route via proxy and decode the polyline so it follows actual streets
+      try {
+        const { data, error } = await supabase.functions.invoke("geo-proxy", {
+          body: {
+            op: "google_directions",
+            originLat: origin.lat,
+            originLng: origin.lng,
+            destLat: destination.lat,
+            destLng: destination.lng,
+          },
+        });
+        if (cancelled) return;
+        const encoded: string | undefined =
+          data?.data?.routes?.[0]?.overview_polyline?.points;
+        if (!error && encoded && google.maps.geometry?.encoding) {
+          const decoded = google.maps.geometry.encoding.decodePath(encoded);
+          drawPath(decoded);
+          return;
         }
-      );
+      } catch {
+        // ignored — falls back below
+      }
+
+      if (cancelled) return;
+      // Fallback: client-side DirectionsService (driving)
+      try {
+        const service = new google.maps.DirectionsService();
+        service.route(
+          { origin, destination, travelMode: google.maps.TravelMode.DRIVING },
+          (result, status) => {
+            if (cancelled) return;
+            if (status === google.maps.DirectionsStatus.OK && result?.routes?.[0]?.overview_path) {
+              drawPath(result.routes[0].overview_path);
+            } else {
+              drawPath([origin, destination]);
+            }
+          },
+        );
+      } catch {
+        drawPath([origin, destination]);
+      }
     });
 
     return () => {
       cancelled = true;
-      rendererRef.current?.setMap(null);
-      fallbackLineRef.current?.setMap(null);
+      polylineRef.current?.setMap(null);
       originMarkerRef.current?.setMap(null);
       destMarkerRef.current?.setMap(null);
-      rendererRef.current = null;
-      fallbackLineRef.current = null;
+      polylineRef.current = null;
       originMarkerRef.current = null;
       destMarkerRef.current = null;
       mapRef.current = null;
