@@ -332,6 +332,9 @@ const HomePage = () => {
                     <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">{link}</a>
                   </li>
                 ))}
+                <li>
+                  <a href="/admin/login" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">Painel Admin</a>
+                </li>
               </ul>
             </div>
 
