@@ -104,7 +104,7 @@ const PassengerHome = () => {
     });
     navigate("/ride-confirm", {
       state: {
-        origem: { endereco, lat: position.lat, lng: position.lng },
+        origem: { endereco: effectiveOrigin.endereco, lat: effectiveOrigin.lat, lng: effectiveOrigin.lng },
         destino: { endereco: sp.address || sp.name, lat: sp.lat, lng: sp.lng },
       },
     });
