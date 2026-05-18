@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV, printTable } from "@/lib/table-utils";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ConfirmDialogProvider";
+import CreateUserDialog from "@/components/admin/CreateUserDialog";
 
 interface PassengerProfile {
   id: string;
@@ -108,10 +109,11 @@ const Passageiros = () => {
             <p className="text-sm text-muted-foreground">Gerencie os passageiros da plataforma.</p>
           </div>
 
-          <div className="flex items-center justify-between px-5 py-3">
+          <div className="flex items-center justify-between px-5 py-3 gap-2 flex-wrap">
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => exportToCSV(filtered as any, headers, "passageiros")}>CSV</Button>
               <Button variant="outline" size="sm" className="text-xs text-primary border-primary" onClick={() => printTable(filtered as any, headers, "Passageiros")}>Print</Button>
+              <CreateUserDialog tipo="passageiro" onCreated={fetchPassageiros} />
             </div>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
