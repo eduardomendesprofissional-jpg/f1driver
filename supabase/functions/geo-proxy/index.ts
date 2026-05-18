@@ -57,11 +57,94 @@ async function googleReverse(body: any) {
   return { ok: res.ok, status: res.status, data: await res.json() };
 }
 
+async function osrmDirections(originLat: number, originLng: number, destLat: number, destLng: number) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=polyline&steps=true&annotations=false`;
+  const res = await fetch(url, { headers: { "User-Agent": "F1Driver/1.0" } });
+  const raw = await res.json();
+  const r = raw?.routes?.[0];
+  if (!r) {
+    return { ok: false, status: res.status, data: { status: "ZERO_RESULTS", routes: [] } };
+  }
+  const leg = r.legs?.[0];
+  const adapted = {
+    status: "OK",
+    routes: [
+      {
+        overview_polyline: { points: r.geometry || "" },
+        legs: [
+          {
+            distance: { value: Math.round(r.distance || 0) },
+            duration: { value: Math.round(r.duration || 0) },
+            steps: (leg?.steps || []).map((s: any) => ({
+              html_instructions: s.maneuver?.instruction || s.name || "",
+              distance: { value: Math.round(s.distance || 0) },
+              duration: { value: Math.round(s.duration || 0) },
+              maneuver: s.maneuver?.type,
+            })),
+          },
+        ],
+      },
+    ],
+  };
+  return { ok: true, status: 200, data: adapted };
+}
+
 async function googleDirections(body: any) {
   const { originLat, originLng, destLat, destLng } = body;
-  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originLat},${originLng}&destination=${destLat},${destLng}&mode=driving&language=pt-BR&region=BR&key=${GOOGLE_KEY}`;
-  const res = await fetch(url);
-  return { ok: res.ok, status: res.status, data: await res.json() };
+  // Try Routes API (new) first
+  try {
+    const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_KEY,
+        "X-Goog-FieldMask":
+          "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration",
+      },
+      body: JSON.stringify({
+        origin: { location: { latLng: { latitude: originLat, longitude: originLng } } },
+        destination: { location: { latLng: { latitude: destLat, longitude: destLng } } },
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+        languageCode: "pt-BR",
+        regionCode: "BR",
+      }),
+    });
+    if (res.ok) {
+      const raw = await res.json();
+      const r = raw?.routes?.[0];
+      if (r) {
+        return {
+          ok: true,
+          status: 200,
+          data: {
+            status: "OK",
+            routes: [
+              {
+                overview_polyline: { points: r.polyline?.encodedPolyline || "" },
+                legs: [
+                  {
+                    distance: { value: r.distanceMeters || 0 },
+                    duration: { value: Math.round(Number(String(r.duration || "0s").replace("s", "")) || 0) },
+                    steps: (r.legs?.[0]?.steps || []).map((s: any) => ({
+                      html_instructions: s.navigationInstruction?.instructions || "",
+                      distance: { value: s.distanceMeters || 0 },
+                      duration: { value: Math.round(Number(String(s.staticDuration || "0s").replace("s", "")) || 0) },
+                      maneuver: s.navigationInstruction?.maneuver,
+                    })),
+                  },
+                ],
+              },
+            ],
+          },
+        };
+      }
+    }
+  } catch (_) {
+    // fall through to OSRM
+  }
+  // Fallback: OSRM (free, no key required)
+  return await osrmDirections(originLat, originLng, destLat, destLng);
 }
 
 async function nominatimSearch(body: any) {
