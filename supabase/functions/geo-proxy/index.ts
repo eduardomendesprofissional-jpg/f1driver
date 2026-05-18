@@ -8,8 +8,82 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const CATEGORY_KEYWORDS: Record<string, string> = {
+  hospital: "hospital",
+  "pronto socorro": "hospital",
+  "pronto-socorro": "hospital",
+  upa: "hospital",
+  ups: "hospital",
+  clinica: "doctor",
+  "clínica": "doctor",
+  consultorio: "doctor",
+  "consultório": "doctor",
+  medico: "doctor",
+  "médico": "doctor",
+  dentista: "dentist",
+  odonto: "dentist",
+  farmacia: "pharmacy",
+  "farmácia": "pharmacy",
+  drogaria: "pharmacy",
+  restaurante: "restaurant",
+  restaurantes: "restaurant",
+  pizzaria: "restaurant",
+  lanchonete: "restaurant",
+  hamburgueria: "restaurant",
+  churrascaria: "restaurant",
+  bar: "bar",
+  bares: "bar",
+  pub: "bar",
+  boteco: "bar",
+  cafe: "cafe",
+  "café": "cafe",
+  cafeteria: "cafe",
+  padaria: "bakery",
+  mercado: "supermarket",
+  supermercado: "supermarket",
+  hotel: "lodging",
+  pousada: "lodging",
+  posto: "gas_station",
+  gasolina: "gas_station",
+  escola: "school",
+  colegio: "school",
+  "colégio": "school",
+  universidade: "university",
+  faculdade: "university",
+  shopping: "shopping_mall",
+  banco: "bank",
+  caixa: "atm",
+  igreja: "church",
+  academia: "gym",
+  parque: "park",
+  aeroporto: "airport",
+  rodoviaria: "bus_station",
+  "rodoviária": "bus_station",
+};
+
+function detectCategory(query: string): string | null {
+  const q = query.toLowerCase().trim();
+  for (const [kw, type] of Object.entries(CATEGORY_KEYWORDS)) {
+    const re = new RegExp(`(^|\\s)${kw}(\\s|$)`, "i");
+    if (re.test(q)) return type;
+  }
+  return null;
+}
+
 async function googlePlacesText(body: any) {
   const { query, lat, lng, radiusMeters = 100000 } = body;
+  const includedType = detectCategory(String(query || ""));
+  const payload: Record<string, unknown> = {
+    textQuery: query,
+    languageCode: "pt-BR",
+    regionCode: "BR",
+    maxResultCount: 20,
+    locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters } },
+  };
+  if (includedType) {
+    payload.includedType = includedType;
+    payload.rankPreference = "DISTANCE";
+  }
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
@@ -18,13 +92,7 @@ async function googlePlacesText(body: any) {
       "X-Goog-FieldMask":
         "places.id,places.displayName,places.formattedAddress,places.shortFormattedAddress,places.location,places.types",
     },
-    body: JSON.stringify({
-      textQuery: query,
-      languageCode: "pt-BR",
-      regionCode: "BR",
-      maxResultCount: 10,
-      locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters } },
-    }),
+    body: JSON.stringify(payload),
   });
   return { ok: res.ok, status: res.status, data: await res.json() };
 }
