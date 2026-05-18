@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
   {
     label: "Viagens", icon: Car,
     children: [
+      { label: "Tempo Real", path: "/admin/viagens/tempo-real" },
       { label: "Encerradas", path: "/admin/viagens/encerradas" },
       { label: "Em Andamento", path: "/admin/viagens/andamento" },
       { label: "Registro de Chamadas", path: "/admin/viagens/registro-chamadas" },
