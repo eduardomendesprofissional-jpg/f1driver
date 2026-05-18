@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Download, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
