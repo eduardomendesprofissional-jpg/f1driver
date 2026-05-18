@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import CreateUserDialog from "@/components/admin/CreateUserDialog";
 
 interface DriverProfile {
   id: string;
@@ -191,16 +192,19 @@ const Motoristas = () => {
       {/* Table */}
       <Card className="bg-card border-border">
         <CardContent className="p-0">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border gap-2 flex-wrap">
             <h2 className="font-semibold text-sm">Motoristas cadastrados</h2>
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Pesquisar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-48 h-8 text-xs"
-              />
+            <div className="flex items-center gap-2">
+              <CreateUserDialog tipo="motorista" onCreated={fetchDrivers} />
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Pesquisar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-48 h-8 text-xs"
+                />
+              </div>
             </div>
           </div>
 
