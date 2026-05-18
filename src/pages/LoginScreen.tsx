@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Mail, Lock, User, Car, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,16 +50,29 @@ const ForgotPassword = () => {
   );
 };
 
-const LoginScreen = () => {
+interface Props {
+  forcedRole?: "passageiro" | "motorista";
+}
+
+const LoginScreen = ({ forcedRole }: Props) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const role: "passageiro" | "motorista" =
+    forcedRole || (location.pathname.includes("/motorista") ? "motorista" : "passageiro");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
-  const [mode, setMode] = useState<"passenger" | "driver">("passenger");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+
+  const isDriver = role === "motorista";
+  const RoleIcon = isDriver ? Car : User;
+  const roleLabel = isDriver ? "Motorista" : "Passageiro";
+  const otherRoute = isDriver ? "/login" : "/login/motorista";
+  const otherLabel = isDriver ? "Sou passageiro" : "Sou motorista";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +84,7 @@ const LoginScreen = () => {
         const { error } = await supabase.auth.signUp({
           email, password,
           options: {
-            data: { nome, tipo: mode === "passenger" ? "passageiro" : "motorista" },
+            data: { nome, tipo: role },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -80,9 +93,43 @@ const LoginScreen = () => {
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        // Navigate based on user metadata type
-        const tipo = data.user?.user_metadata?.tipo;
-        navigate(tipo === "motorista" ? "/driver" : "/passenger");
+
+        // Validate access against the chosen portal
+        const userId = data.user?.id;
+        let allowed = false;
+        if (userId) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("tipo, tem_perfil_passageiro, tem_perfil_motorista")
+            .eq("id", userId)
+            .maybeSingle();
+
+          if (profile) {
+            allowed = isDriver
+              ? (!!profile.tem_perfil_motorista || profile.tipo === "motorista")
+              : (!!profile.tem_perfil_passageiro || profile.tipo === "passageiro");
+          } else {
+            // Fallback to metadata when profile row hasn't been created yet
+            const metaTipo = data.user?.user_metadata?.tipo;
+            allowed = isDriver ? metaTipo === "motorista" : metaTipo !== "motorista";
+          }
+        }
+
+        if (!allowed) {
+          await supabase.auth.signOut();
+          toast.error(
+            isDriver
+              ? "Esta conta não tem perfil de motorista. Entre como passageiro ou cadastre-se como motorista."
+              : "Esta conta não tem perfil de passageiro. Entre como motorista ou cadastre-se como passageiro."
+          );
+          return;
+        }
+
+        // Align active role with the portal used
+        await supabase.auth.updateUser({ data: { tipo: role } });
+        await supabase.from("profiles").update({ tipo: role }).eq("id", userId!);
+
+        navigate(isDriver ? "/driver" : "/passenger");
       }
     } catch (err: any) {
       const msg = String(err?.message || "");
@@ -104,7 +151,7 @@ const LoginScreen = () => {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm flex flex-col items-center gap-7 relative z-10"
+        className="w-full max-w-sm flex flex-col items-center gap-6 relative z-10"
       >
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
@@ -112,24 +159,10 @@ const LoginScreen = () => {
           <h1 className="text-xl font-black text-gradient-blue tracking-tight">F1 Driver</h1>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="flex w-full rounded-2xl bg-secondary/60 p-1 gap-1 border border-border/30">
-          {[
-            { key: "passenger" as const, icon: User, label: "Passageiro" },
-            { key: "driver" as const, icon: Car, label: "Motorista" },
-          ].map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                mode === m.key
-                  ? "bg-primary text-primary-foreground shadow-lg glow-blue"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <m.icon size={16} /> {m.label}
-            </button>
-          ))}
+        {/* Role badge (locked) */}
+        <div className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary/10 border border-primary/30 text-primary font-semibold">
+          <RoleIcon size={18} />
+          Acesso de {roleLabel}
         </div>
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3.5">
@@ -172,7 +205,7 @@ const LoginScreen = () => {
           )}
 
           <Button type="submit" className="w-full h-13 text-base font-bold glow-blue rounded-xl mt-1" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" size={20} /> : isSignUp ? "Criar Conta" : "Entrar"}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : isSignUp ? `Criar conta de ${roleLabel}` : `Entrar como ${roleLabel}`}
           </Button>
 
           {!isSignUp && <ForgotPassword />}
@@ -184,6 +217,10 @@ const LoginScreen = () => {
             {isSignUp ? "Entrar" : "Criar conta"}
           </button>
         </p>
+
+        <Link to={otherRoute} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+          {otherLabel} →
+        </Link>
       </motion.div>
     </div>
   );

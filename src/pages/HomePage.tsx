@@ -79,7 +79,7 @@ const HomePage = () => {
               <Button size="lg" onClick={() => navigate("/login")} className="glow-blue text-base font-bold px-8 h-14">
                 <Users size={18} /> Quero ser passageiro
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/login")} className="text-base font-bold px-8 h-14 border-primary/30 hover:bg-primary/10">
+              <Button size="lg" variant="outline" onClick={() => navigate("/login/motorista")} className="text-base font-bold px-8 h-14 border-primary/30 hover:bg-primary/10">
                 <Car size={18} /> Quero ser motorista
               </Button>
             </motion.div>
@@ -215,7 +215,7 @@ const HomePage = () => {
               ))}
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={5} className="mt-8">
-              <Button size="lg" variant="outline" onClick={() => navigate("/login")} className="font-bold h-12 px-8 border-success/30 text-success hover:bg-success/10">
+              <Button size="lg" variant="outline" onClick={() => navigate("/login/motorista")} className="font-bold h-12 px-8 border-success/30 text-success hover:bg-success/10">
                 Cadastre-se como motorista <ChevronRight size={16} />
               </Button>
             </motion.div>
