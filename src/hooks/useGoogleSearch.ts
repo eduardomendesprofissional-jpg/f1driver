@@ -69,8 +69,14 @@ export const useGoogleSearch = () => {
       const places = googleResults
         .map((r) => googleToPlace(r, lat, lng, hasUserPos))
         .filter((p) => !hasUserPos || (p.distanceMeters ?? 0) <= MAX_DISTANCE_M)
-        .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0))
-        .slice(0, 10);
+        .sort((a, b) => {
+          // POIs (estabelecimentos) primeiro, depois por distância
+          const aPoi = a.category && a.category !== "Endereço" ? 0 : 1;
+          const bPoi = b.category && b.category !== "Endereço" ? 0 : 1;
+          if (aPoi !== bPoi) return aPoi - bPoi;
+          return (a.distanceMeters || 0) - (b.distanceMeters || 0);
+        })
+        .slice(0, 12);
       setResults(places);
     } catch (err: any) {
       console.error("[useGoogleSearch] Error:", err?.message || err);
