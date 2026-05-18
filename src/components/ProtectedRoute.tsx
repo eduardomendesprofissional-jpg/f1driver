@@ -19,7 +19,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Avoid re-fetching if we already checked this user
+    // PERSISTENT LOGIN: once a user has been seen on this device, NEVER show onboarding again.
+    const seenKey = `f1_seen_${user.id}`;
+    if (localStorage.getItem(seenKey) === "1") {
+      setOnboardingDone(true);
+      setCheckingOnboarding(false);
+      lastUserId.current = user.id;
+      return;
+    }
+
+    // Avoid re-fetching if we already checked this user in the current session
     if (lastUserId.current === user.id && onboardingDone !== null) {
       setCheckingOnboarding(false);
       return;
