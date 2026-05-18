@@ -59,9 +59,50 @@ async function googleReverse(body: any) {
 
 async function googleDirections(body: any) {
   const { originLat, originLng, destLat, destLng } = body;
-  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originLat},${originLng}&destination=${destLat},${destLng}&mode=driving&language=pt-BR&region=BR&key=${GOOGLE_KEY}`;
-  const res = await fetch(url);
-  return { ok: res.ok, status: res.status, data: await res.json() };
+  // Use Routes API (new) — legacy Directions API may be disabled on the project
+  const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GOOGLE_KEY,
+      "X-Goog-FieldMask":
+        "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.polyline.encodedPolyline",
+    },
+    body: JSON.stringify({
+      origin: { location: { latLng: { latitude: originLat, longitude: originLng } } },
+      destination: { location: { latLng: { latitude: destLat, longitude: destLng } } },
+      travelMode: "DRIVE",
+      routingPreference: "TRAFFIC_AWARE",
+      languageCode: "pt-BR",
+      regionCode: "BR",
+    }),
+  });
+  const raw = await res.json();
+  // Adapt to legacy shape consumed by the client (routes[0].legs[0].distance/duration + overview_polyline)
+  const r = raw?.routes?.[0];
+  const adapted = r
+    ? {
+        status: "OK",
+        routes: [
+          {
+            overview_polyline: { points: r.polyline?.encodedPolyline || "" },
+            legs: [
+              {
+                distance: { value: r.distanceMeters || 0 },
+                duration: { value: Math.round(Number(String(r.duration || "0s").replace("s", "")) || 0) },
+                steps: (r.legs?.[0]?.steps || []).map((s: any) => ({
+                  html_instructions: s.navigationInstruction?.instructions || "",
+                  distance: { value: s.distanceMeters || 0 },
+                  duration: { value: Math.round(Number(String(s.staticDuration || "0s").replace("s", "")) || 0) },
+                  maneuver: s.navigationInstruction?.maneuver,
+                })),
+              },
+            ],
+          },
+        ],
+      }
+    : { status: raw?.error?.status || "ZERO_RESULTS", routes: [], error_message: raw?.error?.message };
+  return { ok: res.ok, status: res.status, data: adapted };
 }
 
 async function nominatimSearch(body: any) {
