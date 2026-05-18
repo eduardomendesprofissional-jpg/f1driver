@@ -16,14 +16,19 @@ const AdminLayout = () => {
     return localStorage.getItem("theme") === "light";
   });
 
+  // Admin uses the dark theme by default; toggle removes it for light.
+  // The .dark class is scoped to admin and removed when leaving the admin area.
   useEffect(() => {
     if (isLight) {
-      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     } else {
-      document.documentElement.classList.remove("light");
+      document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
     }
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
   }, [isLight]);
 
   // Lock body scroll when mobile sidebar is open
