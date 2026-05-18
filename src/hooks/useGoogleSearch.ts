@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { searchGooglePlaces, GooglePlaceResult } from "@/lib/googleMaps";
 
-const MAX_DISTANCE_KM = 100;
+const MAX_DISTANCE_KM = 35;
 const MAX_DISTANCE_M = MAX_DISTANCE_KM * 1000;
 
 export interface GooglePlace {
