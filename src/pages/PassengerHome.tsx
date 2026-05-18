@@ -19,8 +19,16 @@ const PassengerHome = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [originPickerOpen, setOriginPickerOpen] = useState(false);
+  const [customOrigin, setCustomOrigin] = useState<{ lat: number; lng: number; endereco: string } | null>(null);
   const [destination, setDestination] = useState("");
-  const { position, endereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
+  const { position, endereco: geoEndereco, permission, loading: geoLoading, error: geoError, requestLocation, showGpsModal, acceptGpsModal, dismissGpsModal } = useGeolocation();
+  const effectiveOrigin = customOrigin
+    ? { lat: customOrigin.lat, lng: customOrigin.lng, endereco: customOrigin.endereco }
+    : position && geoEndereco
+      ? { lat: position.lat, lng: position.lng, endereco: geoEndereco }
+      : null;
+  const endereco = effectiveOrigin?.endereco ?? geoEndereco;
   const { results, loading, search, clear } = useGoogleSearch();
   const { routes: savedRoutes, saveRoute, toggleFavorite, isFavorite } = useSavedRoutes();
   const { places: suggested } = useSuggestedPlaces(position);
