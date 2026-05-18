@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Download, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISS_KEY = "admin-pwa-install-dismissed";
 
 const AdminPWAInstallPrompt = () => {
+  const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -54,12 +56,11 @@ const AdminPWAInstallPrompt = () => {
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      // Se o evento não foi capturado (iOS ou já expirado), mostra instrução
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       if (isIOS) {
         alert("Toque no botão Compartilhar e depois em 'Adicionar à Tela de Início' para salvar o PAINEL AMD.");
       } else {
-        alert("Use o menu do navegador (⋮) e selecione 'Adicionar à tela inicial' ou 'Instalar app'.");
+        navigate("/admin/instalar");
       }
       setShowPrompt(false);
       return;

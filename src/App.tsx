@@ -29,6 +29,7 @@ import CaixaCartao from "./pages/admin/CaixaCartao";
 import ViagensEncerradas from "./pages/admin/ViagensEncerradas";
 import ViagensAndamento from "./pages/admin/ViagensAndamento";
 import AcompanhamentoTempoReal from "./pages/admin/AcompanhamentoTempoReal";
+import AdminInstallGuide from "./pages/admin/AdminInstallGuide";
 import ViagensRegistroChamadas from "./pages/admin/ViagensRegistroChamadas";
 import ViagensTodas from "./pages/admin/ViagensTodas";
 import Motoristas from "./pages/admin/Motoristas";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/login" element={<LoginScreen forcedRole="passageiro" />} />
             <Route path="/login/motorista" element={<LoginScreen forcedRole="motorista" />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/instalar" element={<AdminInstallGuide />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/ride-track/:token" element={<RideTrack />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
