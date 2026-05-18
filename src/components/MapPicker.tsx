@@ -49,12 +49,12 @@ const MapPicker = ({
     } finally {
       setLoading(false);
     }
-    if (userPosition) {
+    if (userPosition && !isOrigem) {
       const dist = haversineKm(userPosition.lat, userPosition.lng, lat, lng);
       setDistanceText(dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`);
       setBlocked(dist > maxDistanceKm);
     }
-  }, [userPosition, maxDistanceKm]);
+  }, [userPosition, maxDistanceKm, isOrigem]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
