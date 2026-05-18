@@ -119,7 +119,7 @@ const MapPicker = ({
           <ArrowLeft size={20} className="text-foreground" />
         </button>
         <div className="flex-1 bg-card/90 backdrop-blur-md border border-border rounded-xl px-4 py-2.5 shadow-lg">
-          <p className="text-xs text-muted-foreground">Destino selecionado</p>
+          <p className="text-xs text-muted-foreground">{isOrigem ? "Local de embarque" : "Destino selecionado"}</p>
           <p className="text-sm text-foreground truncate flex items-center gap-1.5">
             {loading ? (
               <Loader2 size={14} className="animate-spin text-primary" />
