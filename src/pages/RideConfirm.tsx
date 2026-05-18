@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useRide, RideEstimate } from "@/hooks/useRide";
 import { toast } from "sonner";
 import MultiStopInput, { StopPoint } from "@/components/MultiStopInput";
+import RoutePreviewMap from "@/components/RoutePreviewMap";
 import ScheduleRidePicker from "@/components/ScheduleRidePicker";
 import VoucherInput from "@/components/VoucherInput";
 import { format } from "date-fns";
