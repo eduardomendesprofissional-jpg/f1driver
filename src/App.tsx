@@ -135,6 +135,7 @@ const App = () => (
               <Route path="caixa/cartao" element={<CaixaCartao />} />
               <Route path="viagens/encerradas" element={<ViagensEncerradas />} />
               <Route path="viagens/andamento" element={<ViagensAndamento />} />
+              <Route path="viagens/tempo-real" element={<AcompanhamentoTempoReal />} />
               <Route path="viagens/registro-chamadas" element={<ViagensRegistroChamadas />} />
               <Route path="viagens/todas" element={<ViagensTodas />} />
               <Route path="motoristas" element={<Motoristas />} />
