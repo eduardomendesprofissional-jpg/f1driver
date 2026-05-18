@@ -37,7 +37,7 @@ const AdminInstallGuide = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="h-14 border-b border-border flex items-center px-4 sticky top-0 z-20 bg-background/95 backdrop-blur-sm">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mr-2">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/login")} className="mr-2">
           <ArrowLeft size={20} />
         </Button>
         <h1 className="text-base font-bold">Salvar Painel Admin</h1>
