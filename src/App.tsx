@@ -74,6 +74,11 @@ import DriverCredits from "./pages/DriverCredits";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DeleteAccountPage from "./pages/DeleteAccountPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { IS_ADMIN_APP, IS_DRIVER_APP, IS_PASSENGER_APP, IS_FULL_APP } from "./lib/app-variant";
+
+const showPassenger = IS_FULL_APP || IS_PASSENGER_APP;
+const showDriver = IS_FULL_APP || IS_DRIVER_APP;
+const showAdmin = IS_FULL_APP || IS_ADMIN_APP;
 const queryClient = new QueryClient();
 
 const App = () => (
