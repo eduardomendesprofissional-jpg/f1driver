@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-f1driver.jpeg";
+import { getVariantHome } from "@/lib/app-variant";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const SplashScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShow(false);
-      setTimeout(() => navigate("/login"), 400);
+      setTimeout(() => navigate(getVariantHome()), 400);
     }, 2200);
     return () => clearTimeout(timer);
   }, [navigate]);

@@ -74,6 +74,11 @@ import DriverCredits from "./pages/DriverCredits";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DeleteAccountPage from "./pages/DeleteAccountPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { IS_ADMIN_APP, IS_DRIVER_APP, IS_PASSENGER_APP, IS_FULL_APP } from "./lib/app-variant";
+
+const showPassenger = IS_FULL_APP || IS_PASSENGER_APP;
+const showDriver = IS_FULL_APP || IS_DRIVER_APP;
+const showAdmin = IS_FULL_APP || IS_ADMIN_APP;
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -86,82 +91,91 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<SplashScreen />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/login" element={<LoginScreen forcedRole="passageiro" />} />
-            <Route path="/login/motorista" element={<LoginScreen forcedRole="motorista" />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/instalar" element={<AdminInstallGuide />} />
+            {IS_FULL_APP && <Route path="/home" element={<HomePage />} />}
+
+            {showPassenger && <Route path="/login" element={<LoginScreen forcedRole="passageiro" />} />}
+            {showDriver && <Route path="/login/motorista" element={<LoginScreen forcedRole="motorista" />} />}
+            {showAdmin && <Route path="/admin/login" element={<AdminLogin />} />}
+            {showAdmin && <Route path="/admin/instalar" element={<AdminInstallGuide />} />}
+
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/ride-track/:token" element={<RideTrack />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/excluir-conta" element={<DeleteAccountPage />} />
 
             {/* Onboarding */}
-            <Route path="/onboarding" element={<ProtectedRoute><OnboardingScreen /></ProtectedRoute>} />
+            {(showPassenger || showDriver) && (
+              <Route path="/onboarding" element={<ProtectedRoute><OnboardingScreen /></ProtectedRoute>} />
+            )}
 
-            {/* Protected user routes */}
-            <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
-            <Route path="/ride-confirm" element={<ProtectedRoute><RideConfirm /></ProtectedRoute>} />
-            <Route path="/ride-active" element={<ProtectedRoute><RideActive /></ProtectedRoute>} />
-            
-            <Route path="/rating" element={<ProtectedRoute><RatingScreen /></ProtectedRoute>} />
-            <Route path="/history" element={<ProtectedRoute><HistoryScreen /></ProtectedRoute>} />
-            <Route path="/envios" element={<ProtectedRoute><EnviosScreen /></ProtectedRoute>} />
-            <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
-            <Route path="/envios/:id" element={<ProtectedRoute><EnvioTracking /></ProtectedRoute>} />
-            <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
-            
-            <Route path="/wallet" element={<ProtectedRoute><PassengerWallet /></ProtectedRoute>} />
-            <Route path="/inbox" element={<ProtectedRoute><PassengerInbox /></ProtectedRoute>} />
-            <Route path="/referral" element={<ProtectedRoute><PassengerReferral /></ProtectedRoute>} />
-            <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
-            <Route path="/driver/profile" element={<ProtectedRoute><DriverProfileScreen /></ProtectedRoute>} />
-            <Route path="/driver/settings" element={<ProtectedRoute><DriverSettings /></ProtectedRoute>} />
-            <Route path="/driver/inbox" element={<ProtectedRoute><DriverInbox /></ProtectedRoute>} />
-            <Route path="/driver/referral" element={<ProtectedRoute><DriverReferral /></ProtectedRoute>} />
-            <Route path="/driver/wallet" element={<ProtectedRoute><DriverWallet /></ProtectedRoute>} />
-            <Route path="/driver/achievements" element={<ProtectedRoute><DriverAchievements /></ProtectedRoute>} />
-            <Route path="/driver/credits" element={<ProtectedRoute><DriverCredits /></ProtectedRoute>} />
-            <Route path="/driver/earnings" element={<ProtectedRoute><DriverEarnings /></ProtectedRoute>} />
+            {/* Passenger routes */}
+            {showPassenger && <>
+              <Route path="/passenger" element={<ProtectedRoute><PassengerHome /></ProtectedRoute>} />
+              <Route path="/ride-confirm" element={<ProtectedRoute><RideConfirm /></ProtectedRoute>} />
+              <Route path="/ride-active" element={<ProtectedRoute><RideActive /></ProtectedRoute>} />
+              <Route path="/rating" element={<ProtectedRoute><RatingScreen /></ProtectedRoute>} />
+              <Route path="/history" element={<ProtectedRoute><HistoryScreen /></ProtectedRoute>} />
+              <Route path="/envios" element={<ProtectedRoute><EnviosScreen /></ProtectedRoute>} />
+              <Route path="/envios/novo" element={<ProtectedRoute><EnvioNovo /></ProtectedRoute>} />
+              <Route path="/envios/:id" element={<ProtectedRoute><EnvioTracking /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
+              <Route path="/wallet" element={<ProtectedRoute><PassengerWallet /></ProtectedRoute>} />
+              <Route path="/inbox" element={<ProtectedRoute><PassengerInbox /></ProtectedRoute>} />
+              <Route path="/referral" element={<ProtectedRoute><PassengerReferral /></ProtectedRoute>} />
+            </>}
 
-            {/* Admin routes - email restricted */}
-            <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="despacho" element={<DespachoRapido />} />
-              <Route path="whats/painel" element={<WhatsPainel />} />
-              <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
-              <Route path="whats/clientes" element={<WhatsClientes />} />
-              <Route path="caixa/pre-pago" element={<CaixaResumo />} />
-              <Route path="caixa/pos-pago" element={<CaixaPosPago />} />
-              <Route path="caixa/cartao" element={<CaixaCartao />} />
-              <Route path="viagens/encerradas" element={<ViagensEncerradas />} />
-              <Route path="viagens/andamento" element={<ViagensAndamento />} />
-              <Route path="viagens/tempo-real" element={<AcompanhamentoTempoReal />} />
-              <Route path="viagens/registro-chamadas" element={<ViagensRegistroChamadas />} />
-              <Route path="viagens/todas" element={<ViagensTodas />} />
-              <Route path="motoristas" element={<Motoristas />} />
-              <Route path="passageiros" element={<Passageiros />} />
-              <Route path="notificacao" element={<DispararNotificacao />} />
-              <Route path="erros" element={<RelatorioErros />} />
-              <Route path="mapa-calor" element={<MapaCalor />} />
-              <Route path="precificacao" element={<Precificacao />} />
-              <Route path="nova-cidade" element={<NovaCidade />} />
-              <Route path="categorias" element={<CategoriasVeiculos />} />
-              <Route path="anuncios" element={<AnunciosBanners />} />
-              <Route path="cupons/criar" element={<CuponsCriar />} />
-              <Route path="cupons/listar" element={<CuponsListar />} />
-              <Route path="estabelecimentos/listar" element={<EstabelecimentosListar />} />
-              <Route path="estabelecimentos/cadastrar" element={<EstabelecimentosCadastrar />} />
-              <Route path="relatorio-estabelecimentos" element={<RelatorioEstabelecimentos />} />
-              <Route path="relatorio-viagens" element={<RelatorioViagens />} />
-              <Route path="mensalidades" element={<Mensalidades />} />
-              <Route path="mapa-motoristas" element={<MapaMotoristas />} />
-              <Route path="suporte" element={<SuporteEmergencial />} />
-              <Route path="administradores" element={<Administradores />} />
-              <Route path="aprovacoes-creditos" element={<AprovacoesCreditos />} />
-              <Route path="configurar" element={<ConfigurarApp />} />
-            </Route>
+            {/* Driver routes */}
+            {showDriver && <>
+              <Route path="/driver" element={<ProtectedRoute><DriverPanel /></ProtectedRoute>} />
+              <Route path="/driver/profile" element={<ProtectedRoute><DriverProfileScreen /></ProtectedRoute>} />
+              <Route path="/driver/settings" element={<ProtectedRoute><DriverSettings /></ProtectedRoute>} />
+              <Route path="/driver/inbox" element={<ProtectedRoute><DriverInbox /></ProtectedRoute>} />
+              <Route path="/driver/referral" element={<ProtectedRoute><DriverReferral /></ProtectedRoute>} />
+              <Route path="/driver/wallet" element={<ProtectedRoute><DriverWallet /></ProtectedRoute>} />
+              <Route path="/driver/achievements" element={<ProtectedRoute><DriverAchievements /></ProtectedRoute>} />
+              <Route path="/driver/credits" element={<ProtectedRoute><DriverCredits /></ProtectedRoute>} />
+              <Route path="/driver/earnings" element={<ProtectedRoute><DriverEarnings /></ProtectedRoute>} />
+            </>}
+
+            {/* Admin routes */}
+            {showAdmin && (
+              <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="despacho" element={<DespachoRapido />} />
+                <Route path="whats/painel" element={<WhatsPainel />} />
+                <Route path="whats/palavras-chave" element={<WhatsPalavrasChave />} />
+                <Route path="whats/clientes" element={<WhatsClientes />} />
+                <Route path="caixa/pre-pago" element={<CaixaResumo />} />
+                <Route path="caixa/pos-pago" element={<CaixaPosPago />} />
+                <Route path="caixa/cartao" element={<CaixaCartao />} />
+                <Route path="viagens/encerradas" element={<ViagensEncerradas />} />
+                <Route path="viagens/andamento" element={<ViagensAndamento />} />
+                <Route path="viagens/tempo-real" element={<AcompanhamentoTempoReal />} />
+                <Route path="viagens/registro-chamadas" element={<ViagensRegistroChamadas />} />
+                <Route path="viagens/todas" element={<ViagensTodas />} />
+                <Route path="motoristas" element={<Motoristas />} />
+                <Route path="passageiros" element={<Passageiros />} />
+                <Route path="notificacao" element={<DispararNotificacao />} />
+                <Route path="erros" element={<RelatorioErros />} />
+                <Route path="mapa-calor" element={<MapaCalor />} />
+                <Route path="precificacao" element={<Precificacao />} />
+                <Route path="nova-cidade" element={<NovaCidade />} />
+                <Route path="categorias" element={<CategoriasVeiculos />} />
+                <Route path="anuncios" element={<AnunciosBanners />} />
+                <Route path="cupons/criar" element={<CuponsCriar />} />
+                <Route path="cupons/listar" element={<CuponsListar />} />
+                <Route path="estabelecimentos/listar" element={<EstabelecimentosListar />} />
+                <Route path="estabelecimentos/cadastrar" element={<EstabelecimentosCadastrar />} />
+                <Route path="relatorio-estabelecimentos" element={<RelatorioEstabelecimentos />} />
+                <Route path="relatorio-viagens" element={<RelatorioViagens />} />
+                <Route path="mensalidades" element={<Mensalidades />} />
+                <Route path="mapa-motoristas" element={<MapaMotoristas />} />
+                <Route path="suporte" element={<SuporteEmergencial />} />
+                <Route path="administradores" element={<Administradores />} />
+                <Route path="aprovacoes-creditos" element={<AprovacoesCreditos />} />
+                <Route path="configurar" element={<ConfigurarApp />} />
+              </Route>
+            )}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
