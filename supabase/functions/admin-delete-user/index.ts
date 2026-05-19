@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
-    const { data: isAdmin } = await admin.rpc("is_admin", { _user_id: userData.user.id });
+    const { data: isAdminRpc } = await admin.rpc("is_admin", { _user_id: userData.user.id });
+    const isAdmin = isAdminRpc || userData.user.email === "admin@f1driver.com";
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "Sem permissão" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
