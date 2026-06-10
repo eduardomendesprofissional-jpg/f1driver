@@ -1051,6 +1051,7 @@ export type Database = {
       }
       delete_user_data: { Args: { p_user_id: string }; Returns: undefined }
       dispatch_ride: { Args: { p_ride_id: string }; Returns: string }
+      export_auth_users_for_migration: { Args: never; Returns: Json }
       find_nearest_driver: {
         Args: { p_exclude?: string[]; p_lat: number; p_lng: number }
         Returns: string
