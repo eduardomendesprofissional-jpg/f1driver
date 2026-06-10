@@ -1051,6 +1051,26 @@ export type Database = {
       }
       delete_user_data: { Args: { p_user_id: string }; Returns: undefined }
       dispatch_ride: { Args: { p_ride_id: string }; Returns: string }
+      dump_auth_identities_migration: {
+        Args: never
+        Returns: unknown[]
+        SetofOptions: {
+          from: "*"
+          to: "identities"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      dump_auth_users_migration: {
+        Args: never
+        Returns: unknown[]
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       export_auth_users_for_migration: { Args: never; Returns: Json }
       find_nearest_driver: {
         Args: { p_exclude?: string[]; p_lat: number; p_lng: number }
