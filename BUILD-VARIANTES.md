@@ -74,9 +74,24 @@ No Android Studio: **Build → Generate Signed Bundle / APK → Android App Bund
 
 ---
 
+## Ícones por variante (Android)
+
+Os ícones-fonte de cada variante estão em `resources/<variante>/icon.png` (1024×1024+) e `resources/<variante>/splash.png` (2732×2732). Para gerar automaticamente todos os tamanhos do Android (mipmap-*):
+
+```bash
+# Motorista (F1 Driver Motorista)
+cp resources/driver/icon.png resources/icon.png
+cp resources/driver/splash.png resources/splash.png
+npx @capacitor/assets generate --android
+
+# (repita o mesmo padrão com resources/admin/* e resources/passenger/* antes de gerar cada AAB)
+```
+
+Rode esse comando **depois** do passo 2 (cópia do `capacitor.config.<variante>.json`) e **antes** do `npx cap sync android`.
+
 ## Dicas
 
-- **Ícones por variante:** substitua os ícones em `android/app/src/main/res/` antes do `Generate Signed Bundle` de cada uma. Use 3 conjuntos diferentes (admin azul, motorista laranja, passageiro azul claro, por exemplo).
+- **Nome do app no Android:** vem do `appName` em `capacitor.config.<variante>.json` (ex.: `F1 Driver Motorista`).
 - **Mesmo backend:** todos os 3 apps usam o mesmo Lovable Cloud → motorista cadastrado num app aparece no painel admin do outro automaticamente.
 - **Atualizações:** mudou o código? Basta repetir os passos 1-3 para cada variante e subir a nova versão no Play Console.
 - **Não toque** em `capacitor.config.json` manualmente — ele é sobrescrito pelo passo 2.

@@ -1,0 +1,35 @@
+{
+  "id": "/?source=pwa-driver",
+  "name": "F1 Driver Motorista",
+  "short_name": "F1 Driver Motorista",
+  "start_url": "/?source=pwa-driver",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["travel", "navigation", "business"],
+  "icons": [
+    {
+      "src": "/icons/driver/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/driver/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/driver/icon-1024x1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
