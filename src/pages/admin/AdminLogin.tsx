@@ -50,7 +50,7 @@ const AdminLogin = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm flex flex-col items-center gap-8"
       >
-        <img src={logo} alt="F1 Driver" className="w-24 h-24 object-contain rounded-xl" />
+        <img src={logo} alt="ADE Drive" className="w-24 h-24 object-contain rounded-xl" />
 
         <div className="flex items-center gap-2 text-primary">
           <Shield size={20} />

@@ -4,9 +4,9 @@ Este projeto gera **3 APKs / AABs independentes** para o Google Play, todos comp
 
 | Variante   | App Play Store         | App ID                       | Rota inicial         |
 |------------|------------------------|------------------------------|----------------------|
-| `admin`    | F1 Driver Admin        | `com.f1driver.admin`         | `/admin/login`       |
-| `driver`   | F1 Driver Motorista    | `com.f1driver.motorista`     | `/login/motorista`   |
-| `passenger`| F1 Driver Passageiro   | `com.f1driver.passageiro`    | `/login`             |
+| `admin`    | ADE Drive Admin        | `com.f1driver.admin`         | `/admin/login`       |
+| `driver`   | ADE Drive Motorista    | `com.f1driver.motorista`     | `/login/motorista`   |
+| `passenger`| ADE Drive Passageiro   | `com.f1driver.passageiro`    | `/login`             |
 
 > No preview do Lovable e no domínio web (`f1driveroficial.com`) **todas as rotas continuam ativas** (variante `all`). A separação só acontece nos builds mobile.
 
@@ -79,7 +79,7 @@ No Android Studio: **Build → Generate Signed Bundle / APK → Android App Bund
 Os ícones-fonte de cada variante estão em `resources/<variante>/icon.png` (1024×1024+) e `resources/<variante>/splash.png` (2732×2732). Para gerar automaticamente todos os tamanhos do Android (mipmap-*):
 
 ```bash
-# Motorista (F1 Driver Motorista)
+# Motorista (ADE Drive Motorista)
 cp resources/driver/icon.png resources/icon.png
 cp resources/driver/splash.png resources/splash.png
 npx @capacitor/assets generate --android
@@ -91,7 +91,7 @@ Rode esse comando **depois** do passo 2 (cópia do `capacitor.config.<variante>.
 
 ## Dicas
 
-- **Nome do app no Android:** vem do `appName` em `capacitor.config.<variante>.json` (ex.: `F1 Driver Motorista`).
+- **Nome do app no Android:** vem do `appName` em `capacitor.config.<variante>.json` (ex.: `ADE Drive Motorista`).
 - **Mesmo backend:** todos os 3 apps usam o mesmo Lovable Cloud → motorista cadastrado num app aparece no painel admin do outro automaticamente.
 - **Atualizações:** mudou o código? Basta repetir os passos 1-3 para cada variante e subir a nova versão no Play Console.
 - **Não toque** em `capacitor.config.json` manualmente — ele é sobrescrito pelo passo 2.

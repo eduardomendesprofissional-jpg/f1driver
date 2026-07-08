@@ -1,7 +1,7 @@
 {
   "id": "/?source=pwa-driver",
-  "name": "F1 Driver Motorista",
-  "short_name": "F1 Driver Motorista",
+  "name": "ADE Drive Motorista",
+  "short_name": "ADE Drive Motorista",
   "start_url": "/?source=pwa-driver",
   "scope": "/",
   "display": "standalone",

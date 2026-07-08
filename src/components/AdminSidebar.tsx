@@ -156,7 +156,7 @@ const AdminSidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
       <div className="p-4 flex items-center gap-2.5 border-b border-sidebar-border">
         <img src={logoF1} alt="Logo" className="w-9 h-9 rounded-xl" />
         <span className="text-sm font-bold text-sidebar-foreground tracking-wide uppercase">
-          F1 Driver
+          ADE Drive
         </span>
       </div>
 

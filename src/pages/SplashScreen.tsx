@@ -37,7 +37,7 @@ const SplashScreen = () => {
       >
         <motion.img
           src={logo}
-          alt="F1 Driver"
+          alt="ADE Drive"
           className="w-36 h-36 object-contain rounded-3xl shadow-2xl"
           initial={{ y: 10 }}
           animate={{ y: 0 }}
@@ -50,7 +50,7 @@ const SplashScreen = () => {
           transition={{ delay: 0.6, duration: 0.5 }}
           className="text-lg font-bold text-gradient-blue tracking-wide"
         >
-          F1 Driver
+          ADE Drive
         </motion.p>
 
         {/* Loading bar */}

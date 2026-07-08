@@ -1,7 +1,7 @@
 {
   "id": "/?source=pwa",
-  "name": "F1 Driver - Mobilidade Urbana",
-  "short_name": "F1 Driver",
+  "name": "ADE Drive - Mobilidade Urbana",
+  "short_name": "ADE Drive",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
