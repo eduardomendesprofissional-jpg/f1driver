@@ -25,7 +25,7 @@ const GpsJustificationModal = ({ open, onAccept, onCancel }: Props) => {
           </div>
           <DialogTitle className="text-lg">Localização Necessária</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground leading-relaxed mt-2">
-            O <strong className="text-foreground">F1 Driver</strong> usa sua localização para encontrar 
+            O <strong className="text-foreground">ADE Drive</strong> usa sua localização para encontrar 
             motoristas próximos, calcular rotas e estimar o tempo de chegada. Sua localização é 
             usada apenas durante corridas ativas.
           </DialogDescription>

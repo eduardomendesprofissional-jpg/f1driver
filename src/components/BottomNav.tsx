@@ -162,7 +162,7 @@ const BottomNav = ({ active, role }: BottomNavProps) => {
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-border/30">
-              <p className="text-[10px] text-muted-foreground text-center">F1Driver v1.0 • Todos os direitos reservados</p>
+              <p className="text-[10px] text-muted-foreground text-center">ADE Drive v1.0 • Todos os direitos reservados</p>
             </div>
           </SheetContent>
         </Sheet>

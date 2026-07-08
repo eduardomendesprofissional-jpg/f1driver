@@ -163,8 +163,8 @@ const LoginScreen = ({ forcedRole }: Props) => {
       >
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <img src={logo} alt="F1 Driver" className="w-20 h-20 object-contain rounded-2xl shadow-lg" />
-          <h1 className="text-xl font-black text-gradient-blue tracking-tight">F1 Driver</h1>
+          <img src={logo} alt="ADE Drive" className="w-20 h-20 object-contain rounded-2xl shadow-lg" />
+          <h1 className="text-xl font-black text-gradient-blue tracking-tight">ADE Drive</h1>
         </div>
 
         {/* Role badge (locked) */}

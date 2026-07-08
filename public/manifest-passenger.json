@@ -1,7 +1,7 @@
 {
   "id": "/?source=pwa",
-  "name": "F1 Driver Passageiro",
-  "short_name": "F1 Driver Passageiro",
+  "name": "ADE Drive Passageiro",
+  "short_name": "ADE Drive Passageiro",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

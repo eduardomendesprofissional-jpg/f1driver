@@ -26,7 +26,7 @@ const steps = [
     num: 4,
     icon: CheckCircle2,
     title: "Confirme a instalação",
-    desc: "Toque em 'Adicionar' ou 'Instalar'. O ícone do F1 Driver Admin aparecerá na sua tela inicial.",
+    desc: "Toque em 'Adicionar' ou 'Instalar'. O ícone do ADE Drive Admin aparecerá na sua tela inicial.",
   },
 ];
 
@@ -55,7 +55,7 @@ const AdminInstallGuide = () => {
           </div>
           <h2 className="text-xl font-bold mb-2">Acesse em um toque</h2>
           <p className="text-sm text-muted-foreground">
-            Salve o Painel Administrativo F1 Driver na tela inicial do seu Android para acesso rápido, sem digitar URL.
+            Salve o Painel Administrativo ADE Drive na tela inicial do seu Android para acesso rápido, sem digitar URL.
           </p>
         </motion.div>
 

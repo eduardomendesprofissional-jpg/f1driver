@@ -33,8 +33,8 @@ const HomePage = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="F1 Driver" className="w-10 h-10 rounded-lg object-cover" />
-            <span className="text-lg font-bold text-gradient-blue">F1 Driver</span>
+            <img src={logo} alt="ADE Drive" className="w-10 h-10 rounded-lg object-cover" />
+            <span className="text-lg font-bold text-gradient-blue">ADE Drive</span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => navigate("/login")} className="text-sm font-semibold">
@@ -92,7 +92,7 @@ const HomePage = () => {
           >
             <div className="relative">
               <div className="absolute -inset-8 bg-primary/10 rounded-full blur-3xl" />
-              <img src={heroPhones} alt="App F1 Driver em smartphones" className="relative w-[22rem] md:w-[38rem] drop-shadow-2xl" />
+              <img src={heroPhones} alt="App ADE Drive em smartphones" className="relative w-[22rem] md:w-[38rem] drop-shadow-2xl" />
             </div>
           </motion.div>
         </div>
@@ -141,7 +141,7 @@ const HomePage = () => {
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
             <div className="relative rounded-2xl overflow-hidden">
-              <img src={passengerPhoto} alt="Passageira usando o app F1 Driver" className="w-full h-80 md:h-[28rem] object-cover" />
+              <img src={passengerPhoto} alt="Passageira usando o app ADE Drive" className="w-full h-80 md:h-[28rem] object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md text-primary text-sm font-bold">
@@ -224,7 +224,7 @@ const HomePage = () => {
             className="order-1 md:order-2"
           >
             <div className="relative rounded-2xl overflow-hidden">
-              <img src={driverPhoto} alt="Motorista parceiro F1 Driver" className="w-full h-80 md:h-[28rem] object-cover" />
+              <img src={driverPhoto} alt="Motorista parceiro ADE Drive" className="w-full h-80 md:h-[28rem] object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/20 backdrop-blur-md text-success text-sm font-bold">
@@ -240,7 +240,7 @@ const HomePage = () => {
       <section className="py-20 px-6 border-y border-border bg-card/50">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
-            <h2 className="text-3xl md:text-4xl font-black mb-4">Por que confiar na <span className="text-gradient-blue">F1 Driver</span>?</h2>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">Por que confiar na <span className="text-gradient-blue">ADE Drive</span>?</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">Tecnologia de ponta e compromisso com sua segurança.</p>
           </motion.div>
           <div className="grid sm:grid-cols-3 gap-6 mt-12">
@@ -289,11 +289,11 @@ const HomePage = () => {
             {/* Logo & Sobre */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <img src={logo} alt="F1 Driver" className="w-12 h-12 rounded-xl object-cover" />
-                <span className="text-xl font-black text-gradient-blue">F1 Driver</span>
+                <img src={logo} alt="ADE Drive" className="w-12 h-12 rounded-xl object-cover" />
+                <span className="text-xl font-black text-gradient-blue">ADE Drive</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-                A F1 Driver é a plataforma de mobilidade urbana que conecta passageiros e motoristas com tecnologia de ponta, segurança e um design premium. Nossa missão é transformar a forma como você se move pela cidade.
+                A ADE Drive é a plataforma de mobilidade urbana que conecta passageiros e motoristas com tecnologia de ponta, segurança e um design premium. Nossa missão é transformar a forma como você se move pela cidade.
               </p>
               {/* Redes Sociais */}
               <div className="flex gap-3 mt-6">
@@ -353,7 +353,7 @@ const HomePage = () => {
 
           {/* Divider + Bottom */}
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">© 2026 F1 Driver. Todos os direitos reservados.</p>
+            <p className="text-xs text-muted-foreground">© 2026 ADE Drive. Todos os direitos reservados.</p>
             <p className="text-xs text-muted-foreground">
               Desenvolvido com <span className="text-primary">💙</span> por <span className="font-bold text-foreground">Orapt GM</span>
             </p>

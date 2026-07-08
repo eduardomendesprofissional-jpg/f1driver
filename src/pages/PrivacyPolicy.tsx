@@ -18,7 +18,7 @@ const PrivacyPolicy = () => {
 
         <h2 className="text-base font-bold mt-6 mb-2">1. Introdução</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          A <strong className="text-foreground">F1 Driver</strong> valoriza a privacidade dos seus usuários. 
+          A <strong className="text-foreground">ADE Drive</strong> valoriza a privacidade dos seus usuários. 
           Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e compartilhamos 
           suas informações pessoais ao utilizar nosso aplicativo de mobilidade urbana.
         </p>

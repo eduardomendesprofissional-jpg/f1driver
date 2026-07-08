@@ -13,7 +13,7 @@ const MilestonePopup = ({ milestone, driverName, onDismiss }: MilestonePopupProp
   if (!milestone) return null;
 
   const whatsappMsg = encodeURIComponent(
-    `Olá! Sou motorista do F1 Driver e acabei de atingir ${milestone.rides.toLocaleString("pt-BR")} corridas! Gostaria de retirar meu prêmio 🏆`
+    `Olá! Sou motorista do ADE Drive e acabei de atingir ${milestone.rides.toLocaleString("pt-BR")} corridas! Gostaria de retirar meu prêmio 🏆`
   );
   const whatsappUrl = `https://wa.me/?text=${whatsappMsg}`;
 

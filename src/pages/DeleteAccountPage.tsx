@@ -98,7 +98,7 @@ const DeleteAccountPage = () => {
             <ArrowLeft size={20} />
             <span className="text-sm">Voltar</span>
           </button>
-          <img src={logo} alt="F1 Driver" className="w-10 h-10 rounded-xl object-contain" />
+          <img src={logo} alt="ADE Drive" className="w-10 h-10 rounded-xl object-contain" />
         </div>
 
         <div className="flex flex-col items-center text-center space-y-3">
@@ -107,7 +107,7 @@ const DeleteAccountPage = () => {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Excluir minha conta</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Você pode solicitar a exclusão da sua conta F1 Driver — válido para passageiros e
+            Você pode solicitar a exclusão da sua conta ADE Drive — válido para passageiros e
             motoristas — diretamente nesta página.
           </p>
         </div>
@@ -235,7 +235,7 @@ const DeleteAccountPage = () => {
             <h2 className="text-xl font-bold">Conta excluída</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Sua conta {tipo ? <strong className="text-foreground">de {tipo}</strong> : null} foi
-              removida do F1 Driver com sucesso.
+              removida do ADE Drive com sucesso.
             </p>
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-xs text-foreground/90 leading-relaxed text-left">
               <strong className="text-primary block mb-1">Mudou de ideia?</strong>
@@ -256,7 +256,7 @@ const DeleteAccountPage = () => {
         )}
 
         <p className="text-[10px] text-muted-foreground text-center pt-4">
-          F1 Driver · Política de exclusão de conta conforme exigências de Google Play e LGPD.
+          ADE Drive · Política de exclusão de conta conforme exigências de Google Play e LGPD.
         </p>
       </div>
     </div>

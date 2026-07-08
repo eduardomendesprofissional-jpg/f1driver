@@ -64,9 +64,9 @@ const PassengerReferral = () => {
   };
 
   const shareCode = () => {
-    const text = `🚗 Use meu código ${codigoIndicacao} para se cadastrar no F1Driver e ganhe um bônus na sua primeira corrida!`;
+    const text = `🚗 Use meu código ${codigoIndicacao} para se cadastrar no ADE Drive e ganhe um bônus na sua primeira corrida!`;
     if (navigator.share) {
-      navigator.share({ title: "Indique e Ganhe - F1Driver", text });
+      navigator.share({ title: "Indique e Ganhe - ADE Drive", text });
     } else {
       navigator.clipboard.writeText(text);
       toast.success("Texto copiado para compartilhar!");
@@ -120,7 +120,7 @@ const PassengerReferral = () => {
             </div>
             <h2 className="text-xl font-bold">Ganhe R$ 10,00 por indicação!</h2>
             <p className="text-sm text-muted-foreground">
-              Convide amigos para o F1Driver. Quando completarem a primeira corrida, vocês dois ganham!
+              Convide amigos para o ADE Drive. Quando completarem a primeira corrida, vocês dois ganham!
             </p>
           </CardContent>
         </Card>

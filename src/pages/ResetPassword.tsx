@@ -70,7 +70,7 @@ const ResetPassword = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm flex flex-col items-center gap-8"
       >
-        <img src={logo} alt="F1 Driver" className="w-24 h-24 object-contain rounded-xl" />
+        <img src={logo} alt="ADE Drive" className="w-24 h-24 object-contain rounded-xl" />
         <h1 className="text-xl font-bold text-foreground">Redefinir Senha</h1>
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">

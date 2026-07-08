@@ -69,7 +69,7 @@ const AdminLayout = () => {
           </button>
           <div className="flex items-center gap-2">
             <img src={logoF1} alt="Logo" className="w-7 h-7 rounded-lg" />
-            <span className="text-sm font-bold tracking-wide uppercase">F1 Driver</span>
+            <span className="text-sm font-bold tracking-wide uppercase">ADE Drive</span>
           </div>
           <div className="flex items-center gap-2">
             {themeToggle}
@@ -127,7 +127,7 @@ const AdminLayout = () => {
         <header className="h-14 border-b border-border flex items-center justify-end px-6 sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             {themeToggle}
-            <span className="text-sm text-muted-foreground">Central F1 Driver</span>
+            <span className="text-sm text-muted-foreground">Central ADE Drive</span>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary/20 text-primary text-xs">AD</AvatarFallback>
             </Avatar>
